@@ -11,6 +11,10 @@
     "./prettier-base": "./prettier-base.js",
     "./react-internal": "./react-internal.js"
   },
+  "scripts": {
+    "build": "echo 'No build needed for config'",
+    "lint": "echo 'No lint needed'"
+  },
   "devDependencies": {
     "@eslint/js": "^9.31.0",
     "@next/eslint-plugin-next": "^15.4.2",

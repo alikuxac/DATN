@@ -6,10 +6,9 @@
     "allowJs": true,
     "esModuleInterop": true,
     "incremental": false,
-    "module": "commonjs",
-    "moduleResolution": "Node10",
-    "outDir": "dist",
-    "baseUrl": "src"
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "outDir": "dist"
   },
   "include": ["src"],
   "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]

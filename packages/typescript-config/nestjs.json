@@ -16,6 +16,6 @@
     "sourceMap": true,
     "strictNullChecks": false,
     "strictBindCallApply": false,
-    "types": ["node"]
+    "lib": ["ES2023"]
   }
 }
