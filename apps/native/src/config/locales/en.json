@@ -1,0 +1,86 @@
+{
+  "HOME": "Home",
+
+  "EMAIL": "Email",
+  "PASSWORD": "Password",
+  "CONFIRM_PASSWORD": "Confirm Password",
+  "FIRST_NAME": "First Name",
+  "LAST_NAME": "Last Name",
+
+  "LOGIN": "Login",
+  "REGISTER": "Register",
+
+  "SURVIAL_MODE": "Survial Mode",
+  "NO_ACCOUNT": "Don't have an account?",
+  "CREATE_ACCOUNT": "Create account",
+  "ALREADY_HAVE_AN_ACCOUNT": "Already have an account?",
+
+  "GENDER": {
+    "NAME": "Gender",
+    "MALE": "Male",
+    "FEMALE": "Female",
+    "OTHER": "Other"
+  },
+
+  "AUTH": {
+    "emailRequired": "Email is required",
+    "passwordRequired": "Password is required",
+    "passwordMinLength": "Password must be at least 6 characters",
+    "passwordsDoNotMatch": "Passwords do not match",
+    "firstNameRequired": "First name is required",
+    "lastNameRequired": "Last name is required"
+  },
+
+  "VALIDATION": {
+    "emailInvalid": "Invalid email address",
+    "passwordMin": "Password must be at least 6 characters",
+    "passwordUppercase": "Password must contain at least one uppercase letter",
+    "passwordLowercase": "Password must contain at least one lowercase letter",
+    "passwordNumber": "Password must contain at least one number",
+    "fieldRequired": "{{fieldName}} is required",
+    "genderRequired": "Gender is required"
+  },
+
+  "COUNT": "Count {{count}}",
+  "APPEARANCE": "Appearance",
+  "LANGUAGE": "Language",
+  "SETTINGS": "Settings",
+  "MORE": "More",
+  "LIGHT_MODE": "Light mode",
+  "DARK_MODE": "Dark mode",
+  "APP_TEXT": "App Text",
+  "AVATAR": "Avatar",
+  "BADGE": "Badge",
+  "BUTTON": "Button",
+  "CHIP": "Chip",
+  "CHECKBOX": "Checkbox",
+  "PROGRESS_BAR": "Progress Bar",
+  "SLIDER": "Slider",
+  "SWITCH": "Switch",
+  "SELECT": "Select",
+  "THEME": "Theme",
+  "APP_INTRODUCTION": "This app is a tech demo for Reach Native Rapid Boilerplate. This was built to provide you a faster, more efficient way to build your next app.",
+  "AUTHENTICATION": "Authentication",
+  "TOP_UP": "Top Up",
+  "SWAP": "Swap",
+  "NET_WORTH": "Net Worth",
+  "GET_RECOMMENDATIONS": "Get Recommendations from Professionals",
+  "GET_RECOMMENDATIONS_SUBTITLE": "See traders insight, get latest news from our hand picked professionals on the market. Get some confidence and start trading.",
+  "TOP_PAIRS": "Top Pairs",
+  "SWAP_SUCCESS": "Swap Success",
+  "SWAP_DETAILS": "You have swapped {{amount}} USDT for BTC!",
+  "ABOUT": "About",
+  "ABOUT_TITLE": "About This App",
+  "ABOUT_INTRO": "A production-ready React Native boilerplate designed to accelerate your mobile app development with best practices and modern tools.",
+  "PROJECT_INFO": "Project Information",
+  "PROJECT_BY": "Project by",
+  "GITHUB_REPO": "GitHub Repository",
+  "AUTHOR_CONTACT": "Author Contact",
+  "CONTACT_EMAIL": "Contact Email",
+  "AUTHOR_WEBSITE": "Author Website",
+  "AUTHOR_GITHUB": "GitHub Profile",
+  "AUTHOR_LINKEDIN": "LinkedIn Profile",
+  "CONTACT_ME": "Need Help?",
+  "CONTACT_ME_DESC": "Feel free to reach out if you need assistance with this boilerplate or have any questions about implementation.",
+  "SEND_EMAIL": "Send Email"
+}

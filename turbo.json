@@ -1,6 +1,38 @@
 {
   "$schema": "https://turborepo.com/schema.json",
   "ui": "tui",
+  "globalDependencies": [
+    ".env*"
+  ],
+  "globalEnv": [
+    "APP_NAME",
+    "APP_ENV",
+    "APP_LANGUAGE",
+    "APP_TIMEZONE",
+    "HTTP_HOST",
+    "HTTP_PORT",
+    "URL_VERSIONING_ENABLE",
+    "URL_VERSION",
+    "DATABASE_URL",
+    "DATABASE_DEBUG",
+    "MIDDLEWARE_CORS_ORIGIN",
+    "JWT_SECRET",
+    "JWT_PREFIX",
+    "JWT_AUDIENCE",
+    "JWT_ISSUER",
+    "JWT_JWKS_URI",
+    "JWT_ALGORITHM",
+    "JWT_ACCESS_TOKEN_KID",
+    "JWT_ACCESS_TOKEN_EXPIRATION_TIME",
+    "JWT_REFRESH_TOKEN_KID",
+    "JWT_REFRESH_TOKEN_EXPIRATION_TIME",
+    "REDIS_URL",
+    "REDIS_HOST",
+    "REDIS_PORT",
+    "REDIS_PASSWORD",
+    "REDIS_USERNAME",
+    "RESEND_API_KEY"
+  ],
   "tasks": {
     "build": {
       "inputs": ["$TURBO_DEFAULT$", ".env*"],

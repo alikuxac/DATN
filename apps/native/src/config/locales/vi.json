@@ -1,0 +1,89 @@
+{
+  "HOME": "Trang chủ",
+
+  "EMAIL": "Email",
+  "PASSWORD": "Mật khẩu",
+  "CONFIRM_PASSWORD": "Xâc nhân mật khâu",
+  "FIRST_NAME": "Tên",
+  "LAST_NAME": "Họ",
+
+  "LOGIN": "Đăng nhập",
+  "REGISTER": "Đăng ký",
+
+  "SURVIAL_MODE": "Chế độ sinh tồn",
+  "NO_ACCOUNT": "Chưa có tài khoản?",
+  "CREATE_ACCOUNT": "Tạo tài khoản",
+  "ALREADY_HAVE_AN_ACCOUNT": "Bạn đã có tài khoản?",
+
+  "GENDER": {
+    "NAME": "Giới tính",
+    "MALE": "Nam",
+    "FEMALE": "Nữ",
+    "OTHER": "Khác"
+  },
+
+  "AUTH": {
+    "emailRequired": "Email cần phải nhập",
+    "passwordRequired": "Password cần phải nhập",
+    "passwordMinLength": "Password phải có ít nhất 6 ky tự",
+    "passwordsDoNotMatch": "Passwords không khớp nhau",
+    "firstNameRequired": "Tên cần phải nhập",
+    "lastNameRequired": "Hộ cần phải nhập"
+  },
+
+  "VALIDATION": {
+    "emailInvalid": "Email không hợp lệ",
+    "passwordMin": "Password phải có ít nhất 6 ky tự",
+    "passwordUppercase": "Password phải có ít nhất một ký tự in hoa",
+    "passwordLowercase": "Password phải có ít nhất một ký tự thường",
+    "passwordNumber": "Password phải có ít nhất một số",
+    "fieldRequired": "{{fieldName}} cần phải nhập",
+    "genderRequired": "Phải chọn giới tính"
+  },
+
+  "WELCOME": "Chào mừng đến với React Native Rapid Boilerplate",
+  "COUNT": "Đếm {{count}}",
+  "APPEARANCE": "Giao diện",
+  "LANGUAGE": "Ngôn ngữ",
+  "SETTINGS": "Thiết lập",
+  "MORE": "Thêm",
+  "LIGHT_MODE": "Chế độ sáng",
+  "DARK_MODE": "Chế độ tối",
+  "APP_TEXT": "App Text",
+  "AVATAR": "Avatar",
+  "BADGE": "Badge",
+  "BUTTON": "Button",
+  "CHIP": "Chip",
+  "CHECKBOX": "Checkbox",
+  "PROGRESS_BAR": "Progress Bar",
+  "SLIDER": "Slider",
+  "SWITCH": "Switch",
+  "SELECT": "Select",
+  "THEME": "Chủ đề",
+  "APP_INTRODUCTION": "Ứng dụng này là một ví dụ về Reach Native Rapid Boilerplate. Chúng tôi đã xây dựng ứng dụng này để giúp bạn phát triển ứng dụng của mình một cách nhanh chóng và hiệu quả hơn.",
+  "AUTHENTICATION": "Xác thực",
+
+  "TOP_UP": "Nạp tiền",
+  "SWAP": "Tráo đổi",
+  "NET_WORTH": "Giá trị tài sản ròng",
+  "GET_RECOMMENDATIONS": "Nhận khuyến nghị từ các chuyên gia",
+  "GET_RECOMMENDATIONS_SUBTITLE": "Xem thông tin chi tiết về nhà giao dịch, nhận tin tức mới nhất từ ​​các chuyên gia được chúng tôi tuyển chọn kỹ lưỡng trên thị trường. Hãy tự tin và bắt đầu giao dịch.",
+  "TOP_PAIRS": "Cặp đôi hàng đầu",
+  "SWAP_SUCCESS": "Thành công hoán đổi",
+  "SWAP_DETAILS": "Bạn đã đổi {{amount}} USDT lấy BTC!",
+  "ABOUT": "Giới thiệu",
+  "ABOUT_TITLE": "Giới thiệu ứng dụng",
+  "ABOUT_INTRO": "Một boilerplate React Native sẵn sàng cho sản xuất, được thiết kế để tăng tốc phát triển ứng dụng di động của bạn với các phương pháp hay nhất và công cụ hiện đại.",
+  "PROJECT_INFO": "Thông tin dự án",
+  "PROJECT_BY": "Dự án bởi",
+  "GITHUB_REPO": "Kho GitHub",
+  "AUTHOR_CONTACT": "Liên hệ tác giả",
+  "CONTACT_EMAIL": "Email liên hệ",
+  "AUTHOR_WEBSITE": "Website tác giả",
+  "AUTHOR_GITHUB": "Hồ sơ GitHub",
+  "AUTHOR_LINKEDIN": "Hồ sơ LinkedIn",
+  "CONTACT_ME": "Cần trợ giúp?",
+  "CONTACT_ME_DESC": "Hãy liên hệ nếu bạn cần hỗ trợ với boilerplate này hoặc có bất kỳ câu hỏi nào về việc triển khai.",
+  "SEND_EMAIL": "Gửi Email",
+  "auth": {}
+}
