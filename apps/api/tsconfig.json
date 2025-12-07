@@ -1,7 +1,24 @@
 {
   "extends": "@repo/typescript-config/nestjs.json",
   "compilerOptions": {
-    "ignoreDeprecations": "6.0",
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "module": "node16",
+    "moduleResolution": "node16",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    
+    // THÊM DÒNG NAY: Tắt isolatedModules cho Backend
+    "isolatedModules": false,
+    "paths": {
+      "@app/*": ["./src/app/*"],
+      "@common/*": ["./src/common/*"],
+      "@configs/*": ["./src/configs/*"],
+      "@config": ["./src/configs/index.ts"],
+      "@modules/*": ["./src/modules/*"],
+      "@routes/*": ["./src/router/routes/*"],
+      "@router": ["./src/router/router.module.ts"],
+      "@test/*": ["./test/*"],
+      "@workers/*": ["./src/worker/*"],
+    }
   }
 }

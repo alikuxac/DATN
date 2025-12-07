@@ -2,8 +2,21 @@ import { Global, Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { MongooseModule } from '@nestjs/mongoose';
 
-import Joi from 'joi';
 import configs from "../configs";
+
+import { PolicyModule } from "@modules/policy/policy.module";
+import { DatabaseModule } from "./database/database.module";
+import { MessageModule } from "./message/message.module";
+import { AuthModule } from "@modules/auth/auth.module";
+import { HelperModule } from "./helper/helper.module";
+import { RequestModule } from "./request/request.module";
+import { PaginationModule } from "./pagination/pagination.module";
+import { DatabaseOptionModule } from "./database/database.module";
+import { DatabaseOptionService } from "./database/services/database.options.service";
+import { DATABASE_CONNECTION_NAME } from "./database/constants/database.constant";
+import { BullModule } from "@nestjs/bullmq";
+import { CacheModule, CacheOptions } from "@nestjs/cache-manager";
+import KeyvRedis from "@keyv/redis";
 
 @Global()
 @Module({
@@ -13,24 +26,92 @@ import configs from "../configs";
     ConfigModule.forRoot({
       load: configs,
       isGlobal: true,
-      envFilePath: ['.env', '.env.development', '.env.production'],
-      validationSchema: Joi.object({
-        PORT: Joi.number().default(3000).required(),
-        MONGO_URL: Joi.string().required(),
-      }),
-      validationOptions: {
-        allowUnknown: true,
-        abortEarly: true,
-      },
+      cache: true,
+      envFilePath: ['.env.development.local'],
+      // validationSchema: Joi.object({
+      //   PORT: Joi.number().default(3000).required(),
+      //   MONGO_URL: Joi.string().required(),
+      // }),
+      // validationOptions: {
+      //   allowUnknown: true,
+      //   abortEarly: true,
+      // },
     }),
     MongooseModule.forRootAsync({
+      inject: [DatabaseOptionService],
+      imports: [DatabaseOptionModule],
+      connectionName: DATABASE_CONNECTION_NAME,
+      useFactory: (databaseService: DatabaseOptionService) => 
+        databaseService.createOptions(),
+    }),
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
       inject: [ConfigService],
-      connectionName: 'api',
-      useFactory: (config: ConfigService) => ({
-        uri: config.get('MONGO_URL'),
-        dbName: 'api',
+      useFactory: (configService: ConfigService) => ({
+        connection: {
+          url: configService.get<string>('redis.queue.url'),
+          host: configService.get<string>('redis.queue.host'),
+          port: configService.get<number>('redis.queue.port'),
+          username: configService.get<string>('redis.queue.username'),
+          password: configService.get<string>('redis.queue.password'),
+          tls: configService.get<any>('redis.queue.tls'),
+        },
+        defaultJobOptions: {
+          backoff: {
+            type: 'exponential',
+            delay: 3000,
+          },
+          attempts: 3,
+        },
       }),
     }),
+    CacheModule.registerAsync({
+      isGlobal: true,
+      imports: [ConfigModule],
+      useFactory: async (
+        configService: ConfigService
+      ): Promise<CacheOptions> => ({
+        max: configService.get<number>('redis.cached.max'),
+        ttl: configService.get<number>('redis.cached.ttl'),
+        stores: [
+          new KeyvRedis(
+            {
+              url: configService.get<string>('redis.cached.url'),
+              username: configService.get<string>(
+                'redis.cached.username'
+              ),
+              password: configService.get<string>(
+                'redis.cached.password'
+              )
+            }),
+        //   createKeyv({
+        //     url: configService.get<string>('redis.cached.url'),
+        //     socket: {
+        //       host: configService.get<string>(
+        //         'redis.cached.host'
+        //       ),
+        //       port: configService.get<number>(
+        //         'redis.cached.port'
+        //       ),
+        //     },
+        //     username: configService.get<string>(
+        //       'redis.cached.username'
+        //     ),
+        //     password: configService.get<string>(
+        //       'redis.cached.password'
+        //     ),
+        //   } as RedisClientOptions),
+        ],
+      }),
+      inject: [ConfigService],
+    }),
+    MessageModule.forRoot(),
+    HelperModule.forRoot(),
+    RequestModule,
+    PolicyModule.forRoot(),
+    AuthModule.forRoot(),
+    DatabaseModule.forRoot(),
+    PaginationModule
   ]
 })
-export class CommonModule {}
+export class CommonModule { }

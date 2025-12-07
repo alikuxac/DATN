@@ -1,0 +1,10 @@
+export enum ENUM_AUTH_LOGIN_FROM {
+    CREDENTIAL = 'CREDENTIAL',
+    SOCIAL_GOOGLE = 'SOCIAL_GOOGLE',
+}
+
+export enum ENUM_AUTH_TOKEN_TYPE {
+    ACCESS = 'ACCESS_TOKEN',
+    REFRESH = 'REFRESH_TOKEN',
+    PRE_AUTH = 'PRE_AUTH_TOKEN', // <--- Token tạm
+}
