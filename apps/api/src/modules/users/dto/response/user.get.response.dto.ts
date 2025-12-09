@@ -3,12 +3,13 @@ import {
   ENUM_USER_ROLE,
   ENUM_USER_SIGN_UP_FROM,
   ENUM_USER_STATUS,
-} from '@modules/users/enums/user.enum';
+  IUserGetResponse,
+} from '@repo/shared';
 import { UserVerificationResponseDto } from '@modules/users/dto/response/user.verification.response.dto';
 import { DatabaseObjectIdDto } from '@common/database/dtos/database.object-id.dto';
 import { Exclude } from 'class-transformer';
 
-export class UserGetResponseDto extends DatabaseObjectIdDto {
+export class UserGetResponseDto extends DatabaseObjectIdDto implements IUserGetResponse {
   firstName: string;
   lastName: string;
   email: string;

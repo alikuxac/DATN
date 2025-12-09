@@ -2,14 +2,14 @@ import {
   ENUM_USER_ROLE, 
   ENUM_USER_SIGN_UP_FROM, 
   ENUM_USER_STATUS, 
-  ENUM_USER_GENDER 
-} from '@modules/users/enums/user.enum';
+  ENUM_USER_GENDER,
+  ENUM_MESSAGE_LANGUAGE
+} from '@repo/shared';
 
 import { UserVerificationEntity, UserVerificationSchema } from './user.verification.entity';
 import { DatabaseProp, DatabaseEntity, DatabaseSchema,  } from '@common/database/decorators/database.decorator';
 import { IDatabaseDocument } from '@common/database/interfaces/database.interface';
 import { DatabaseObjectIdEntityBase } from '@common/database/bases/database.object-id.entity';
-import { ENUM_MESSAGE_LANGUAGE } from '@common/message/enums/message.enum';
 
 @DatabaseEntity({
   collection: 'users',

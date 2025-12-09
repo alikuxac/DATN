@@ -1,6 +1,6 @@
 import { Exclude, Expose, Type } from 'class-transformer';
 import { DatabaseObjectIdDto } from '@common/database/dtos/database.object-id.dto';
-import { ENUM_REPORT_SEVERITY, ENUM_REPORT_STATUS } from '../../enums/report.enum';
+import { ENUM_REPORT_SEVERITY, ENUM_REPORT_STATUS } from '@repo/shared';
 
 @Exclude()
 export class ReportResponseDto extends DatabaseObjectIdDto {

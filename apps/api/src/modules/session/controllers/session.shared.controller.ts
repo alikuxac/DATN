@@ -20,7 +20,7 @@ import {
     AuthJwtPayload,
 } from '@modules/auth/decorators/auth.jwt.decorator';
 import { SessionListResponseDto } from '@modules/session/dtos/response/session.list.response.dto';
-import { ENUM_SESSION_STATUS_CODE_ERROR } from '@modules/session/enums/session.status-code.enum';
+import { ENUM_STATUS_CODE_ERROR } from '@repo/shared';
 import { SessionActiveByUserParsePipe } from '@modules/session/pipes/session.parse.pipe';
 import { SessionDoc } from '@modules/session/repository/entities/session.entity';
 import { SessionService } from '@modules/session/services/session.service';
@@ -88,7 +88,7 @@ export class SessionSharedController {
     ): Promise<void> {
         if (session._id === sessionFromRequest) {
             throw new ForbiddenException({
-                statusCode: ENUM_SESSION_STATUS_CODE_ERROR.FORBIDDEN_REVOKE,
+                statusCode: ENUM_STATUS_CODE_ERROR.SESSION_FORBIDDEN_REVOKE,
                 message: 'session.error.forbiddenRevoke',
             });
         }

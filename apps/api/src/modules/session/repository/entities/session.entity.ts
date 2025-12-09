@@ -1,5 +1,5 @@
 import { IDatabaseDocument } from '@common/database/interfaces/database.interface';
-import { ENUM_SESSION_STATUS } from '@modules/session/enums/session.enum';
+import { ENUM_SESSION_STATUS } from '@repo/shared';
 import { UserEntity } from '@modules/users/repository/entities/user.entity';
 import { DatabaseUUIDEntityBase } from '@common/database/bases/database.uuid.entity';
 import { DatabaseEntity, DatabaseProp, DatabaseSchema } from '@common/database/decorators/database.decorator';

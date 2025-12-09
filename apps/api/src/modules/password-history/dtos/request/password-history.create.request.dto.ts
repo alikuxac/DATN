@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmpty, IsEnum, IsString } from 'class-validator';
-import { ENUM_PASSWORD_HISTORY_TYPE } from '@modules/password-history/enums/password-history.enum';
+import { ENUM_PASSWORD_HISTORY_TYPE, IPasswordHistoryCreateRequest} from '@repo/shared';
 
-export class PasswordHistoryCreateRequestDto {
+export class PasswordHistoryCreateRequestDto implements IPasswordHistoryCreateRequest {
     @ApiProperty({
         required: true,
         enum: ENUM_PASSWORD_HISTORY_TYPE,

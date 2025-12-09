@@ -1,12 +1,12 @@
 import { Exclude, Expose, Type } from 'class-transformer';
-import { ENUM_REPORT_SEVERITY, ENUM_REPORT_STATUS } from '@modules/reports/enums/report.enum';
+import { ENUM_REPORT_SEVERITY, ENUM_REPORT_STATUS } from '@repo/shared';
 import { DatabaseObjectIdDto } from '@common/database/dtos/database.object-id.dto';
 import { UserShortResponseDto } from '@modules/users/dto/response/user.short.response.dto';
 
 @Exclude()
 export class ReportListResponseDto extends DatabaseObjectIdDto {
   @Expose()
-  @Type(() => UserShortResponseDto) // Nếu bạn populate user, nếu không thì để string
+  @Type(() => UserShortResponseDto)
   user: UserShortResponseDto;
 
   @Expose()

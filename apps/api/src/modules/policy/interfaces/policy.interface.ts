@@ -2,7 +2,7 @@ import { InferSubjects, MongoAbility } from '@casl/ability';
 import {
     ENUM_POLICY_ACTION,
     ENUM_POLICY_SUBJECT,
-} from '@modules/policy/enums/policy.enum';
+} from '@repo/shared';
 import { UserEntity } from '@modules/users/repository/entities/user.entity';
 
 export interface IPolicyAbility {

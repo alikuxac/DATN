@@ -4,15 +4,18 @@ import {
     ExtractSubjectType,
 } from '@casl/ability';
 import { Injectable } from '@nestjs/common';
-import { ENUM_POLICY_ACTION, ENUM_POLICY_SUBJECT } from '@modules/policy/enums/policy.enum';
+import { 
+    ENUM_POLICY_ACTION, 
+    ENUM_POLICY_SUBJECT,
+    ENUM_USER_ROLE,
+    ENUM_REPORT_STATUS
+} from '@repo/shared';
 import {
     IPolicyAbility,
     IPolicyAbilityRule,
     IPolicyAbilitySubject,
 } from '@modules/policy/interfaces/policy.interface';
 import { UserEntity } from '@modules/users/repository/entities/user.entity';
-import { ENUM_USER_ROLE } from '@modules/users/enums/user.enum';
-import { ENUM_REPORT_STATUS } from '@modules/reports/enums/report.enum';
 
 @Injectable()
 export class PolicyAbilityFactory {

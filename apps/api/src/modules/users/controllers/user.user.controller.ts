@@ -20,7 +20,7 @@ import { UserDocument } from '@modules/users/repository/entities/user.entity';
 import { ClientSession } from 'mongoose';
 import { ActivityService } from '@modules/activity/services/activity.service';
 import { MessageService } from '@common/message/services/message.service';
-import { ENUM_APP_STATUS_CODE_ERROR } from '@app/enums/app.status-code.enum';
+import { ENUM_STATUS_CODE_ERROR } from '@repo/shared';
 import { SessionService } from '@modules/session/services/session.service';
 import { UserProtected } from '@modules/users/decorators/user.decorator';
 import { DatabaseService } from '@common/database/services/database.service';
@@ -73,7 +73,7 @@ export class UserUserController {
             await this.databaseService.abortTransaction(session);
 
             throw new InternalServerErrorException({
-                statusCode: ENUM_APP_STATUS_CODE_ERROR.UNKNOWN,
+                statusCode: ENUM_STATUS_CODE_ERROR.APP_UNKNOWN,
                 message: 'http.serverError.internalServerError',
                 _error: err,
             });

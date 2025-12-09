@@ -1,11 +1,10 @@
 import { AuthGuard } from '@nestjs/passport';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { ENUM_AUTH_STATUS_CODE_ERROR } from '@modules/auth/enums/auth.status-code.enum';
-import { isUUID } from 'class-validator';
 import {
     IAuthJwtAccessTokenPayload,
     IAuthJwtRefreshTokenPayload,
 } from '@modules/auth/interfaces/auth.interface';
+import { ENUM_STATUS_CODE_ERROR } from '@repo/shared';
 
 @Injectable()
 export class AuthJwtRefreshGuard extends AuthGuard('jwtRefresh') {
@@ -16,7 +15,7 @@ export class AuthJwtRefreshGuard extends AuthGuard('jwtRefresh') {
     ): T {
         if (err || !user) {
             throw new UnauthorizedException({
-                statusCode: ENUM_AUTH_STATUS_CODE_ERROR.JWT_REFRESH_TOKEN,
+                statusCode: ENUM_STATUS_CODE_ERROR.AUTH_JWT_REFRESH_TOKEN,
                 message: 'auth.error.refreshTokenUnauthorized',
                 _error: err ? err.message : info.message,
             });
@@ -25,12 +24,7 @@ export class AuthJwtRefreshGuard extends AuthGuard('jwtRefresh') {
         const { sub } = user as IAuthJwtAccessTokenPayload;
         if (!sub) {
             throw new UnauthorizedException({
-                statusCode: ENUM_AUTH_STATUS_CODE_ERROR.JWT_ACCESS_TOKEN,
-                message: 'auth.error.accessTokenUnauthorized',
-            });
-        } else if (!isUUID(sub)) {
-            throw new UnauthorizedException({
-                statusCode: ENUM_AUTH_STATUS_CODE_ERROR.JWT_ACCESS_TOKEN,
+                statusCode: ENUM_STATUS_CODE_ERROR.AUTH_JWT_ACCESS_TOKEN,
                 message: 'auth.error.accessTokenUnauthorized',
             });
         }

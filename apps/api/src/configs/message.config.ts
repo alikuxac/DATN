@@ -1,5 +1,5 @@
 import { registerAs } from '@nestjs/config';
-import { ENUM_MESSAGE_LANGUAGE } from '@common/message/enums/message.enum';
+import { ENUM_MESSAGE_LANGUAGE } from '@repo/shared';
 
 export default registerAs(
     'message',

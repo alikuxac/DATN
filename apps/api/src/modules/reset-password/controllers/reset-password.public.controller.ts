@@ -15,10 +15,8 @@ import { ApiTags } from '@nestjs/swagger';
 import { IResponse } from '@common/response/interfaces/response.interface';
 import { ResetPasswordCreateRequestDto } from '@modules/reset-password/dtos/request/reset-password.create.request.dto';
 import { UserDocument } from '@modules/users/repository/entities/user.entity';
-import { ENUM_USER_STATUS_CODE_ERROR } from '@modules/users/enums/user.status-code.enum';
 import { ResetPasswordService } from '@modules/reset-password/services/reset-password.service';
 import { ResetPasswordCreteResponseDto } from '@modules/reset-password/dtos/response/reset-password.create.response.dto';
-import { ENUM_APP_STATUS_CODE_ERROR } from '@app/enums/app.status-code.enum';
 import { IResetPasswordRequest } from '@modules/reset-password/interfaces/reset-password.interface';
 import { Response } from '@common/response/decorators/response.decorator';
 import { ENUM_SEND_EMAIL_PROCESS } from '@modules/email/enums/email.enum';
@@ -31,13 +29,12 @@ import { RequestRequiredPipe } from '@common/request/pipes/request.required.pipe
 import { ResetPasswordActivePipe } from '@modules/reset-password/pipes/reset-password.active.pipe';
 import { ResetPasswordExpiredPipe } from '@modules/reset-password/pipes/reset-password.expired.pipe';
 import { ResetPasswordDoc } from '@modules/reset-password/repository/entities/reset-password.entity';
-import { ENUM_RESET_PASSWORD_STATUS_CODE_ERROR } from '@modules/reset-password/enums/reset-password.status-code.enum';
 import { ResetPasswordResetRequestDto } from '@modules/reset-password/dtos/request/reset-password.reset.request.dto';
 import { AuthService } from '@modules/auth/services/auth.service';
 import { IAuthPassword } from '@modules/auth/interfaces/auth.interface';
-import { ENUM_PASSWORD_HISTORY_TYPE } from '@modules/password-history/enums/password-history.enum';
 import { ResetPasswordVerifyRequestDto } from '@modules/reset-password/dtos/request/reset-password.verify.request.dto';
 import { DatabaseService } from '@common/database/services/database.service';
+import { ENUM_PASSWORD_HISTORY_TYPE, ENUM_STATUS_CODE_ERROR } from '@repo/shared';
 
 @ApiTags('modules.public.resetPassword')
 @Controller({
@@ -65,7 +62,7 @@ export class ResetPasswordPublicController {
             await this.userService.findOneActiveByEmail(email);
         if (!user) {
             throw new NotFoundException({
-                statusCode: ENUM_USER_STATUS_CODE_ERROR.NOT_FOUND,
+                statusCode: ENUM_STATUS_CODE_ERROR.USER_NOT_FOUND,
                 message: 'user.error.notFound',
             });
         }
@@ -120,7 +117,7 @@ export class ResetPasswordPublicController {
             await this.databaseService.abortTransaction(session);
 
             throw new InternalServerErrorException({
-                statusCode: ENUM_APP_STATUS_CODE_ERROR.UNKNOWN,
+                statusCode: ENUM_STATUS_CODE_ERROR.APP_UNKNOWN,
                 message: 'http.serverError.internalServerError',
                 _error: err,
             });
@@ -143,7 +140,7 @@ export class ResetPasswordPublicController {
         const user = await this.userService.findOneById(resetPassword.user);
         if (!user) {
             throw new NotFoundException({
-                statusCode: ENUM_USER_STATUS_CODE_ERROR.NOT_FOUND,
+                statusCode: ENUM_STATUS_CODE_ERROR.USER_NOT_FOUND,
                 message: 'user.error.notFound',
             });
         }
@@ -178,7 +175,7 @@ export class ResetPasswordPublicController {
         const user = await this.userService.findOneById(resetPassword.user);
         if (!user) {
             throw new NotFoundException({
-                statusCode: ENUM_USER_STATUS_CODE_ERROR.NOT_FOUND,
+                statusCode: ENUM_STATUS_CODE_ERROR.USER_NOT_FOUND,
                 message: 'user.error.notFound',
             });
         }
@@ -189,7 +186,7 @@ export class ResetPasswordPublicController {
         );
         if (!check) {
             throw new BadRequestException({
-                statusCode: ENUM_RESET_PASSWORD_STATUS_CODE_ERROR.OTP_NOT_MATCH,
+                statusCode: ENUM_STATUS_CODE_ERROR.VERIFICATION_OTP_NOT_MATCH,
                 message: 'resetPassword.error.otpNotMatch',
             });
         }
@@ -217,7 +214,7 @@ export class ResetPasswordPublicController {
         let user = await this.userService.findOneById(resetPassword.user);
         if (!user) {
             throw new NotFoundException({
-                statusCode: ENUM_USER_STATUS_CODE_ERROR.NOT_FOUND,
+                statusCode: ENUM_STATUS_CODE_ERROR.USER_NOT_FOUND,
                 message: 'user.error.notFound',
             });
         }
@@ -259,7 +256,7 @@ export class ResetPasswordPublicController {
             await this.databaseService.abortTransaction(session);
 
             throw new InternalServerErrorException({
-                statusCode: ENUM_APP_STATUS_CODE_ERROR.UNKNOWN,
+                statusCode: ENUM_STATUS_CODE_ERROR.APP_UNKNOWN,
                 message: 'http.serverError.internalServerError',
                 _error: err,
             });

@@ -37,7 +37,7 @@ import {
     // UserCheckUsernameResponseDto,
 } from '@modules/users/dto/response/user.check.response.dto';
 import { UserShortResponseDto } from '@modules/users/dto/response/user.short.response.dto';
-import { ENUM_USER_STATUS } from '@modules/users/enums/user.enum';
+import { ENUM_USER_STATUS } from '@repo/shared';
 import { UserEntity } from '../repository/entities/user.entity';
 import { UsersService } from '@modules/users/services/users.service';
 

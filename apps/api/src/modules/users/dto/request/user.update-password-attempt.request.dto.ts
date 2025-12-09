@@ -1,7 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IUserUpdatePasswordAttemptRequest } from '@repo/shared';
 import { IsNotEmpty, IsNumber, Max, Min } from 'class-validator';
 
-export class UserUpdatePasswordAttemptRequestDto {
+export class UserUpdatePasswordAttemptRequestDto implements IUserUpdatePasswordAttemptRequest{
     @ApiProperty({
         required: true,
         minimum: 0,
@@ -11,5 +12,5 @@ export class UserUpdatePasswordAttemptRequestDto {
     @IsNotEmpty()
     @Min(0)
     @Max(3)
-    passwordAttempt: number;
+    passwordAttempts: number;
 }

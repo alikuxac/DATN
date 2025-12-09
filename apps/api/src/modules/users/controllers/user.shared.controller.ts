@@ -6,7 +6,7 @@ import {
     Put,
 } from '@nestjs/common';
 import { ClientSession } from 'mongoose';
-import { ENUM_APP_STATUS_CODE_ERROR } from '@app/enums/app.status-code.enum';
+import { ENUM_STATUS_CODE_ERROR } from '@repo/shared';
 import { DatabaseService } from '@common/database/services/database.service';
 import { MessageService } from '@common/message/services/message.service';
 import { Response } from '@common/response/decorators/response.decorator';
@@ -87,7 +87,7 @@ export class UserSharedController {
             await this.databaseService.abortTransaction(session);
 
             throw new InternalServerErrorException({
-                statusCode: ENUM_APP_STATUS_CODE_ERROR.UNKNOWN,
+                statusCode: ENUM_STATUS_CODE_ERROR.APP_UNKNOWN,
                 message: 'http.serverError.internalServerError',
                 _error: err,
             });

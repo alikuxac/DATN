@@ -1,4 +1,4 @@
-import { ENUM_PAGINATION_ORDER_DIRECTION_TYPE } from '@common/pagination/enums/pagination.enum';
+import { ENUM_PAGINATION_ORDER_DIRECTION_TYPE } from '@repo/shared';
 
 export type IPaginationOrder = Record<
   string,

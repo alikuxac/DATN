@@ -4,13 +4,13 @@ import { Document } from 'mongoose';
 import { UserDocument, UserEntity } from '@modules/users/repository/entities/user.entity';
 
 import { UserCreateRequestDto } from '@modules/users/dto/request/user.create.request.dto';
-import { UserUpdateRequestDto } from '@modules/users/dto/update-user.dto';
+import { UserUpdateRequestDto } from '@modules/users/dto/request/user.update.request.dto';
 
 import { IAuthPassword } from '@modules/auth/interfaces/auth.interface';
 import { IDatabaseCreateOptions, IDatabaseDeleteManyOptions, IDatabaseExistsOptions, IDatabaseFindAllOptions, IDatabaseFindOneOptions, IDatabaseGetTotalOptions, IDatabaseSaveOptions, IDatabaseSoftDeleteOptions } from '@common/database/interfaces/database.interface';
 import { UserRepository } from '@modules/users/repository/repositories/user.repository';
 import { DatabaseHelperQueryContain } from '@common/database/decorators/database.decorator';
-import { ENUM_USER_SIGN_UP_FROM, ENUM_USER_STATUS } from '@modules/users/enums/user.enum';
+import { ENUM_USER_SIGN_UP_FROM, ENUM_USER_STATUS } from '@repo/shared';
 import { HelperDateService } from '@common/helper/services/helper.date.service';
 import { plainToInstance } from 'class-transformer';
 import { HelperStringService } from '@common/helper/services/helper.string.service';

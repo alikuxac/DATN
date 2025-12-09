@@ -1,0 +1,23 @@
+{
+  "extends": "@repo/typescript-config/base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "declaration": true,
+    "declarationMap": true,
+
+    // allowJs chỉ nên bật nếu bạn đang migrate từ JS sang TS.
+    // Nếu project thuần TS, hãy tắt đi để tránh lỗi 'src bẩn'.
+    "allowJs": false,
+
+    "esModuleInterop": true,
+    "incremental": false,
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+
+    // Đảm bảo chắc chắn được quyền xuất file
+    "noEmit": false
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "test", "dist", "**/*.spec.ts"]
+}

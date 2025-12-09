@@ -16,7 +16,7 @@ import {
 } from '@common/pagination/decorators/pagination.decorator';
 import { PaginationListDto } from '@common/pagination/dtos/pagination.list.dto';
 import { PaginationService } from '@common/pagination/services/pagination.service';
-import { ENUM_REPORT_SEVERITY, ENUM_REPORT_STATUS } from '@modules/reports/enums/report.enum';
+import { ENUM_REPORT_SEVERITY, ENUM_REPORT_STATUS } from '@repo/shared';
 import { UserDocument } from '@modules/users/repository/entities/user.entity';
 import { UserParsePipe } from '@modules/users/pipes/user.parse.pipe';
 import { IResponsePaging } from '@common/response/interfaces/response.interface';

@@ -1,6 +1,7 @@
+import { IDatabaseDto } from '@repo/shared';
 import { Exclude } from 'class-transformer';
 
-export class DatabaseObjectIdDto {
+export class DatabaseObjectIdDto implements IDatabaseDto {
     _id: string;
 
     createdAt: Date;

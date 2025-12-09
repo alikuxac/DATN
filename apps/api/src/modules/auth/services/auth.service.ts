@@ -10,7 +10,7 @@ import {
     IAuthPassword,
     IAuthPasswordOptions,
 } from '@modules/auth/interfaces/auth.interface';
-import { ENUM_AUTH_LOGIN_FROM } from '@modules/auth/enums/auth.enum';
+import { ENUM_AUTH_LOGIN_FROM } from '@repo/shared';
 import { AuthLoginResponseDto } from '@modules/auth/dtos/response/auth.login.response.dto';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { UserDocument } from '@modules/users/repository/entities/user.entity';

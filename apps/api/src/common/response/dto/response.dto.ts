@@ -7,6 +7,7 @@ export class ResponseMetadataDto {
 
 export class ResponseDto {
   statusCode: number;
+  message: string;
   _metadata: ResponseMetadataDto;
   data?: Record<string, any>;
 }

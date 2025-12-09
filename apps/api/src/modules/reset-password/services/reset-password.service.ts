@@ -19,11 +19,10 @@ import {
     ResetPasswordEntity,
 } from '@modules/reset-password/repository/entities/reset-password.entity';
 import { IResetPasswordService } from '@modules/reset-password/interfaces/reset-password.service.interface';
-import { ENUM_RESET_PASSWORD_TYPE } from '@modules/reset-password/enums/reset-password.enum';
 import { Duration } from 'luxon';
 import { DeleteResult, InsertManyResult, UpdateResult } from 'mongoose';
 import { ResetPasswordCreateRequestDto } from '@modules/reset-password/dtos/request/reset-password.create.request.dto';
-import { ENUM_PAGINATION_ORDER_DIRECTION_TYPE } from '@common/pagination/enums/pagination.enum';
+import { ENUM_PAGINATION_ORDER_DIRECTION_TYPE, ENUM_RESET_PASSWORD_TYPE } from '@repo/shared';
 import { IResetPasswordRequest } from '@modules/reset-password/interfaces/reset-password.interface';
 import { ResetPasswordCreteResponseDto } from '@modules/reset-password/dtos/response/reset-password.create.response.dto';
 import { DatabaseService } from '@common/database/services/database.service';

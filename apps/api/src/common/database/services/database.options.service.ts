@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MongooseModuleOptions } from '@nestjs/mongoose';
 import mongoose from 'mongoose';
-import { ENUM_APP_ENVIRONMENT } from '@app/enums/app.enum';
+import { ENUM_APP_ENVIRONMENT } from '@repo/shared';
 
 @Injectable()
 export class DatabaseOptionService {

@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
-import { ENUM_RESET_PASSWORD_STATUS_CODE_ERROR } from '@modules/reset-password/enums/reset-password.status-code.enum';
+import { ENUM_STATUS_CODE_ERROR } from '@repo/shared';
 import { ResetPasswordDoc } from '@modules/reset-password/repository/entities/reset-password.entity';
 import { ResetPasswordService } from '@modules/reset-password/services/reset-password.service';
 
@@ -10,7 +10,7 @@ export class ResetPasswordExpiredPipe implements PipeTransform {
     async transform(value: ResetPasswordDoc): Promise<ResetPasswordDoc> {
         if (!value.isActive) {
             throw new BadRequestException({
-                statusCode: ENUM_RESET_PASSWORD_STATUS_CODE_ERROR.EXPIRED,
+                statusCode: ENUM_STATUS_CODE_ERROR.RESET_PASSWORD_EXPIRED,
                 message: 'resetPassword.error.expired',
             });
         }
@@ -20,7 +20,7 @@ export class ResetPasswordExpiredPipe implements PipeTransform {
         );
         if (checkExpired) {
             throw new BadRequestException({
-                statusCode: ENUM_RESET_PASSWORD_STATUS_CODE_ERROR.EXPIRED,
+                statusCode: ENUM_STATUS_CODE_ERROR.RESET_PASSWORD_EXPIRED,
                 message: 'resetPassword.error.expired',
             });
         }

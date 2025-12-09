@@ -1,6 +1,6 @@
 import { ApiHideProperty } from '@nestjs/swagger';
-import { ENUM_PAGINATION_ORDER_DIRECTION_TYPE } from '../constants/pagination.enum.constant';
-import { IPaginationOrder } from '..//interfaces/pagination.interface';
+import { ENUM_PAGINATION_ORDER_DIRECTION_TYPE } from '@repo/shared';
+import { IPaginationOrder } from '../interfaces/pagination.interface';
 
 export class PaginationListDto {
   @ApiHideProperty()

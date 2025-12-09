@@ -31,7 +31,9 @@ import {
 import {
     ENUM_POLICY_ACTION,
     ENUM_POLICY_SUBJECT,
-} from '@modules/policy/enums/policy.enum';
+    ENUM_USER_SIGN_UP_FROM,
+    ENUM_USER_STATUS
+} from '@repo/shared';
 import {
     AuthJwtAccessProtected,
     AuthJwtPayload,
@@ -40,10 +42,6 @@ import { RequestRequiredPipe } from '@common/request/pipes/request.required.pipe
 import { IAuthPassword } from '@modules/auth/interfaces/auth.interface';
 import { AuthService } from '@modules/auth/services/auth.service';
 import { ClientSession } from 'mongoose';
-import {
-    ENUM_USER_SIGN_UP_FROM,
-    ENUM_USER_STATUS,
-} from '@modules/users/enums/user.enum';
 import { UserListResponseDto } from '@modules/users/dto/response/user.list.response.dto';
 import { UserParsePipe } from '@modules/users/pipes/user.parse.pipe';
 import { UserProfileResponseDto } from '@modules/users/dto/response/user.profile.response.dto';
@@ -54,16 +52,13 @@ import {
 } from '@modules/users/constants/user.list.constant';
 import { UserDocument, UserEntity } from '@modules/users/repository/entities/user.entity';
 import { UserCreateRequestDto } from '@modules/users/dto/request/user.create.request.dto';
-import { ENUM_USER_STATUS_CODE_ERROR } from '@modules/users/enums/user.status-code.enum';
 import { UserNotSelfPipe } from '@modules/users/pipes/users.not-self.pipe';
 import { UserUpdateRequestDto } from '@modules/users/dto/request/user.update.request.dto';
-import { ENUM_APP_STATUS_CODE_ERROR } from '@app/enums/app.status-code.enum';
 import { DatabaseIdResponseDto } from '@common/database/dtos/response/database.id.response.dto';
 import { ENUM_SEND_EMAIL_PROCESS } from '@modules/email/enums/email.enum';
 import { Queue } from 'bullmq';
 import { ENUM_WORKER_QUEUES } from '@workers/enums/worker.enum';
 import { PasswordHistoryService } from '@modules/password-history/services/password-history.service';
-import { ENUM_PASSWORD_HISTORY_TYPE } from '@modules/password-history/enums/password-history.enum';
 import { ActivityService } from '@modules/activity/services/activity.service';
 import { MessageService } from '@common/message/services/message.service';
 import { InjectQueue } from '@nestjs/bullmq';
@@ -71,7 +66,7 @@ import { UserUpdateStatusRequestDto } from '@modules/users/dto/request/user.upda
 import { VerificationService } from '@modules/verification/services/verification.service';
 import { UserProtected } from '@modules/users/decorators/user.decorator';
 import { DatabaseService } from '@common/database/services/database.service';
-
+import { ENUM_STATUS_CODE_ERROR, ENUM_PASSWORD_HISTORY_TYPE, } from '@repo/shared';
 @Controller({
     version: '1',
     path: '/user',
@@ -181,7 +176,7 @@ export class UserAdminController {
 
         if (emailExist) {
             throw new ConflictException({
-                statusCode: ENUM_USER_STATUS_CODE_ERROR.EMAIL_EXIST,
+                statusCode: ENUM_STATUS_CODE_ERROR.USER_EMAIL_EXIST,
                 message: 'user.error.emailExist',
             });
         }
@@ -273,7 +268,7 @@ export class UserAdminController {
             await this.databaseService.abortTransaction(session);
 
             throw new InternalServerErrorException({
-                statusCode: ENUM_APP_STATUS_CODE_ERROR.UNKNOWN,
+                statusCode: ENUM_STATUS_CODE_ERROR.APP_UNKNOWN,
                 message: 'http.serverError.internalServerError',
                 _error: err,
             });
@@ -291,16 +286,15 @@ export class UserAdminController {
     async update(
         @Param('user', RequestRequiredPipe, UserParsePipe, UserNotSelfPipe)
         user: UserDocument,
-        @Body() { lastName, firstName, gender }: UserUpdateRequestDto
+        @Body() dto: UserUpdateRequestDto
     ): Promise<void> {
-
         const session: ClientSession =
             await this.databaseService.createTransaction();
 
         try {
             await this.userService.update(
                 user,
-                { firstName, lastName, gender },
+                dto,
                 { session }
             );
 
@@ -319,7 +313,7 @@ export class UserAdminController {
             await this.databaseService.abortTransaction(session);
 
             throw new InternalServerErrorException({
-                statusCode: ENUM_APP_STATUS_CODE_ERROR.UNKNOWN,
+                statusCode: ENUM_STATUS_CODE_ERROR.APP_UNKNOWN,
                 message: 'http.serverError.internalServerError',
                 _error: err,
             });
@@ -341,7 +335,7 @@ export class UserAdminController {
     ): Promise<IResponse<void>> {
         if (user.status === ENUM_USER_STATUS.INACTIVE) {
             throw new BadRequestException({
-                statusCode: ENUM_USER_STATUS_CODE_ERROR.STATUS_INVALID,
+                statusCode: ENUM_STATUS_CODE_ERROR.USER_STATUS_INVALID,
                 message: 'user.error.statusInvalid',
                 _metadata: {
                     customProperty: {
@@ -384,7 +378,7 @@ export class UserAdminController {
             await this.databaseService.abortTransaction(session);
 
             throw new InternalServerErrorException({
-                statusCode: ENUM_APP_STATUS_CODE_ERROR.UNKNOWN,
+                statusCode: ENUM_STATUS_CODE_ERROR.APP_UNKNOWN,
                 message: 'http.serverError.internalServerError',
                 _error: err,
             });

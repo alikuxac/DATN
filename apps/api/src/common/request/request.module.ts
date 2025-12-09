@@ -20,7 +20,7 @@ import { SafeStringConstraint } from './validations/request.safe-string.validati
 
 
 
-import { ENUM_REQUEST_STATUS_CODE_ERROR } from './enums/request.status-code.enum';
+import { ENUM_STATUS_CODE_ERROR } from '@repo/shared';
 
 import { RequestTimeoutInterceptor } from './interceptors/request.timeout.interceptor';
 import { MaxDateTodayConstraint } from './validations/request.max-date-today.validation';
@@ -48,7 +48,7 @@ import { MaxDateTodayConstraint } from './validations/request.max-date-today.val
           exceptionFactory: async (errors: ValidationError[]) =>
             new UnprocessableEntityException({
               statusCode:
-                ENUM_REQUEST_STATUS_CODE_ERROR.VALIDATION,
+                ENUM_STATUS_CODE_ERROR.REQUEST_VALIDATION,
               errors,
             }),
         }),

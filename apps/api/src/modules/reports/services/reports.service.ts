@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ReportRepository } from '@modules/reports/repository/repositories/report.repository';
 import { ReportCreateRequestDto } from '@modules/reports/dtos/request/report.create.request.dto';
 import { ReportDocument, ReportEntity } from '@modules/reports/repository/entities/report.entity';
-import { ENUM_REPORT_LOCATION_TYPE, ENUM_REPORT_STATUS } from '@modules/reports/enums/report.enum';
+import { ENUM_REPORT_LOCATION_TYPE, ENUM_REPORT_STATUS } from '@repo/shared';
 import { IDatabaseCreateOptions, IDatabaseDeleteManyOptions, IDatabaseFindAllOptions, IDatabaseFindOneOptions, IDatabaseGetTotalOptions } from '@common/database/interfaces/database.interface';
 import { IReportDocument, IReportEntity } from '../interfaces/report.interface';
 import { ReportListResponseDto } from '../dtos/response/report.list.reponse.dto';

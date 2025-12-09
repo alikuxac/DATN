@@ -29,4 +29,11 @@ export class HelperNumberService {
     }
     return Number.parseFloat((tValue * 100).toFixed(2));
   }
+
+  mapHttpCode(customCode: number): number {
+  if (customCode >= 5000 && customCode < 5100) return 500; // System Error
+  if (customCode >= 5100 && customCode < 5200) return 401; // Unauthorized
+  if (customCode >= 5200 && customCode < 5300) return 403; // Forbidden
+  return 400; // Bad Request (User, Verification...)
+}
 }

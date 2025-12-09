@@ -1,4 +1,4 @@
-import { ENUM_AUTH_LOGIN_FROM, ENUM_AUTH_TOKEN_TYPE } from '@modules/auth/enums/auth.enum';
+import { ENUM_AUTH_LOGIN_FROM } from '@repo/shared';
 
 export interface IAuthPassword {
     salt: string;
@@ -41,22 +41,4 @@ export interface IAuthSocialGooglePayload
     name: string;
     photo: string;
     emailVerified: boolean;
-}
-
-
-export interface IAuthJwtPreAuthTokenPayload {
-    user: string;
-    email: string;
-    type: ENUM_AUTH_TOKEN_TYPE; // BẮT BUỘC: Để phân biệt
-
-    loginDate: Date;
-    loginFrom: ENUM_AUTH_LOGIN_FROM;
-
-    // Các trường tiêu chuẩn JWT
-    iat?: number;
-    nbf?: number;
-    exp?: number;
-    aud?: string;
-    iss?: string;
-    sub?: string;
 }

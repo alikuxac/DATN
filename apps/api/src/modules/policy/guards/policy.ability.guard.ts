@@ -6,12 +6,10 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { IRequestApp } from '@common/request/interfaces/request.interface';
-import { ENUM_POLICY_STATUS_CODE_ERROR } from '@modules/policy/enums/policy.status-code.enum';
 import { PolicyAbilityFactory } from '@modules/policy/factories/policy.factory';
 import { IPolicyAbility } from '@modules/policy/interfaces/policy.interface';
 import { POLICY_ABILITY_META_KEY } from '@modules/policy/constants/policy.constant';
-import { ENUM_AUTH_STATUS_CODE_ERROR } from '@modules/auth/enums/auth.status-code.enum';
-import { ENUM_USER_ROLE } from '@modules/users/enums/user.enum';
+import { ENUM_USER_ROLE, ENUM_STATUS_CODE_ERROR } from '@repo/shared';
 
 @Injectable()
 export class PolicyAbilityGuard implements CanActivate {
@@ -33,7 +31,7 @@ export class PolicyAbilityGuard implements CanActivate {
 
         if (!user) {
             throw new ForbiddenException({
-                statusCode: ENUM_AUTH_STATUS_CODE_ERROR.JWT_ACCESS_TOKEN,
+                statusCode: ENUM_STATUS_CODE_ERROR.AUTH_JWT_ACCESS_TOKEN,
                 message: 'auth.error.accessTokenUnauthorized',
             });
         }
@@ -46,7 +44,7 @@ export class PolicyAbilityGuard implements CanActivate {
         if (policies.length === 0) {
             throw new ForbiddenException({
                 statusCode:
-                    ENUM_POLICY_STATUS_CODE_ERROR.ABILITY_PREDEFINED_NOT_FOUND,
+                    ENUM_STATUS_CODE_ERROR.POLICY_ABILITY_PREDEFINED_NOT_FOUND,
                 message: 'policy.error.abilityPredefinedNotFound',
             });
         }
@@ -57,7 +55,7 @@ export class PolicyAbilityGuard implements CanActivate {
         const handler = this.policyAbilityFactory.handlerAbilities(userAbilities, policies);
         if (!handler) {
             throw new ForbiddenException({
-                statusCode: ENUM_POLICY_STATUS_CODE_ERROR.ABILITY_FORBIDDEN,
+                statusCode: ENUM_STATUS_CODE_ERROR.POLICY_ABILITY_FORBIDDEN,
                 message: 'policy.error.abilityForbidden',
             });
         }

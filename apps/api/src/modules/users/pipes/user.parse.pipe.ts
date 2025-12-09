@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, PipeTransform } from '@nestjs/common';
-import { ENUM_USER_STATUS_CODE_ERROR } from '@modules/users/enums/user.status-code.enum';
+import { ENUM_STATUS_CODE_ERROR } from '@repo/shared';
 import { UsersService } from '@modules/users/services/users.service';
 
 @Injectable()
@@ -10,7 +10,7 @@ export class UserParsePipe implements PipeTransform {
     const user = await this.userService.findOneById(value);
     if (!user) {
       throw new NotFoundException({
-        statusCode: ENUM_USER_STATUS_CODE_ERROR.NOT_FOUND,
+        statusCode: ENUM_STATUS_CODE_ERROR.USER_NOT_FOUND,
       });
     }
 

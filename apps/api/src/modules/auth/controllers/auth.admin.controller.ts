@@ -17,25 +17,22 @@
 //     AuthJwtAccessProtected,
 //     AuthJwtPayload,
 // } from '@modules/auth/decorators/auth.jwt.decorator';
-// import { AuthAdminUpdatePasswordDoc } from '@modules/auth/docs/auth.admin.doc';
 // import { AuthService } from '@modules/auth/services/auth.service';
 // import { ENUM_SEND_EMAIL_PROCESS } from '@modules/email/enums/email.enum';
 // import { ENUM_PASSWORD_HISTORY_TYPE } from '@modules/password-history/enums/password-history.enum';
 // import { PasswordHistoryService } from '@modules/password-history/services/password-history.service';
 // import {
 //     PolicyAbilityProtected,
-//     PolicyRoleProtected,
 // } from '@modules/policy/decorators/policy.decorator';
 // import {
 //     ENUM_POLICY_ACTION,
-//     ENUM_POLICY_ROLE_TYPE,
 //     ENUM_POLICY_SUBJECT,
 // } from '@modules/policy/enums/policy.enum';
-// import { UserProtected } from '@modules/user/decorators/user.decorator';
-// import { UserNotSelfPipe } from '@modules/user/pipes/user.not-self.pipe';
-// import { UserParsePipe } from '@modules/user/pipes/user.parse.pipe';
-// import { UserDoc } from '@modules/user/repository/entities/user.entity';
-// import { UserService } from '@modules/user/services/user.service';
+// import { UserProtected } from '@modules/users/decorators/user.decorator';
+// import { UserNotSelfPipe } from '@modules/users/pipes/user.not-self.pipe';
+// import { UserParsePipe } from '@modules/users/pipes/user.parse.pipe';
+// import { UserDocument } from '@modules/users/repository/entities/user.entity';
+// import { UsersService } from '@modules/users/services/users.service';
 // import { ENUM_WORKER_QUEUES } from '@workers/enums/worker.enum';
 
 // @ApiTags('modules.admin.auth')
@@ -49,17 +46,15 @@
 //         @InjectQueue(ENUM_WORKER_QUEUES.EMAIL_QUEUE)
 //         private readonly emailQueue: Queue,
 //         private readonly authService: AuthService,
-//         private readonly userService: UserService,
+//         private readonly userService: UsersService,
 //         private readonly passwordHistoryService: PasswordHistoryService
 //     ) {}
 
-//     @AuthAdminUpdatePasswordDoc()
 //     @Response('auth.updatePassword')
 //     @PolicyAbilityProtected({
 //         subject: ENUM_POLICY_SUBJECT.AUTH,
 //         action: [ENUM_POLICY_ACTION.READ, ENUM_POLICY_ACTION.UPDATE],
 //     })
-//     @PolicyRoleProtected(ENUM_POLICY_ROLE_TYPE.ADMIN)
 //     @UserProtected()
 //     @AuthJwtAccessProtected()
 //     @ApiKeyProtected()
@@ -67,7 +62,7 @@
 //     async updatePassword(
 //         @AuthJwtPayload('user') updatedBy: string,
 //         @Param('user', RequestRequiredPipe, UserParsePipe, UserNotSelfPipe)
-//         user: UserDoc
+//         user: UserDocument
 //     ): Promise<void> {
 //         const session: ClientSession =
 //             await this.databaseService.createTransaction();
@@ -99,7 +94,7 @@
 //             await this.emailQueue.add(
 //                 ENUM_SEND_EMAIL_PROCESS.TEMPORARY_PASSWORD,
 //                 {
-//                     send: { email: user.email, name: user.name },
+//                     send: { email: user.email, name: user.firstName },
 //                     data: {
 //                         passwordExpiredAt: password.passwordExpired,
 //                         password: passwordString,

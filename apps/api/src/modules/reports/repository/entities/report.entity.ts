@@ -8,7 +8,7 @@ import {
   ENUM_REPORT_STATUS,
   ENUM_REPORT_LOCATION_TYPE,
   ENUM_REPORT_SEVERITY
- } from "@modules/reports/enums/report.enum";
+} from "@repo/shared";
 import { IDatabaseDocument } from "@common/database/interfaces/database.interface";
 import { UserEntity } from "@modules/users/repository/entities/user.entity";
 

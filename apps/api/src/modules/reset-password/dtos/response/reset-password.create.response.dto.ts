@@ -1,4 +1,6 @@
-export class ResetPasswordCreteResponseDto {
+import { IResetPasswordCreteResponse } from "@repo/shared";
+
+export class ResetPasswordCreteResponseDto implements IResetPasswordCreteResponse {
     expiredDate: Date;
 
     to: string;

@@ -17,22 +17,24 @@ import { IResponse } from '@common/response/interfaces/response.interface';
 import { AuthLoginResponseDto } from '@modules/auth/dtos/response/auth.login.response.dto';
 import { AuthLoginRequestDto } from '@modules/auth/dtos/request/auth.login.request.dto';
 import { UsersService } from '@modules/users/services/users.service';
-import { ENUM_USER_STATUS_CODE_ERROR } from '@modules/users/enums/user.status-code.enum';
-import { ENUM_USER_SIGN_UP_FROM, ENUM_USER_STATUS } from '@modules/users/enums/user.enum';
 import { AuthSignUpRequestDto } from '@modules/auth/dtos/request/auth.sign-up.request.dto';
 import { ClientSession } from 'mongoose';
 import { ENUM_SEND_EMAIL_PROCESS } from '@modules/email/enums/email.enum';
-import { ENUM_APP_STATUS_CODE_ERROR } from '@app/enums/app.status-code.enum';
 import { ENUM_WORKER_QUEUES } from '@workers/enums/worker.enum';
 import { Queue } from 'bullmq';
 import { PasswordHistoryService } from '@modules/password-history/services/password-history.service';
-import { ENUM_PASSWORD_HISTORY_TYPE } from '@modules/password-history/enums/password-history.enum';
 import { SessionService } from '@modules/session/services/session.service';
 import { IRequestApp } from '@common/request/interfaces/request.interface';
 import { ActivityService } from '@modules/activity/services/activity.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { VerificationService } from '@modules/verification/services/verification.service';
 import { DatabaseService } from '@common/database/services/database.service';
+import { 
+  ENUM_STATUS_CODE_ERROR, 
+  ENUM_PASSWORD_HISTORY_TYPE,
+  ENUM_USER_SIGN_UP_FROM,
+  ENUM_USER_STATUS
+} from '@repo/shared';
 // import {
 //   IAuthSocialGooglePayload,
 // } from '@modules/auth/interfaces/auth.interface';
@@ -63,7 +65,7 @@ export class AuthPublicController {
     let user = await this.userService.findOneByEmail(email);
     if (!user) {
       throw new NotFoundException({
-        statusCode: ENUM_USER_STATUS_CODE_ERROR.NOT_FOUND,
+        statusCode: ENUM_STATUS_CODE_ERROR.USER_NOT_FOUND,
         message: 'user.error.notFound',
       });
     }
@@ -73,7 +75,7 @@ export class AuthPublicController {
       this.authService.getPasswordMaxAttempt();
     if (passwordAttempt && user.passwordAttempts >= passwordMaxAttempt) {
       throw new ForbiddenException({
-        statusCode: ENUM_USER_STATUS_CODE_ERROR.PASSWORD_ATTEMPT_MAX,
+        statusCode: ENUM_STATUS_CODE_ERROR.USER_PASSWORD_ATTEMPT_MAX,
         message: 'auth.error.passwordAttemptMax',
       });
     }
@@ -86,7 +88,7 @@ export class AuthPublicController {
       user = await this.userService.increasePasswordAttempt(user);
 
       throw new BadRequestException({
-        statusCode: ENUM_USER_STATUS_CODE_ERROR.PASSWORD_NOT_MATCH,
+        statusCode: ENUM_STATUS_CODE_ERROR.USER_PASSWORD_NOT_MATCH,
         message: 'auth.error.passwordNotMatch',
         data: {
           attempt: user.passwordAttempts,
@@ -94,7 +96,7 @@ export class AuthPublicController {
       });
     } else if (user.status !== ENUM_USER_STATUS.ACTIVE) {
       throw new ForbiddenException({
-        statusCode: ENUM_USER_STATUS_CODE_ERROR.INACTIVE_FORBIDDEN,
+        statusCode: ENUM_STATUS_CODE_ERROR.USER_INACTIVE_FORBIDDEN,
         message: 'user.error.inactive',
       });
     }
@@ -145,7 +147,7 @@ export class AuthPublicController {
       await this.databaseService.abortTransaction(databaseSession);
 
       throw new InternalServerErrorException({
-        statusCode: ENUM_APP_STATUS_CODE_ERROR.UNKNOWN,
+        statusCode: ENUM_STATUS_CODE_ERROR.APP_UNKNOWN,
         message: 'auth.error.unknown',
         _error: err,
       });
@@ -171,7 +173,7 @@ export class AuthPublicController {
 
     if (emailExist) {
       throw new ConflictException({
-        statusCode: ENUM_USER_STATUS_CODE_ERROR.EMAIL_EXIST,
+        statusCode: ENUM_STATUS_CODE_ERROR.USER_EMAIL_EXIST,
         message: 'user.error.emailExist',
       });
     }
@@ -251,7 +253,7 @@ export class AuthPublicController {
       await this.databaseService.abortTransaction(session);
 
       throw new InternalServerErrorException({
-        statusCode: ENUM_APP_STATUS_CODE_ERROR.UNKNOWN,
+        statusCode: ENUM_STATUS_CODE_ERROR.APP_UNKNOWN,
         message: 'auth.error.unknown',
         _error: err,
       });

@@ -1,4 +1,4 @@
-import { ENUM_PAGINATION_ORDER_DIRECTION_TYPE } from './pagination.enum.constant';
+import { ENUM_PAGINATION_ORDER_DIRECTION_TYPE } from '@repo/shared';
 
 export const PAGINATION_PER_PAGE = 20;
 export const PAGINATION_MAX_PER_PAGE = 100;

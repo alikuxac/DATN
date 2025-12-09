@@ -9,9 +9,12 @@ import { WorkerModule } from '@workers/worker.module';
 import { AppMiddlewareModule } from './app.middleware.module';
 
 @Module({
-  imports: [CommonModule,
+  imports: [
+    CommonModule,
     AppMiddlewareModule,
-    RoutersModule, WorkerModule],
+    RoutersModule, 
+    WorkerModule
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

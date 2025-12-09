@@ -1,8 +1,8 @@
 import { IsString, IsNotEmpty, IsNumber, IsBoolean, IsOptional, IsEnum, IsArray, ArrayMinSize, ArrayMaxSize } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ENUM_REPORT_SEVERITY } from '@modules/reports/enums/report.enum';
+import { ENUM_REPORT_SEVERITY, IReportCreateRequest } from '@repo/shared';
 
-export class ReportCreateRequestDto {
+export class ReportCreateRequestDto implements IReportCreateRequest {
   @IsArray()
   @ArrayMinSize(2)
   @ArrayMaxSize(2)

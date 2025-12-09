@@ -8,8 +8,7 @@ import { IRequestApp } from '@common/request/interfaces/request.interface';
 import { AuthService } from '@modules/auth/services/auth.service';
 import { UsersService } from '@modules/users/services/users.service';
 import { UserDocument, UserEntity } from '../repository/entities/user.entity';
-import { ENUM_USER_STATUS } from '@modules/users/enums/user.enum';
-import { ENUM_USER_STATUS_CODE_ERROR } from '@modules/users/enums/user.status-code.enum';
+import { ENUM_USER_STATUS, ENUM_STATUS_CODE_ERROR } from '@repo/shared';
 import { Reflector } from '@nestjs/core';
 import { USER_GUARD_EMAIL_VERIFIED_META_KEY } from '@modules/users/constants/user.constant';
 
@@ -36,12 +35,12 @@ export class UserGuard implements CanActivate {
 
         if (!userWithRole) {
             throw new ForbiddenException({
-                statusCode: ENUM_USER_STATUS_CODE_ERROR.NOT_FOUND,
+                statusCode: ENUM_STATUS_CODE_ERROR.USER_NOT_FOUND,
                 message: 'user.error.notFound',
             });
         } else if (userWithRole.status !== ENUM_USER_STATUS.ACTIVE) {
             throw new ForbiddenException({
-                statusCode: ENUM_USER_STATUS_CODE_ERROR.INACTIVE_FORBIDDEN,
+                statusCode: ENUM_STATUS_CODE_ERROR.USER_INACTIVE_FORBIDDEN,
                 message: 'user.error.inactive',
             });
         }
@@ -51,7 +50,7 @@ export class UserGuard implements CanActivate {
             userWithRole.verification.email !== true
         ) {
             throw new ForbiddenException({
-                statusCode: ENUM_USER_STATUS_CODE_ERROR.EMAIL_NOT_VERIFIED,
+                statusCode: ENUM_STATUS_CODE_ERROR.USER_EMAIL_NOT_VERIFIED,
                 message: 'user.error.emailNotVerified',
             });
         }

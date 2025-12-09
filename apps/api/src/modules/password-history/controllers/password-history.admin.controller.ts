@@ -16,7 +16,7 @@ import {
 import {
     ENUM_POLICY_ACTION,
     ENUM_POLICY_SUBJECT,
-} from '@modules/policy/enums/policy.enum';
+} from '@repo/shared';
 import { UserProtected } from '@modules/users/decorators/user.decorator';
 import { UserParsePipe } from '@modules/users/pipes/user.parse.pipe';
 import { UserDocument } from '@modules/users/repository/entities/user.entity';

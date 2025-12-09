@@ -4,7 +4,7 @@ import {
 import {
     ENUM_USER_GENDER,
     ENUM_USER_SIGN_UP_FROM,
-} from '@modules/users/enums/user.enum';
+} from '@repo/shared';
 
 import { UserGetResponseDto } from '@modules/users/dto/response/user.get.response.dto';
 import { UserVerificationResponseDto } from '@modules/users/dto/response/user.verification.response.dto';

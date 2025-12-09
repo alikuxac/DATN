@@ -7,7 +7,7 @@ import {
 } from '@nestjs/swagger';
 import { Exclude, Type } from 'class-transformer';
 import { DatabaseUUIDDto } from '@common/database/dtos/database.uuid.dto';
-import { ENUM_PASSWORD_HISTORY_TYPE } from '@modules/password-history/enums/password-history.enum';
+import { ENUM_PASSWORD_HISTORY_TYPE } from '@repo/shared';
 import { SessionListResponseDto } from '@modules/session/dtos/response/session.list.response.dto';
 import { UserShortResponseDto } from '@modules/users/dto/response/user.short.response.dto';
 

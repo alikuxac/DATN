@@ -22,9 +22,9 @@ import {
 import {
     ENUM_POLICY_ACTION,
     ENUM_POLICY_SUBJECT,
-} from '@modules/policy/enums/policy.enum';
+    ENUM_STATUS_CODE_ERROR,
+} from '@repo/shared';
 import { SessionListResponseDto } from '@modules/session/dtos/response/session.list.response.dto';
-import { ENUM_SESSION_STATUS_CODE_ERROR } from '@modules/session/enums/session.status-code.enum';
 import { SessionActiveParsePipe } from '@modules/session/pipes/session.parse.pipe';
 import { SessionDoc } from '@modules/session/repository/entities/session.entity';
 import { SessionService } from '@modules/session/services/session.service';
@@ -101,7 +101,7 @@ export class SessionAdminController {
     ): Promise<void> {
         if (user._id.toString() !== session.user) {
             throw new NotFoundException({
-                statusCode: ENUM_SESSION_STATUS_CODE_ERROR.NOT_FOUND,
+                statusCode: ENUM_STATUS_CODE_ERROR.SESSION_NOT_FOUND,
                 message: 'session.error.notFound',
             });
         }

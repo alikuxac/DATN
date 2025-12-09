@@ -20,8 +20,9 @@ import { ConfigService } from '@nestjs/config';
 import { HelperDateService } from '@common/helper/services/helper.date.service';
 import { RESPONSE_MESSAGE_PATH_META_KEY, RESPONSE_MESSAGE_PROPERTIES_META_KEY } from '../constants/response.constant';
 import { IMessageOptionsProperties } from '@common/message/interfaces/message.interface';
-import { ENUM_MESSAGE_LANGUAGE } from '@common/message/enums/message.enum';
+import { ENUM_MESSAGE_LANGUAGE } from '@repo/shared';
 import { MessageService } from '@common/message/services/message.service';
+import { HelperNumberService } from '@common/helper/services/helper.number.service';
 
 @Injectable()
 export class ResponsePagingInterceptor
@@ -31,6 +32,7 @@ export class ResponsePagingInterceptor
         private readonly reflector: Reflector,
         private readonly configService: ConfigService,
         private readonly helperDateService: HelperDateService,
+        private readonly helperNumberService: HelperNumberService,
         private readonly messageService: MessageService
     ) {}
 
@@ -119,6 +121,8 @@ export class ResponsePagingInterceptor
                             ...responseData._pagination,
                         },
                     };
+
+                    httpStatus = this.helperNumberService.mapHttpCode(statusCode);
 
                     const message: string = this.messageService.setMessage(
                         messagePath,

@@ -26,7 +26,7 @@ import {
     IDatabaseUpsertOptions,
 } from '@common/database/interfaces/database.interface';
 import { DeleteResult, InsertManyResult, UpdateResult } from 'mongodb';
-import { ENUM_PAGINATION_ORDER_DIRECTION_TYPE } from '@common/pagination/enums/pagination.enum';
+import { ENUM_PAGINATION_ORDER_DIRECTION_TYPE } from '@repo/shared';
 import { DatabaseObjectIdEntityBase } from '@common/database/bases/database.object-id.entity';
 
 export class DatabaseObjectIdRepositoryBase<

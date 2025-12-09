@@ -10,10 +10,9 @@ import { DatabaseService } from '@common/database/services/database.service';
 import { HelperDateService } from '@common/helper/services/helper.date.service';
 import { HelperNumberService } from '@common/helper/services/helper.number.service';
 import { HelperStringService } from '@common/helper/services/helper.string.service';
-import { ENUM_PAGINATION_ORDER_DIRECTION_TYPE } from '@common/pagination/enums/pagination.enum';
+import { ENUM_PAGINATION_ORDER_DIRECTION_TYPE, ENUM_VERIFICATION_TYPE } from '@repo/shared';
 import { UserDocument } from '@modules/users/repository/entities/user.entity';
 import { VerificationResponse } from '@modules/verification/dtos/response/verification.response';
-import { ENUM_VERIFICATION_TYPE } from '@modules/verification/enums/verification.enum.constant';
 import {
     VerificationDoc,
     VerificationEntity,

@@ -8,7 +8,7 @@ import {
 import { REQUEST } from '@nestjs/core';
 
 import { IRequestApp } from '@common/request/interfaces/request.interface';
-import { ENUM_USER_STATUS_CODE_ERROR } from '@modules/users/enums/user.status-code.enum';
+import { ENUM_STATUS_CODE_ERROR } from '@repo/shared';
 
 @Injectable({ scope: Scope.REQUEST })
 export class UserNotSelfPipe implements PipeTransform {
@@ -18,7 +18,7 @@ export class UserNotSelfPipe implements PipeTransform {
     const { user } = this.request;
     if (user.user === value) {
       throw new BadRequestException({
-        statusCode: ENUM_USER_STATUS_CODE_ERROR.NOT_SELF,
+        statusCode: ENUM_STATUS_CODE_ERROR.USER_NOT_SELF,
       });
     }
 

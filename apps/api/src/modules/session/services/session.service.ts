@@ -19,7 +19,7 @@ import {
 import { HelperDateService } from '@common/helper/services/helper.date.service';
 import { SessionCreateRequestDto } from '@modules/session/dtos/request/session.create.request.dto';
 import { SessionListResponseDto } from '@modules/session/dtos/response/session.list.response.dto';
-import { ENUM_SESSION_STATUS } from '@modules/session/enums/session.enum';
+import { ENUM_SESSION_STATUS } from '@repo/shared';
 import {
     SessionDoc,
     SessionEntity,

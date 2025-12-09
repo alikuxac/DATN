@@ -1,7 +1,7 @@
 import { DatabaseEntity, DatabaseProp, DatabaseSchema } from '@common/database/decorators/database.decorator';
 import { UserEntity } from '@modules/users/repository/entities/user.entity';
 import { DatabaseUUIDEntityBase } from '@common/database/bases/database.uuid.entity';
-import { ENUM_RESET_PASSWORD_TYPE } from '@modules/reset-password/enums/reset-password.enum';
+import { ENUM_RESET_PASSWORD_TYPE } from '@repo/shared';
 import { IDatabaseDocument } from '@common/database/interfaces/database.interface';
 
 export const ResetPasswordTableName = 'ResetPasswords';

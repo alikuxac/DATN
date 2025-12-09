@@ -1,4 +1,3 @@
-import { ENUM_APP_STATUS_CODE_ERROR } from '@app/enums/app.status-code.enum';
 import { DatabaseService } from '@common/database/services/database.service';
 import { Response } from '@common/response/decorators/response.decorator';
 import { IResponse } from '@common/response/interfaces/response.interface';
@@ -14,7 +13,6 @@ import { UserDocument } from '@modules/users/repository/entities/user.entity';
 import { UsersService } from '@modules/users/services/users.service';
 import { VerificationVerifyRequestDto } from '@modules/verification/dtos/request/verification.verify.request.dto';
 import { VerificationResponse } from '@modules/verification/dtos/response/verification.response';
-import { ENUM_VERIFICATION_STATUS_CODE_ERROR } from '@modules/verification/enums/verification.status-code.constant';
 import {
     VerificationUserEmailNotVerifiedYetPipe,
     VerificationUserMobileNumberNotVerifiedYetPipe,
@@ -37,6 +35,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { ENUM_WORKER_QUEUES } from '@workers/enums/worker.enum';
 import { Queue } from 'bullmq';
 import { ClientSession } from 'mongoose';
+import { ENUM_STATUS_CODE_ERROR } from '@repo/shared';
 
 @ApiTags('modules.user.verification')
 @Controller({
@@ -68,7 +67,7 @@ export class VerificationUserController {
             await this.verificationService.findOneLatestEmailByUser(user._id.toString());
         if (!verification) {
             throw new NotFoundException({
-                statusCode: ENUM_VERIFICATION_STATUS_CODE_ERROR.NOT_FOUND,
+                statusCode: ENUM_STATUS_CODE_ERROR.VERIFICATION_NOT_FOUND,
                 message: 'verification.error.notFound',
             });
         }
@@ -97,7 +96,7 @@ export class VerificationUserController {
             );
         if (!verification) {
             throw new NotFoundException({
-                statusCode: ENUM_VERIFICATION_STATUS_CODE_ERROR.NOT_FOUND,
+                statusCode: ENUM_STATUS_CODE_ERROR.VERIFICATION_NOT_FOUND,
                 message: 'verification.error.notFound',
             });
         }
@@ -174,7 +173,7 @@ export class VerificationUserController {
             await this.databaseService.abortTransaction(session);
 
             throw new InternalServerErrorException({
-                statusCode: ENUM_APP_STATUS_CODE_ERROR.UNKNOWN,
+                statusCode: ENUM_STATUS_CODE_ERROR.APP_UNKNOWN,
                 message: 'http.serverError.internalServerError',
                 _error: err,
             });
@@ -249,7 +248,7 @@ export class VerificationUserController {
             await this.databaseService.abortTransaction(session);
 
             throw new InternalServerErrorException({
-                statusCode: ENUM_APP_STATUS_CODE_ERROR.UNKNOWN,
+                statusCode: ENUM_STATUS_CODE_ERROR.APP_UNKNOWN,
                 message: 'http.serverError.internalServerError',
                 _error: err,
             });
@@ -276,7 +275,7 @@ export class VerificationUserController {
             await this.verificationService.findOneLatestEmailByUser(user._id.toString());
         if (!verification) {
             throw new NotFoundException({
-                statusCode: ENUM_VERIFICATION_STATUS_CODE_ERROR.NOT_FOUND,
+                statusCode: ENUM_STATUS_CODE_ERROR.VERIFICATION_NOT_FOUND,
                 message: 'verification.error.notFound',
             });
         }
@@ -287,7 +286,7 @@ export class VerificationUserController {
         );
         if (!check) {
             throw new BadRequestException({
-                statusCode: ENUM_VERIFICATION_STATUS_CODE_ERROR.OTP_NOT_MATCH,
+                statusCode: ENUM_STATUS_CODE_ERROR.VERIFICATION_OTP_NOT_MATCH,
                 message: 'verification.error.otpNotMatch',
             });
         }
@@ -326,7 +325,7 @@ export class VerificationUserController {
             await this.databaseService.abortTransaction(session);
 
             throw new InternalServerErrorException({
-                statusCode: ENUM_APP_STATUS_CODE_ERROR.UNKNOWN,
+                statusCode: ENUM_STATUS_CODE_ERROR.APP_UNKNOWN,
                 message: 'http.serverError.internalServerError',
                 _error: err,
             });
@@ -355,7 +354,7 @@ export class VerificationUserController {
             );
         if (!verification) {
             throw new NotFoundException({
-                statusCode: ENUM_VERIFICATION_STATUS_CODE_ERROR.NOT_FOUND,
+                statusCode: ENUM_STATUS_CODE_ERROR.VERIFICATION_NOT_FOUND,
                 message: 'verification.error.notFound',
             });
         }
@@ -366,7 +365,7 @@ export class VerificationUserController {
         );
         if (!check) {
             throw new BadRequestException({
-                statusCode: ENUM_VERIFICATION_STATUS_CODE_ERROR.OTP_NOT_MATCH,
+                statusCode: ENUM_STATUS_CODE_ERROR.VERIFICATION_OTP_NOT_MATCH,
                 message: 'verification.error.otpNotMatch',
             });
         }
@@ -407,7 +406,7 @@ export class VerificationUserController {
             await this.databaseService.abortTransaction(session);
 
             throw new InternalServerErrorException({
-                statusCode: ENUM_APP_STATUS_CODE_ERROR.UNKNOWN,
+                statusCode: ENUM_STATUS_CODE_ERROR.APP_UNKNOWN,
                 message: 'http.serverError.internalServerError',
                 _error: err,
             });

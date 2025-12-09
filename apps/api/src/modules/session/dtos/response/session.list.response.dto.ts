@@ -1,7 +1,7 @@
 import { DatabaseUUIDDto } from '@common/database/dtos/database.uuid.dto';
-import { ENUM_SESSION_STATUS } from '@modules/session/enums/session.enum';
+import { ENUM_SESSION_STATUS, ISessionListResponse } from '@repo/shared';
 
-export class SessionListResponseDto extends DatabaseUUIDDto {
+export class SessionListResponseDto extends DatabaseUUIDDto implements ISessionListResponse {
 
     user: string;
 

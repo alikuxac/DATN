@@ -15,7 +15,7 @@ import { HelperDateService } from '@common/helper/services/helper.date.service';
 import { IRequestApp } from '@common/request/interfaces/request.interface';
 import { ResponseMetadataDto } from '@common/response/dto/response.dto';
 import { MessageService } from '@common/message/services/message.service';
-import { ENUM_MESSAGE_LANGUAGE } from '@common/message/enums/message.enum';
+import { ENUM_MESSAGE_LANGUAGE } from '@repo/shared';
 
 @Catch()
 export class AppGeneralFilter implements ExceptionFilter {

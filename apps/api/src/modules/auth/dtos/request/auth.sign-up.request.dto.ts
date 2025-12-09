@@ -1,7 +1,8 @@
 import { IsEmail, IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
 import { IsPassword } from '@common/request/validations/request.is-password.validation';
+import { ISignUpPayload } from '@repo/shared';
 
-export class AuthSignUpRequestDto {
+export class AuthSignUpRequestDto implements ISignUpPayload {
     @IsString()
     @IsNotEmpty()
     @IsEmail()

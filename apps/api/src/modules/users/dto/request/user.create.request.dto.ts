@@ -1,7 +1,7 @@
-import { ENUM_USER_GENDER } from '@modules/users/enums/user.enum';
+import { ENUM_USER_GENDER } from '@repo/shared';
 import { IsEmail, IsNotEmpty, IsString, IsPhoneNumber, IsEnum } from 'class-validator';
-
-export class UserCreateRequestDto {
+import { IUserCreateRequest} from '@repo/shared';
+export class UserCreateRequestDto implements IUserCreateRequest {
   @IsEmail()
   @IsNotEmpty()
   email: string;
@@ -22,5 +22,5 @@ export class UserCreateRequestDto {
   gender: ENUM_USER_GENDER;
 
   @IsPhoneNumber()
-  phoneNumber: string;
+  mobileNumber: string;
 }
