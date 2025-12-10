@@ -1,91 +1,100 @@
-import React from 'react';
-import { View, Text, Image, ImageSourcePropType } from 'react-native';
-import { cn } from '@/utils';
-import { cva } from 'class-variance-authority';
-import {ClassValue} from "clsx";
-import {useColors} from "@/hooks/useColors.ts";
+import React, { useState } from "react";
+import { View, Text, Image, ImageSourcePropType } from "react-native";
+import { cn } from "@/utils"; // Đảm bảo đường dẫn đúng file utils của bạn
+import { cva, type VariantProps } from "class-variance-authority";
+import { useColors } from "@/hooks/useColors";
 
-interface AvatarProps {
-  size?: 'sm' | 'md' | 'lg' | 'xl';
-  variant?: 'default' | 'primary' | 'secondary';
-  className?: ClassValue;
-  textClassName?: ClassValue;
-  // Content props - only one should be provided
-  text?: string;
-  source?: ImageSourcePropType;
-  icon?: React.ReactElement;
-  // Optional props
-  alt?: string;
-}
+// --- 1. Helper tạo URL DiceBear (Thay thế cho việc import package nặng) ---
+const getDiceBearUrl = (seed: string) => {
+  const encodedSeed = encodeURIComponent(seed.trim());
+  // Bạn có thể đổi 'personas' thành 'adventurer', 'micah', 'avataaars' tùy thích
+  // 'personas' là style bạn đang import trong code cũ
+  return `https://api.dicebear.com/9.x/personas/png?seed=${encodedSeed}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
+};
 
-const avatarVariants = cva(
-  'rounded-full items-center justify-center overflow-hidden',
-  {
-    variants: {
-      size: {
-        sm: 'w-8 h-8',
-        md: 'w-12 h-12',
-        lg: 'w-16 h-16',
-        xl: 'w-20 h-20',
-      },
-      variant: {
-        default: 'bg-neutrals700',
-        primary: 'bg-primary',
-        secondary: 'bg-secondary',
-      },
-    },
-    defaultVariants: {
-      size: 'md',
-      variant: 'default',
-    },
-  }
-);
-
-const avatarTextVariants = cva(
-  'font-sans-semibold text-center',
-  {
-    variants: {
-      size: {
-        sm: 'text-xs',
-        md: 'text-sm',
-        lg: 'text-lg',
-        xl: 'text-xl',
-      },
-      variant: {
-        default: 'text-neutrals100',
-        primary: 'text-white',
-        secondary: 'text-neutrals800',
-      },
-    },
-    defaultVariants: {
-      size: 'md',
-      variant: 'default',
-    },
-  }
-);
-
+// --- 2. Helper lấy chữ cái đầu (Fallback) ---
 const getInitials = (text: string): string => {
   return text
-    .split(' ')
-    .map(word => word.charAt(0))
-    .join('')
+    .split(" ")
+    .map((word) => word.charAt(0))
+    .join("")
     .toUpperCase()
     .slice(0, 2);
 };
 
-const getIconSize = (size: 'sm' | 'md' | 'lg' | 'xl'): number => {
+// --- 3. Định nghĩa Variants (Giữ nguyên logic của bạn) ---
+const avatarVariants = cva(
+  "rounded-full items-center justify-center overflow-hidden bg-gray-100", // Thêm bg-gray-100 để đẹp khi loading
+  {
+    variants: {
+      size: {
+        sm: "w-8 h-8",
+        md: "w-12 h-12",
+        lg: "w-16 h-16",
+        xl: "w-20 h-20",
+      },
+      variant: {
+        default: "bg-neutrals700",
+        primary: "bg-primary",
+        secondary: "bg-secondary",
+      },
+    },
+    defaultVariants: {
+      size: "md",
+      variant: "default",
+    },
+  }
+);
+
+const avatarTextVariants = cva("font-sans-semibold text-center", {
+  variants: {
+    size: {
+      sm: "text-xs",
+      md: "text-sm",
+      lg: "text-lg",
+      xl: "text-xl",
+    },
+    variant: {
+      default: "text-white", // Đổi mặc định thành trắng cho nổi trên nền tối
+      primary: "text-white",
+      secondary: "text-neutrals800",
+    },
+  },
+  defaultVariants: {
+    size: "md",
+    variant: "default",
+  },
+});
+
+const getIconSize = (size: "sm" | "md" | "lg" | "xl"): number => {
   switch (size) {
-    case 'sm': return 12;
-    case 'md': return 20;
-    case 'lg': return 28;
-    case 'xl': return 36;
-    default: return 20;
+    case "sm":
+      return 12;
+    case "md":
+      return 20;
+    case "lg":
+      return 28;
+    case "xl":
+      return 36;
+    default:
+      return 20;
   }
 };
 
+// --- 4. Interface Props ---
+interface AvatarProps extends VariantProps<typeof avatarVariants> {
+  className?: string;
+  textClassName?: string;
+  text?: string; // Tên user (dùng để tạo avatar hoặc lấy initials)
+  source?: ImageSourcePropType | string; // Cho phép truyền cả URL string
+  icon?: React.ReactElement;
+  alt?: string;
+}
+
+// --- 5. Main Component ---
 export default function Avatar({
-  size = 'md',
-  variant = 'default',
+  size = "md",
+  variant = "default",
   className,
   textClassName,
   text,
@@ -94,50 +103,70 @@ export default function Avatar({
   alt,
 }: AvatarProps) {
   const colors = useColors();
-  const renderContent = () => {
-    // Priority: image > icon > text
+  const [imageError, setImageError] = useState(false);
+
+  // Logic xác định nguồn ảnh:
+  // Nếu có 'source' (ảnh thật) -> dùng source
+  // Nếu không có 'source' nhưng có 'text' -> dùng DiceBear
+  // Lưu ý: Nếu imageError = true (ảnh lỗi), ta sẽ bỏ qua bước này để render Initials
+  const imageSource = React.useMemo(() => {
+    if (imageError) return null;
+
     if (source) {
+      return typeof source === "string" ? { uri: source } : source;
+    }
+
+    if (text) {
+      return { uri: getDiceBearUrl(text) };
+    }
+
+    return null;
+  }, [source, text, imageError]);
+
+  const renderContent = () => {
+    // 1. Ưu tiên hiển thị Ảnh (Upload hoặc DiceBear)
+    if (imageSource) {
       return (
         <Image
-          source={source}
-          style={{ width: '100%', height: '100%' }}
+          source={imageSource as ImageSourcePropType}
+          style={{ width: "100%", height: "100%" }}
           resizeMode="cover"
-          accessibilityLabel={alt || 'Avatar image'}
+          accessibilityLabel={alt || text || "Avatar"}
+          // Quan trọng: Nếu load ảnh lỗi -> set state để chuyển sang render Initials/Icon
+          onError={() => setImageError(true)}
         />
       );
     }
 
+    // 2. Nếu không có ảnh hoặc ảnh lỗi -> Hiển thị Icon (nếu có)
     if (icon) {
       return React.cloneElement(icon as any, {
-        size: getIconSize(size),
-        color: variant === 'default' ? colors.foreground : variant === 'primary' ? colors.primaryForeground : colors.secondaryForeground,
+        size: getIconSize(size || "md"),
+        color:
+          variant === "default"
+            ? colors.foreground
+            : variant === "primary"
+              ? colors.primaryForeground
+              : colors.secondaryForeground,
       });
     }
 
+    // 3. Cuối cùng -> Hiển thị chữ cái đầu (Initials)
     if (text) {
       return (
         <Text
-          className={cn(
-            avatarTextVariants({ size, variant }),
-            textClassName
-          )}
+          className={cn(avatarTextVariants({ size, variant }), textClassName)}
         >
           {getInitials(text)}
         </Text>
       );
     }
 
-    // Fallback to empty avatar
     return null;
   };
 
   return (
-    <View
-      className={cn(
-        avatarVariants({ size, variant }),
-        className
-      )}
-    >
+    <View className={cn(avatarVariants({ size, variant }), className)}>
       {renderContent()}
     </View>
   );

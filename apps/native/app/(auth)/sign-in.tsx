@@ -14,7 +14,6 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setLanguage, setTheme, setToken } from "@/store/slices/appSlice"; // Giả định action
 import { useToast } from "@/components/ui/ToastProvider";
 
-import { expo } from '../../app.json';
 import AuthHeader from "@/components/auth/header";
 
 export default function SignInScreen() {
@@ -30,7 +29,7 @@ export default function SignInScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>(
-    {}
+    { email: '', password: '' }
   );
 
   // Handlers
@@ -91,34 +90,6 @@ export default function SignInScreen() {
         showError("Login Failed", "No access token received.");
       }
 
-      // Giả lập gọi API (Delay 1.5s)
-      // await new Promise((resolve, reject) => {
-      //   setTimeout(() => {
-      //     // --- LOGIC MOCK API ---
-      //     const MOCK_DB_USER = "user@example.com";
-      //     const MOCK_DB_PASS = "123456";
-
-      //     if (email.trim() !== MOCK_DB_USER) {
-      //       // Case 1: Email không tồn tại
-      //       reject(new Error("EMAIL_NOT_FOUND"));
-      //     } else if (password !== MOCK_DB_PASS) {
-      //       // Case 2: Sai mật khẩu
-      //       reject(new Error("WRONG_PASSWORD"));
-      //     } else {
-      //       // Case 3: Thành công
-      //       resolve("fake-jwt-token-123");
-      //     }
-      //   }, 1500);
-      // });
-
-      // ✅ ĐĂNG NHẬP THÀNH CÔNG
-      // dispatch(setToken("fake-jwt-token-123")); // Lưu token vào Redux
-      // showSuccess("Welcome back!", "Login successful");
-
-      // // Chuyển hướng vào App sau 500ms để người dùng kịp đọc thông báo
-      // setTimeout(() => {
-      //   router.replace("/(tabs)");
-      // }, 500);
     } catch (error: any) {
       // ❌ XỬ LÝ LỖI
       console.log(error)
