@@ -122,7 +122,7 @@ export class ResponsePagingInterceptor
                         },
                     };
 
-                    httpStatus = this.helperNumberService.mapHttpCode(statusCode);
+                    httpStatus = statusCode === 200 ? HttpStatus.OK : this.helperNumberService.mapHttpCode(statusCode);
 
                     const message: string = this.messageService.setMessage(
                         messagePath,
