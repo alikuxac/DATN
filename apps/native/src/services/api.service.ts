@@ -1,4 +1,5 @@
-import { useAppSelector } from "@/store/hooks";
+import { store } from "@/store";
+import { setToken } from "@/store/slices/appSlice";
 // src/services/api.service.ts
 
 class ApiService {
@@ -36,6 +37,12 @@ class ApiService {
 
     try {
       const response = await fetch(url, config);
+
+      if (response.status === 401) {
+        store.dispatch(setToken(null));
+
+        throw new Error('Session expired');
+      }
 
       // Xử lý lỗi từ Backend trả về (nếu có)
       if (!response.ok) {
