@@ -1,21 +1,21 @@
-import React, {forwardRef, useState} from 'react';
-import {Text, TextInput, TextInputProps, View} from 'react-native';
-import {cn} from '@/utils';
-import {cva} from 'class-variance-authority';
-import {useColors} from "@/hooks/useColors.ts";
+import React, { forwardRef, useState } from "react";
+import { Text, TextInput, TextInputProps, View } from "react-native";
+import { cn } from "@/utils";
+import { cva } from "class-variance-authority";
+import { useColors } from "@/hooks/useColors.ts";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
   withTiming,
-} from 'react-native-reanimated';
+} from "react-native-reanimated";
 
 interface AppInputProps extends TextInputProps {
   label?: string;
   helperText?: string;
   errorText?: string;
-  variant?: 'default' | 'textarea';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: "default" | "textarea";
+  size?: "sm" | "md" | "lg";
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   containerClassName?: string;
@@ -25,78 +25,69 @@ interface AppInputProps extends TextInputProps {
   required?: boolean;
 }
 
-const inputVariants = cva(
-  'border rounded-lg font-sans-medium bg-background',
-  {
-    variants: {
-      variant: {
-        default: 'text-foreground',
-        textarea: 'min-h-20 text-top text-foreground',
-      },
-      size: {
-        sm: 'px-3 py-2 text-sm',
-        md: 'px-4 py-2.5 text-base',
-        lg: 'px-4 py-3 text-lg',
-      },
-      state: {
-        default: 'border-neutrals900',
-        focused: 'border-neutrals600',
-        error: 'border-error',
-      },
-      hasLeftIcon: {
-        true: 'pl-10',
-      },
-      hasRightIcon: {
-        true: 'pr-10',
-      },
+const inputVariants = cva("border rounded-lg font-sans-medium bg-background", {
+  variants: {
+    variant: {
+      default: "text-foreground",
+      textarea: "min-h-20 text-top text-foreground",
     },
-    defaultVariants: {
-      variant: 'default',
-      size: 'md',
-      state: 'default',
+    size: {
+      sm: "px-3 py-2 text-sm",
+      md: "px-4 py-2.5 text-base",
+      lg: "px-4 py-3 text-lg",
     },
-  }
-);
+    state: {
+      default: "border-neutrals900",
+      focused: "border-neutrals600",
+      error: "border-error",
+    },
+    hasLeftIcon: {
+      true: "pl-10",
+    },
+    hasRightIcon: {
+      true: "pr-10",
+    },
+  },
+  defaultVariants: {
+    variant: "default",
+    size: "md",
+    state: "default",
+  },
+});
 
-const labelVariants = cva(
-  'font-sans-medium text-foreground mb-1.5',
-  {
-    variants: {
-      size: {
-        sm: 'text-sm',
-        md: 'text-base',
-        lg: 'text-lg',
-      },
-      required: {
-        true: "after:content-['*'] after:text-error after:ml-1",
-      },
+const labelVariants = cva("font-sans-medium text-foreground mb-1.5", {
+  variants: {
+    size: {
+      sm: "text-sm",
+      md: "text-base",
+      lg: "text-lg",
     },
-    defaultVariants: {
-      size: 'md',
+    required: {
+      true: "after:content-['*'] after:text-error after:ml-1",
     },
-  }
-);
+  },
+  defaultVariants: {
+    size: "md",
+  },
+});
 
-const helperVariants = cva(
-  'font-sans-regular mt-1.5',
-  {
-    variants: {
-      type: {
-        helper: 'text-neutrals100',
-        error: 'text-error',
-      },
-      size: {
-        sm: 'text-xs',
-        md: 'text-sm',
-        lg: 'text-base',
-      },
+const helperVariants = cva("font-sans-regular mt-1.5", {
+  variants: {
+    type: {
+      helper: "text-neutrals100",
+      error: "text-error",
     },
-    defaultVariants: {
-      type: 'helper',
-      size: 'md',
+    size: {
+      sm: "text-xs",
+      md: "text-sm",
+      lg: "text-base",
     },
-  }
-);
+  },
+  defaultVariants: {
+    type: "helper",
+    size: "md",
+  },
+});
 
 const AppInput = forwardRef<TextInput, AppInputProps>(
   (
@@ -104,8 +95,8 @@ const AppInput = forwardRef<TextInput, AppInputProps>(
       label,
       helperText,
       errorText,
-      variant = 'default',
-      size = 'md',
+      variant = "default",
+      size = "md",
       leftIcon,
       rightIcon,
       className,
@@ -120,7 +111,7 @@ const AppInput = forwardRef<TextInput, AppInputProps>(
   ) => {
     const [focused, setFocused] = useState(false);
     const hasError = !!errorText;
-    const state = hasError ? 'error' : focused ? 'focused' : 'default';
+    const state = hasError ? "error" : focused ? "focused" : "default";
     const colors = useColors();
 
     // Animation values
@@ -154,13 +145,10 @@ const AppInput = forwardRef<TextInput, AppInputProps>(
     };
 
     return (
-      <View className={cn('w-full', containerClassName)}>
+      <View className={cn("w-full", containerClassName)}>
         {label && (
           <Text
-            className={cn(
-              labelVariants({size, required}),
-              labelClassName
-            )}
+            className={cn(labelVariants({ size, required }), labelClassName)}
           >
             {label}
           </Text>
@@ -168,8 +156,13 @@ const AppInput = forwardRef<TextInput, AppInputProps>(
 
         <Animated.View style={animatedStyle} className="relative">
           {leftIcon && (
-            <View className="absolute left-3 top-1/2 -translate-y-1/2 z-10">
-              {leftIcon}
+            <View className="absolute left-3 top-1/2 -translate-y-1/2 z-10 justify-center items-center">
+              {/* Fix: Kiểm tra nếu icon là string thì bọc trong Text */}
+              {typeof leftIcon === "string" ? (
+                <Text>{leftIcon}</Text>
+              ) : (
+                leftIcon
+              )}
             </View>
           )}
 
@@ -182,8 +175,8 @@ const AppInput = forwardRef<TextInput, AppInputProps>(
           <TextInput
             ref={ref}
             {...props}
-            multiline={variant === 'textarea'}
-            textAlignVertical={variant === 'textarea' ? 'top' : 'center'}
+            multiline={variant === "textarea"}
+            textAlignVertical={variant === "textarea" ? "top" : "center"}
             onFocus={handleFocus}
             placeholderTextColor={colors.neutrals600}
             onBlur={handleBlur}
@@ -200,8 +193,13 @@ const AppInput = forwardRef<TextInput, AppInputProps>(
           />
 
           {rightIcon && (
-            <View className="absolute right-3 top-1/2 -translate-y-1/2 z-10">
-              {rightIcon}
+            <View className="absolute right-3 top-1/2 -translate-y-1/2 z-10 justify-center items-center">
+              {/* Fix: Kiểm tra nếu icon là string thì bọc trong Text */}
+              {typeof rightIcon === "string" ? (
+                <Text>{rightIcon}</Text>
+              ) : (
+                rightIcon
+              )}
             </View>
           )}
         </Animated.View>
@@ -210,7 +208,7 @@ const AppInput = forwardRef<TextInput, AppInputProps>(
           <Text
             className={cn(
               helperVariants({
-                type: hasError ? 'error' : 'helper',
+                type: hasError ? "error" : "helper",
                 size,
               }),
               hasError ? errorClassName : helperClassName
@@ -224,6 +222,6 @@ const AppInput = forwardRef<TextInput, AppInputProps>(
   }
 );
 
-AppInput.displayName = 'AppInput';
+AppInput.displayName = "AppInput";
 
 export default AppInput;
