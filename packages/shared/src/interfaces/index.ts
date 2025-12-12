@@ -7,6 +7,7 @@ export * from "./auth.interface";
 export * from "./database.interface";
 export * from "./password-history.interface";
 export * from "./report.interface";
+export * from "./response.interface";
 export * from "./session.interface";
 export * from "./user.interface";
 export * from "./verification.interface";
