@@ -10,7 +10,7 @@ import { IAuthPassword } from '@modules/auth/interfaces/auth.interface';
 import { IDatabaseCreateOptions, IDatabaseDeleteManyOptions, IDatabaseExistsOptions, IDatabaseFindAllOptions, IDatabaseFindOneOptions, IDatabaseGetTotalOptions, IDatabaseSaveOptions, IDatabaseSoftDeleteOptions } from '@common/database/interfaces/database.interface';
 import { UserRepository } from '@modules/users/repository/repositories/user.repository';
 import { DatabaseHelperQueryContain } from '@common/database/decorators/database.decorator';
-import { ENUM_USER_SIGN_UP_FROM, ENUM_USER_STATUS } from '@repo/shared';
+import { ENUM_MESSAGE_LANGUAGE, ENUM_USER_SIGN_UP_FROM, ENUM_USER_STATUS, ENUM_USER_THEME } from '@repo/shared';
 import { HelperDateService } from '@common/helper/services/helper.date.service';
 import { plainToInstance } from 'class-transformer';
 import { HelperStringService } from '@common/helper/services/helper.string.service';
@@ -21,6 +21,7 @@ import { UserShortResponseDto } from '@modules/users/dto/response/user.short.res
 import { UserGetResponseDto } from '@modules/users/dto/response/user.get.response.dto';
 import { UserUpdateStatusRequestDto } from '@modules/users/dto/request/user.update-status.request.dto';
 import { UserUpdateProfileRequestDto } from '@modules/users/dto/request/user.update-profile.request.dto';
+import { UserUpdatePreferencesRequestDto } from '../dto/request/user.update-preferences.request.dto';
 @Injectable()
 export class UsersService {
   constructor(
@@ -229,10 +230,22 @@ async update(respository: UserDocument, updateUserDto: UserUpdateRequestDto, opt
     return this.userRepository.save(repository, options);
   }
 
+  async updatePreferences(
+    repository: UserDocument,
+    { language, theme }: UserUpdatePreferencesRequestDto,
+    options?: IDatabaseSaveOptions
+  ) {
+    repository.preferences.language = language;
+    repository.preferences.theme = theme;
+
+    return this.userRepository.save(repository, options);
+  }
+
 
   async signUp(
     data: IAuthPassword, 
-    { email, firstName, lastName }: { email: string, lastName: string, firstName: string }, 
+    { email, firstName, lastName }: { email: string, lastName: string, firstName: string },
+    language: ENUM_MESSAGE_LANGUAGE,
     signUpFrom: ENUM_USER_SIGN_UP_FROM,
     options?: IDatabaseCreateOptions) {
     const user = new UserEntity();
@@ -252,6 +265,11 @@ async update(respository: UserDocument, updateUserDto: UserUpdateRequestDto, opt
       mobileNumber: false,
       mobileNumberVerifiedAt: null
     }
+
+    user.preferences = {
+      language: language,
+      theme: ENUM_USER_THEME.SYSTEM
+    };
 
     const newUser = await this.userRepository.create<UserEntity>(user, options);
     return newUser;

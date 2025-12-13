@@ -21,3 +21,10 @@ export enum ENUM_USER_GENDER {
   FEMALE = 'FEMALE',
   OTHER = 'OTHER',
 }
+
+// Preferences
+export enum ENUM_USER_THEME {
+  SYSTEM = 'system',
+  LIGHT = 'light',
+  DARK = 'dark',
+}

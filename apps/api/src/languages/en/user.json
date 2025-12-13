@@ -4,6 +4,7 @@
     "create": "New user created successfully.",
     "updateStatus": "User status updated to {status}.",
     "profile": "User profile retrieved successfully.",
+    "preferences": "User preferences retrieved successfully.",
     "updateProfile": "User profile updated successfully.",
     "uploadPhotoProfile": "Profile photo upload request successful.",
     "updatePhotoProfile": "Profile picture uploaded successfully.",

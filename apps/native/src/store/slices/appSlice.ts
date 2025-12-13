@@ -3,7 +3,7 @@ import {colorScheme} from "nativewind";
 import {LanguageCode} from '@/config/i18n';
 import {getDeviceLanguage} from "@/utils/getDeviceLanguage.ts";
 
-export type Theme = 'light' | 'dark';
+export type Theme = 'light' | 'dark' | 'system';
 
 export interface Insets {
   left: number;
@@ -25,7 +25,7 @@ interface AppState {
 }
 
 const initialState: AppState = {
-  theme: 'dark',
+  theme: 'system',
   language: getDeviceLanguage(),
   insets: {
     left: 0,
@@ -44,6 +44,7 @@ const appSlice = createSlice({
   reducers: {
     setTheme: (state, action: PayloadAction<Theme>) => {
       state.theme = action.payload;
+      colorScheme.set(action.payload);
     },
     setLanguage: (state, action: PayloadAction<LanguageCode>) => {
       state.language = action.payload;
@@ -57,16 +58,11 @@ const appSlice = createSlice({
     setIsLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
     },
-    toggleTheme: (state) => {
-      const newTheme = state.theme === 'light' ? 'dark' : 'light';
-      colorScheme.set(newTheme);
-      state.theme = newTheme;
-    },
     setToken: (state, action: PayloadAction<string | null>) => {
       state.token = action.payload;
     },
   },
 });
 
-export const {setTheme, setLanguage, setInsets, setIsFirstLaunch, setIsLoading, toggleTheme, setToken} = appSlice.actions;
+export const {setTheme, setLanguage, setInsets, setIsFirstLaunch, setIsLoading, setToken} = appSlice.actions;
 export default appSlice.reducer;

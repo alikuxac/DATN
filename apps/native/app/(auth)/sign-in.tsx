@@ -37,21 +37,18 @@ export default function SignInScreen() {
     dispatch(setTheme(theme === "dark" ? "light" : "dark"));
   };
 
-  const handleToggleLanguage = () => {
-    dispatch(setLanguage(language === "en" ? "vi" : "en"));
-  };
-
   const validate = () => {
     const newErrors: typeof errors = {};
     if (!email)
-      newErrors.email = t("auth.emailRequired") || "Email is required";
+      newErrors.email = t("VALIDATION.REQUIRED", { field: "Email" });
     else if (!/\S+@\S+\.\S+/.test(email))
-      newErrors.email = t("auth.emailInvalid") || "Invalid email";
+      newErrors.email = t("VALIDATION.EMAIL_INVALID") || "Invalid email";
 
     if (!password)
-      newErrors.password = t("auth.passwordRequired") || "Password is required";
+      newErrors.password = t("VALIDATION.REQUIRED", { field: "Password" });
     else if (password.length < 6)
-      newErrors.password = t("auth.passwordLength") || "Min 6 characters";
+      newErrors.password =
+        t("VALIDATION.PASSWORD_MIN_LENGTH");
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -80,27 +77,27 @@ export default function SignInScreen() {
         // ✅ Lưu token và chuyển trang
         dispatch(setToken(token));
         apiService.setAuthToken(token);
-        showSuccess("Welcome back!", "Login successful");
+        showSuccess(t("AUTH.MSG_WELCOME_BACK"), t("AUTH.MSG_LOGIN_SUCCESS"));
 
         setTimeout(() => {
           router.replace("/(tabs)");
         }, 500);
       } else {
         // Trường hợp API trả về 200 nhưng không có token (logic lạ)
-        showError("Login Failed", "No access token received.");
+        showError(t("AUTH.ERR_LOGIN_FAILED"), t("AUTH.ERR_NO_TOKEN"));
       }
 
     } catch (error: any) {
       // ❌ XỬ LÝ LỖI
       console.log(error)
       if (error.message === "EMAIL_NOT_FOUND") {
-        showError("Login Failed", "Email does not exist.");
+        showError(t("AUTH.ERR_LOGIN_FAILED"), t("AUTH.ERR_EMAIL_NOT_EXIST"));
         setErrors((prev) => ({ ...prev, email: "Email not found" })); // Hiển thị lỗi đỏ dưới ô Email
       } else if (error.message === "WRONG_PASSWORD") {
-        showError("Login Failed", "Incorrect password.");
+        showError(t("AUTH.ERR_LOGIN_FAILED"), t("AUTH.ERR_INCORRECT_PASSWORD"));
         setErrors((prev) => ({ ...prev, password: "Wrong password" })); // Hiển thị lỗi đỏ dưới ô Password
       } else {
-        showError("Error", "Something went wrong. Please try again.");
+        showError(t("COMMON.ERROR"), t("AUTH.ERR_SOMETHING_WENT_WRONG"));
       }
     } finally {
       setLoading(false);
@@ -113,28 +110,6 @@ export default function SignInScreen() {
 
   return (
     <AuthContainer>
-      {/* 1. Top Bar: Theme & Language Toggles */}
-      <View className="flex-row justify-between items-center mb-8">
-        <TouchableOpacity
-          onPress={handleToggleTheme}
-          className="w-10 h-10 rounded-full bg-neutrals200 dark:bg-neutrals800 items-center justify-center border border-neutrals300 dark:border-neutrals700"
-        >
-          <Icon
-            name={theme === "dark" ? "Moon" : "Sun"}
-            className="text-foreground w-5 h-5"
-          />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={handleToggleLanguage}
-          className="px-3 py-1.5 rounded-full bg-background border border-neutrals300 dark:border-neutrals700"
-        >
-          <AppText variant="label" weight="medium">
-            {language === "en" ? "VN" : "EN"}
-          </AppText>
-        </TouchableOpacity>
-      </View>
-
       {/* 2. Header: Logo & Titles */}
       <AuthHeader />
 
@@ -142,7 +117,7 @@ export default function SignInScreen() {
       <View className="bg-white dark:bg-neutrals900 rounded-3xl p-6 shadow-xl border border-neutrals200 dark:border-neutrals800 gap-6">
         <View className="gap-4 mb-6">
           <AppInput
-            label={t("EMAIL") || "Email"}
+            label={t("AUTH.LABEL_EMAIL")}
             placeholder="hello@example.com"
             value={email}
             onChangeText={(text) => {
@@ -156,7 +131,7 @@ export default function SignInScreen() {
           />
 
           <AppInput
-            label={t("PASSWORD") || "Password"}
+            label={t("AUTH.LABEL_PASSWORD")}
             placeholder="••••••"
             value={password}
             onChangeText={(text) => {
@@ -186,7 +161,6 @@ export default function SignInScreen() {
             onPress={handleSignIn}
             loading={loading}
             className="w-full h-14 rounded-full shadow-md"
-            // 👉 ÉP MÀU NỀN TRỰC TIẾP (Mã màu Blue-600 chuẩn)
             style={{
               height: 56,
               borderRadius: 100,
@@ -196,7 +170,7 @@ export default function SignInScreen() {
             }}
             textClassname="text-white font-sans-semibold"
           >
-            {t("LOGIN") || "Sign In"}
+            {t("AUTH.BTN_LOGIN")}
           </AppButton>
 
           <AppButton
@@ -224,7 +198,7 @@ export default function SignInScreen() {
               />
             }
           >
-            {t("SURVIAL_MODE") || "Survival Mode"}
+            {t("FEATURE.SURVIVAL_MODE")}
           </AppButton>
         </View>
       </View>
@@ -232,17 +206,16 @@ export default function SignInScreen() {
       <View className="flex-row justify-center items-center mt-8 gap-1">
         {/* Text câu hỏi: Màu xám trung tính */}
         <AppText className="text-neutrals600 dark:text-neutrals400 text-lg font-sans-regular">
-          {t("NO_ACCOUNT") || "Don't have an account?"}
+          {t("AUTH.HINT_NO_ACCOUNT")}
         </AppText>
 
         {/* Text Link: Màu xanh dương + In đậm */}
         <Pressable onPress={handleRegister}>
           <AppText
             className="text-lg font-sans-bold"
-            // 👉 Dùng style đè màu xanh dương (#2563eb) để giống hệt ảnh
             style={{ color: "#2563eb" }}
           >
-            {t("REGISTER") || "Register Now"}
+            {t("AUTH.LINK_REGISTER")}
           </AppText>
         </Pressable>
       </View>

@@ -8,6 +8,7 @@ import {
 import { UserVerificationResponseDto } from '@modules/users/dto/response/user.verification.response.dto';
 import { DatabaseObjectIdDto } from '@common/database/dtos/database.object-id.dto';
 import { Exclude } from 'class-transformer';
+import { UserPreferencesResponseDto } from './user.preference.response.dto';
 
 export class UserGetResponseDto extends DatabaseObjectIdDto implements IUserGetResponse {
   firstName: string;
@@ -32,4 +33,5 @@ export class UserGetResponseDto extends DatabaseObjectIdDto implements IUserGetR
   gender: ENUM_USER_GENDER;
 
   verification: UserVerificationResponseDto;
+  preferences: UserPreferencesResponseDto;
 }

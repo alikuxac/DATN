@@ -12,7 +12,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { ThemeProvider, DefaultTheme } from "@react-navigation/native";
-import { Stack, SplashScreen } from "expo-router"; // Dùng Stack của Expo Router
+import { Stack, SplashScreen, useSegments, useRouter, useRootNavigationState } from "expo-router"; // Dùng Stack của Expo Router
 
 // Import từ code cũ của bạn
 import { persistor, store } from "@/store";
@@ -26,6 +26,29 @@ import { ToastProvider } from "@/components/ui/ToastProvider.tsx";
 
 // Ngăn màn hình splash ẩn đi cho đến khi load xong (tùy chọn)
 SplashScreen.preventAutoHideAsync();
+
+function InitialLayout() {
+  const { token } = useAppSelector((state) => state.app);
+  const segments = useSegments();
+  const router = useRouter();
+  const navigationState = useRootNavigationState();
+
+  useEffect(() => {
+    if (!navigationState?.key) return;
+
+    const inAuthGroup = segments[0] === '(auth)';
+
+    if (!token && !inAuthGroup) {
+      // A. Nếu KHÔNG có token và đang KHÔNG ở trang login -> Đá về login
+      router.replace('/(auth)/sign-in');
+    } else if (token && inAuthGroup) {
+      // B. Nếu CÓ token mà lại đang ở trang login -> Đá vào trong
+      router.replace('/(tabs)'); // Hoặc '/(tabs)/map' tùy bạn
+    }
+  }, [token, segments, navigationState?.key]);
+
+  return <Stack screenOptions={{ headerShown: false }} />; // Slot sẽ render các màn hình con (Stack/Tabs)
+}
 
 // Component con: Đã có Redux Context, có thể dùng hooks
 const AppLayoutNav = () => {
@@ -65,7 +88,7 @@ const AppLayoutNav = () => {
                   <LanguageHelper />
 
                   {/* Đây là nơi các screen (như index.tsx) được render */}
-                  <Stack screenOptions={{ headerShown: false }} />
+                  <InitialLayout />
                 </ToastProvider>
               </DialogProvider>
             </SafeAreaProvider>

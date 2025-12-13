@@ -4,6 +4,7 @@ import {
 import {
     ENUM_USER_GENDER,
     ENUM_USER_SIGN_UP_FROM,
+    IUserListResponse,
 } from '@repo/shared';
 
 import { UserGetResponseDto } from '@modules/users/dto/response/user.get.response.dto';
@@ -16,7 +17,7 @@ export class UserListResponseDto extends OmitType(UserGetResponseDto, [
     'signUpFrom',
     'gender',
     'verification',
-] as const) {
+] as const) implements IUserListResponse {
     passwordExpiredAt: Date;
     passwordCreatedAt: Date;
     signUpDate: Date;

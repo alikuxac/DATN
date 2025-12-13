@@ -4,7 +4,6 @@ import {
   FlatList,
   TouchableOpacity,
   StatusBar,
-  SafeAreaView,
   StyleSheet,
   Platform,
   Alert,
@@ -13,7 +12,7 @@ import {
 } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { toggleTheme } from "@/store/slices/appSlice";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 // Components
 import { AppText, AppInput, Icon, Badge, AppButton } from "@/components/ui";
@@ -291,12 +290,12 @@ export default function ReportsScreen() {
 
   const handleEditSave = () => {
     setEditingReport(null);
-    Alert.alert("Success", "Report updated successfully");
+    Alert.alert(t("COMMON.SUCCESS"), "Report updated successfully");
   };
 
   const handleChangeStatus = (newStatus: string) => {
     setStatusTargetReport(null);
-    Alert.alert("Success", `Status changed to ${newStatus}`);
+    Alert.alert(t("COMMON.SUCCESS"), `Status changed to ${newStatus}`);
   };
 
   const handleDelete = (id: string) => {
@@ -516,27 +515,6 @@ export default function ReportsScreen() {
       <StatusBar
         barStyle={theme === "dark" ? "light-content" : "dark-content"}
       />
-
-      {/* HEADER */}
-      <View className="bg-white dark:bg-background pt-safe-offset-0 pb-2 px-4 border-b border-gray-100 dark:border-neutrals800">
-        <SafeAreaView>
-          <View className="flex-row items-center justify-between h-[50px]">
-            <View className="w-10" />
-            <AppText className="text-lg font-sans-bold text-foreground">
-              Reports
-            </AppText>
-            <TouchableOpacity
-              onPress={() => dispatch(toggleTheme())}
-              className="w-10 h-10 items-center justify-center bg-gray-50 dark:bg-neutrals800 rounded-full"
-            >
-              <Icon
-                name={theme === "dark" ? "Sun" : "Moon"}
-                className="w-5 h-5 text-foreground"
-              />
-            </TouchableOpacity>
-          </View>
-        </SafeAreaView>
-      </View>
 
       <View className="flex-1 px-4 pt-4">
         {/* Search & Filter Bar */}

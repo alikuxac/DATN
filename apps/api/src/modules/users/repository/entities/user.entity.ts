@@ -2,14 +2,14 @@ import {
   ENUM_USER_ROLE, 
   ENUM_USER_SIGN_UP_FROM, 
   ENUM_USER_STATUS, 
-  ENUM_USER_GENDER,
-  ENUM_MESSAGE_LANGUAGE
+  ENUM_USER_GENDER
 } from '@repo/shared';
 
 import { UserVerificationEntity, UserVerificationSchema } from './user.verification.entity';
 import { DatabaseProp, DatabaseEntity, DatabaseSchema,  } from '@common/database/decorators/database.decorator';
 import { IDatabaseDocument } from '@common/database/interfaces/database.interface';
 import { DatabaseObjectIdEntityBase } from '@common/database/bases/database.object-id.entity';
+import { UserPreferencesEntity, UserPreferencesSchema } from './user.preferences.entity';
 
 @DatabaseEntity({
   collection: 'users',
@@ -70,14 +70,14 @@ export class UserEntity extends DatabaseObjectIdEntityBase {
   @DatabaseProp({ default: ENUM_USER_ROLE.USER, enum: ENUM_USER_ROLE })
   role: ENUM_USER_ROLE;
 
-  @DatabaseProp({ enum: ENUM_MESSAGE_LANGUAGE, default: ENUM_MESSAGE_LANGUAGE.VI })
-  language: ENUM_MESSAGE_LANGUAGE;
-
   @DatabaseProp()
   mobileNumber: string;
 
   @DatabaseProp({ required: true, schema: UserVerificationSchema })
   verification: UserVerificationEntity;
+
+  @DatabaseProp({ required: true, schema: UserPreferencesSchema })
+  preferences: UserPreferencesEntity;
 }
 
 export const UserSchema = DatabaseSchema(UserEntity);

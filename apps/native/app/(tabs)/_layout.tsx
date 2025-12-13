@@ -1,7 +1,4 @@
-import React from "react";
-import { Redirect, Tabs } from "expo-router";
-
-import { useAppSelector } from "@/store/hooks";
+import { Tabs } from "expo-router";
 
 import CustomTabBar from "../../src/navigation/components/CustomTabBar";
 import CustomScreenHeader from "@/navigation/components/ScreenHeader";
@@ -10,9 +7,7 @@ export default function TabLayout() {
 
   return (
     <Tabs
-      // Gắn CustomTabBar vào đây
       tabBar={(props) => <CustomTabBar {...props} />}
-      
       screenOptions={{
         headerShown: true,
         header: (props) => <CustomScreenHeader {...props} />,
@@ -31,7 +26,7 @@ export default function TabLayout() {
         name="map"
         options={{
           headerShown: false,
-          title: "Map", // CustomTabBar sẽ dùng cái này làm label (hoặc dùng translation key)
+          title: "Map",
         }}
       />
 
@@ -40,6 +35,8 @@ export default function TabLayout() {
         name="reports"
         options={{
           title: "Reports",
+          headerLeft: () => null,
+          headerRight: () => null,
         }}
       />
 
@@ -48,6 +45,8 @@ export default function TabLayout() {
         name="account"
         options={{
           title: "Account",
+          headerLeft: () => null,
+          headerRight: () => null,
         }}
       />
     </Tabs>

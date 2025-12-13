@@ -25,6 +25,7 @@ import {
 } from '@modules/users/pipes/user.parse.pipe';
 import { UserDocument } from '@modules/users/repository/entities/user.entity';
 import { UsersService } from '@modules/users/services/users.service';
+import { UserUpdatePreferencesRequestDto } from '../dto/request/user.update-preferences.request.dto';
 
 @Controller({
     version: '1',
@@ -93,6 +94,62 @@ export class UserSharedController {
             });
         }
 
+        return;
+    }
+
+    @Response('user.preferences')
+    @UserProtected([false])
+    @AuthJwtAccessProtected()
+    @Get('/preferences')
+    async preferences(
+        @AuthJwtPayload<IAuthJwtAccessTokenPayload>('user', UserParsePipe)
+        user: UserDocument
+    ) {
+        return { data: user.preferences };
+    }
+
+    @Response('user.updatePreferences')
+    @UserProtected()
+    @AuthJwtAccessProtected()
+    @Put('/preferences/update')
+    async updatePreferences(
+        @AuthJwtPayload<IAuthJwtAccessTokenPayload>('user', UserParsePipe)
+        user: UserDocument,
+        @Body()
+        { ...body }: UserUpdatePreferencesRequestDto
+    ): Promise<void> {
+        const session: ClientSession =
+            await this.databaseService.createTransaction();
+
+        try {
+            await this.userService.updatePreferences(
+                user, 
+                { ...body },
+                { session }
+            );
+
+            await this.activityService.createByUser(
+                user,
+                {
+                    description: this.messageService.setMessage(
+                        'activity.user.updatePreferences'
+                    ),
+                },
+                { session }
+            );
+
+            await this.databaseService.commitTransaction(session);
+        } catch (err: unknown) {
+            await this.databaseService.abortTransaction(session);
+
+            throw new InternalServerErrorException({
+                statusCode: ENUM_STATUS_CODE_ERROR.APP_UNKNOWN,
+                message: 'http.serverError.internalServerError',
+                _error: err,
+            });
+        }
+
+        
         return;
     }
 }

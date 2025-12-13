@@ -1,86 +1,137 @@
 {
-  "HOME": "Home",
+  "COMMON": {
+    "HOME": "Home",
+    "ERROR": "Error",
+    "SUCCESS": "Success",
+    "CANCEL": "Cancel",
+    "SAVE": "Save",
+    "EDIT": "Edit",
+    "DELETE": "Delete",
+    "CONFIRM": "Confirm",
+    "LOADING": "Loading...",
+    "UNKNOWN_ERROR": "An unknown error occurred",
 
-  "EMAIL": "Email",
-  "PASSWORD": "Password",
-  "CONFIRM_PASSWORD": "Confirm Password",
-  "FIRST_NAME": "First Name",
-  "LAST_NAME": "Last Name",
+    "BTN_SAVE_CHANGES": "Save Changes",
 
-  "LOGIN": "Login",
-  "REGISTER": "Register",
-
-  "SURVIAL_MODE": "Survial Mode",
-  "NO_ACCOUNT": "Don't have an account?",
-  "CREATE_ACCOUNT": "Create account",
-  "ALREADY_HAVE_AN_ACCOUNT": "Already have an account?",
-
-  "GENDER": {
-    "NAME": "Gender",
-    "MALE": "Male",
-    "FEMALE": "Female",
-    "OTHER": "Other"
+    "ERR_UPDATE_FAILED": "Failed to save settings"
   },
 
   "AUTH": {
-    "emailRequired": "Email is required",
-    "passwordRequired": "Password is required",
-    "passwordMinLength": "Password must be at least 6 characters",
-    "passwordsDoNotMatch": "Passwords do not match",
-    "firstNameRequired": "First name is required",
-    "lastNameRequired": "Last name is required"
+    "LOGIN_TITLE": "Login",
+    "REGISTER_TITLE": "Register",
+    "FORGOT_PASSWORD": "Forgot Password?",
+
+    "LABEL_EMAIL": "Email",
+    "LABEL_PASSWORD": "Password",
+    "LABEL_CONFIRM_PASSWORD": "Confirm Password",
+    "LABEL_FIRST_NAME": "First Name",
+    "LABEL_LAST_NAME": "Last Name",
+
+    "BTN_LOGIN": "Login",
+    "BTN_REGISTER": "Create Account",
+    "BTN_LOGOUT": "Logout",
+
+    "HINT_NO_ACCOUNT": "Don't have an account?",
+    "HINT_HAS_ACCOUNT": "Already have an account?",
+    "LINK_REGISTER": "Register now",
+    "LINK_LOGIN": "Login here",
+
+    "MSG_WELCOME_BACK": "Welcome back!",
+    "MSG_LOGIN_SUCCESS": "Login successful",
+
+    "ERR_LOGIN_FAILED": "Login Failed",
+    "ERR_NO_TOKEN": "No access token received from server",
+    "ERR_EMAIL_NOT_EXIST": "Email does not exist",
+    "ERR_INCORRECT_PASSWORD": "Incorrect password",
+    "ERR_SOMETHING_WENT_WRONG": "Something went wrong. Please try again later."
   },
 
   "VALIDATION": {
-    "emailInvalid": "Invalid email address",
-    "passwordMin": "Password must be at least 6 characters",
-    "passwordUppercase": "Password must contain at least one uppercase letter",
-    "passwordLowercase": "Password must contain at least one lowercase letter",
-    "passwordNumber": "Password must contain at least one number",
-    "fieldRequired": "{{fieldName}} is required",
-    "genderRequired": "Gender is required"
+    "REQUIRED": "{{field}} is required",
+    "EMAIL_INVALID": "Invalid email address",
+    "PASSWORD_MIN_LENGTH": "Password must be at least 6 characters",
+    "PASSWORD_MISMATCH": "Passwords do not match",
+    "PASSWORD_WEAK": "Password must contain uppercase, lowercase, and a number",
+    "GENDER_REQUIRED": "Please select a gender"
   },
 
-  "COUNT": "Count {{count}}",
-  "APPEARANCE": "Appearance",
-  "LANGUAGE": "Language",
-  "SETTINGS": "Settings",
-  "MORE": "More",
-  "LIGHT_MODE": "Light mode",
-  "DARK_MODE": "Dark mode",
-  "APP_TEXT": "App Text",
-  "AVATAR": "Avatar",
-  "BADGE": "Badge",
-  "BUTTON": "Button",
-  "CHIP": "Chip",
-  "CHECKBOX": "Checkbox",
-  "PROGRESS_BAR": "Progress Bar",
-  "SLIDER": "Slider",
-  "SWITCH": "Switch",
-  "SELECT": "Select",
-  "THEME": "Theme",
-  "APP_INTRODUCTION": "This app is a tech demo for Reach Native Rapid Boilerplate. This was built to provide you a faster, more efficient way to build your next app.",
-  "AUTHENTICATION": "Authentication",
-  "TOP_UP": "Top Up",
-  "SWAP": "Swap",
-  "NET_WORTH": "Net Worth",
-  "GET_RECOMMENDATIONS": "Get Recommendations from Professionals",
-  "GET_RECOMMENDATIONS_SUBTITLE": "See traders insight, get latest news from our hand picked professionals on the market. Get some confidence and start trading.",
-  "TOP_PAIRS": "Top Pairs",
-  "SWAP_SUCCESS": "Swap Success",
-  "SWAP_DETAILS": "You have swapped {{amount}} USDT for BTC!",
-  "ABOUT": "About",
-  "ABOUT_TITLE": "About This App",
-  "ABOUT_INTRO": "A production-ready React Native boilerplate designed to accelerate your mobile app development with best practices and modern tools.",
-  "PROJECT_INFO": "Project Information",
-  "PROJECT_BY": "Project by",
-  "GITHUB_REPO": "GitHub Repository",
-  "AUTHOR_CONTACT": "Author Contact",
-  "CONTACT_EMAIL": "Contact Email",
-  "AUTHOR_WEBSITE": "Author Website",
-  "AUTHOR_GITHUB": "GitHub Profile",
-  "AUTHOR_LINKEDIN": "LinkedIn Profile",
-  "CONTACT_ME": "Need Help?",
-  "CONTACT_ME_DESC": "Feel free to reach out if you need assistance with this boilerplate or have any questions about implementation.",
-  "SEND_EMAIL": "Send Email"
+  "PROFILE": {
+    "TITLE": "Profile",
+    "EDIT_PROFILE": "Edit Profile",
+    "PERSONAL_INFO": "Personal Information",
+    "CONTACT_INFO": "Contact Information",
+    "AVATAR_UPLOAD": "Change Avatar",
+
+    "LABEL_PHONE": "Phone Number",
+    "LABEL_GENDER": "Gender",
+    "LABEL_SELECT_GENDER": "Select Gender",
+    "VALUE_NO_PHONE": "No phone number added",
+    "VALUE_NOT_SPECIFIED": "Not specified",
+
+    "GENDER_OPTIONS": {
+      "MALE": "Male",
+      "FEMALE": "Female",
+      "OTHER": "Other"
+    },
+
+    "MSG_PROFILE_UPDATED": "Profile updated successfully"
+  },
+
+  "SETTINGS": {
+    "TITLE": "Settings",
+
+    "SECTION_ACCOUNT": "Account",
+    "SECTION_APP": "App Settings",
+    "SECTION_INFO": "Information",
+    
+    "EDIT_PROFILE": "Edit Profile",
+    "PROFILE_DESC": "Name, Email, Phone number",
+
+    "SECURITY": "Security & Login",
+    "SECURITY_DESC": "Password, Devices",
+    
+    "PREFERENCES": "Preferences",
+    "PREFERENCES_DESC": "Language, Appearance",
+    
+    "NOTIFICATIONS": "Notifications",
+    "ABOUT": "About App",
+    
+    "LOGOUT": "Logout",
+    "LOGOUT_CONFIRM": "Are you sure you want to logout?",
+
+    "THEME": {
+      "TITLE": "Appearance",
+      "SYSTEM": "Sync with system",
+      "LIGHT": "Light mode",
+      "DARK": "Dark mode"
+    },
+
+    "LANGUAGE": {
+      "TITLE": "Language",
+      "SYSTEM": "System Default",
+      "VI": "Vietnamese",
+      "EN": "English"
+    }
+  },
+
+  "SECURITY": {
+    "TITLE": "Security",
+    "CHANGE_PASSWORD": "Change Password",
+    "ACTIVE_SESSIONS": "Active Sessions",
+    "THIS_DEVICE": "This device",
+
+    "LABEL_CURRENT_PASSWORD": "Current Password",
+    "LABEL_NEW_PASSWORD": "New Password",
+    "LABEL_CONFIRM_NEW_PASSWORD": "Confirm New Password",
+    "LABEL_ACTIVE_SESSIONS": "Active Sessions",
+
+    "BTN_UPDATE_PASSWORD": "Update Password",
+    "MSG_PASSWORD_CHANGED": "Password changed successfully",
+    "MSG_PASSWORD_ERROR": "Failed to change password"
+  },
+
+  "FEATURE": {
+    "SURVIVAL_MODE": "Survival Mode",
+    "SURVIVAL_DESC": "Enable offline maps and emergency contacts"
+  }
 }

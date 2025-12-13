@@ -1,4 +1,4 @@
-import { ENUM_USER_GENDER, ENUM_USER_ROLE, ENUM_USER_SIGN_UP_FROM, ENUM_USER_STATUS } from "../enums";
+import { ENUM_MESSAGE_LANGUAGE, ENUM_USER_GENDER, ENUM_USER_ROLE, ENUM_USER_SIGN_UP_FROM, ENUM_USER_STATUS, ENUM_USER_THEME } from "../enums";
 import { IDatabaseDto } from "./database.interface";
 
 // Request
@@ -27,6 +27,11 @@ export interface IUserVerificationResponse {
   mobileNumberVerifiedDate?: Date;
 }
 
+export interface IUserPreferencesResponse {
+  language: ENUM_MESSAGE_LANGUAGE;
+  theme: ENUM_USER_THEME;
+}
+
 export interface IUserGetResponse extends IDatabaseDto {
   firstName: string;
   lastName: string;
@@ -45,6 +50,7 @@ export interface IUserGetResponse extends IDatabaseDto {
   gender: ENUM_USER_GENDER;
 
   verification: IUserVerificationResponse;
+  preferences: IUserPreferencesResponse;
 }
 
 export type IUserListResponse =
@@ -53,7 +59,7 @@ export type IUserListResponse =
     'password' | 'passwordExpiredAt' | 'passwordCreatedAt' | 'signUpDate' | 'signUpFrom' | 'gender' | 'verification'
   >;
 
-export type IUserProfileReponse = Omit<IUserGetResponse, 'role' | 'mobileNumber'>;
+export type IUserProfileReponse = Omit<IUserGetResponse, 'role' | 'mobileNumber' | 'password' | 'passwordExpiredAt' | 'passwordCreatedAt'>;
 
 export type IUserShortResponse = Omit<IUserListResponse, 'status' | 'createdAt' | 'updatedAt'> & {
   status: ENUM_USER_STATUS;

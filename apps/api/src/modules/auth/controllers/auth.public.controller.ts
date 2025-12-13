@@ -163,6 +163,7 @@ export class AuthPublicController {
       password: passwordString,
       firstName,
       lastName,
+      language,
     }: AuthSignUpRequestDto,
   ): Promise<void> {
     const promises: Promise<any>[] = [
@@ -191,6 +192,7 @@ export class AuthPublicController {
           lastName,
           firstName,
         },
+        language,
         ENUM_USER_SIGN_UP_FROM.PUBLIC,
         { session }
       );

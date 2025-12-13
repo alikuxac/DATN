@@ -1,26 +1,25 @@
 import React, { useState, useEffect } from "react";
 import {
   View,
-  TouchableOpacity,
   StatusBar,
-  SafeAreaView,
   StyleSheet,
   Platform, // 👈 Quan trọng để check nền tảng
   Alert,
   Text, // Thêm Text để hiện thông báo trên Web
 } from "react-native";
 import { useTranslation } from "react-i18next";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { toggleTheme, setLanguage } from "@/store/slices/appSlice";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 // Components
 import { cn } from "@/utils";
 import { useColors } from "@/hooks/useColors";
 import { useToast } from "@/components/ui/ToastProvider";
 import { AppText, AppInput, AppButton, Icon, Badge } from "@/components/ui";
+import VietMaap, { MapView } from '@vietmap/vietmap-gl-react-native';
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
 // --- CONFIG ---
-const VIETMAP_API_KEY = "8ebb5c39aa7a2d1eeab976c9e8f8e25425b25a5947f6414e";
+const VIETMAP_API_KEY = "";
 const MAP_STYLE_URL = `https://maps.vietmap.vn/api/maps/light/styles.json?apikey=${VIETMAP_API_KEY}`;
 
 // 👇 1. LOAD THƯ VIỆN CÓ ĐIỀU KIỆN
@@ -84,11 +83,6 @@ export default function MapScreen() {
     setReportNotes("");
   };
 
-  const handleToggleLanguage = () => {
-    const nextLang = language === "en" ? "vi" : "en";
-    dispatch(setLanguage(nextLang));
-  };
-
   const handleMyLocation = () => {
     const newLat = 10.7 + Math.random() * 0.1;
     const newLng = 106.6 + Math.random() * 0.1;
@@ -109,7 +103,6 @@ export default function MapScreen() {
         // --- MOBILE: Render Map Thật ---
         <Vietmap.MapView
           style={styles.map}
-          styleURL={MAP_STYLE_URL}
           logoEnabled={false}
           attributionEnabled={false}
         >

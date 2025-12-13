@@ -17,10 +17,13 @@ class ApiService {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
+    const state = store.getState();
+    const language = state.app.language;
 
     // Tự động thêm Authorization Header nếu có token
     const defaultHeaders: Record<string, string> = {
       'Content-Type': 'application/json',
+      'x-custom-lang': language
     };
 
     if (this.accessToken) {
@@ -38,21 +41,41 @@ class ApiService {
     try {
       const response = await fetch(url, config);
 
+      // 1. Xử lý 401 (Unauthorized) - Ưu tiên cao nhất
       if (response.status === 401) {
         store.dispatch(setToken(null));
-
         throw new Error('Session expired');
       }
 
-      // Xử lý lỗi từ Backend trả về (nếu có)
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP Error ${response.status}`);
+      // 2. Xử lý 204 (No Content) 
+      // Rất quan trọng cho API PUT/DELETE update preferences của bạn
+      if (response.status === 204) {
+        return {} as any; // Trả về object rỗng nếu server không trả dữ liệu
       }
 
-      return await response.json();
+      // 3. Đọc body dưới dạng TEXT trước (Tránh lỗi Body used & JSON parse)
+      const responseText = await response.text();
+
+      let data;
+      try {
+        // Cố gắng parse JSON
+        data = responseText ? JSON.parse(responseText) : {};
+      } catch (e) {
+        // Nếu server trả về HTML lỗi hoặc text thường -> gán data bằng text đó
+        data = { message: responseText };
+      }
+
+      // 4. Kiểm tra lỗi HTTP (!ok)
+      if (!response.ok) {
+        // Lúc này 'data' chắc chắn đã có dữ liệu (JSON hoặc text)
+        throw new Error(data.message || `HTTP Error ${response.status}`);
+      }
+
+      // 5. Trả về data thành công
+      return data;
+
     } catch (error) {
-      console.error('API Request failed:', error);
+      console.error('[API Error]:', error);
       throw error;
     }
   }

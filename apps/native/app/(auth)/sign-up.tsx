@@ -14,14 +14,15 @@ import { setTheme, setLanguage } from "@/store/slices/appSlice";
 import { useToast } from "@/components/ui/ToastProvider";
 import { getRegisterSchema, RegisterFormData } from "@/validations/common";
 import { apiService } from "@/services/api.service";
+import { getDeviceLanguage } from "@/utils/getDeviceLanguage";
 
 export default function SignUpScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
-  const { theme, language } = useAppSelector((state) => state.app);
+  const { theme } = useAppSelector((state) => state.app);
   const { showError, showSuccess } = useToast();
-
+  const language = getDeviceLanguage();
   // State
   const [formData, setFormData] = useState<RegisterFormData>({
     firstName: "",
@@ -29,15 +30,12 @@ export default function SignUpScreen() {
     email: "",
     password: "",
     confirmPassword: "",
-    // ❌ ĐÃ XÓA: gender: "other",
   });
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-
-  // ❌ ĐÃ XÓA: genderOptions
 
   // Helper update form
   const updateForm = (key: keyof RegisterFormData, value: string) => {
@@ -80,6 +78,7 @@ export default function SignUpScreen() {
         password: formData.password,
         firstName: formData.firstName,
         lastName: formData.lastName,
+        language,
       };
 
       // Gọi API
@@ -98,7 +97,7 @@ export default function SignUpScreen() {
       if (error.message && error.message.includes("email")) {
         setErrors((prev) => ({
           ...prev,
-          email: t("VALIDATION.EMAIL_EXISTS") || "Email already exists",
+          email: t("VALIDATION.EMAIL_EXISTS"),
         }));
         showError("Registration Failed", "This email is already in use.");
       } else {
@@ -114,13 +113,11 @@ export default function SignUpScreen() {
 
   const handleToggleTheme = () =>
     dispatch(setTheme(theme === "dark" ? "light" : "dark"));
-  const handleToggleLanguage = () =>
-    dispatch(setLanguage(language === "en" ? "vi" : "en"));
 
   const FirstNameInput = (
     <View className="flex-1">
       <AppInput
-        label={t("FIRST_NAME") || "First Name"}
+        label={t("FIRST_NAME")}
         placeholder="John"
         value={formData.firstName}
         onChangeText={(val) => updateForm("firstName", val)}
@@ -132,7 +129,7 @@ export default function SignUpScreen() {
   const LastNameInput = (
     <View className="flex-1">
       <AppInput
-        label={t("LAST_NAME") || "Last Name"}
+        label={t("LAST_NAME")}
         placeholder="Doe"
         value={formData.lastName}
         onChangeText={(val) => updateForm("lastName", val)}
@@ -153,14 +150,6 @@ export default function SignUpScreen() {
             className="text-foreground w-5 h-5"
           />
         </TouchableOpacity>
-        <TouchableOpacity
-          onPress={handleToggleLanguage}
-          className="px-3 py-1.5 rounded-full bg-background border border-neutrals300 dark:border-neutrals700"
-        >
-          <AppText variant="label" weight="medium">
-            {language === "en" ? "VN" : "EN"}
-          </AppText>
-        </TouchableOpacity>
       </View>
 
       <View className="items-center mb-8">
@@ -178,15 +167,15 @@ export default function SignUpScreen() {
       <View className="bg-white dark:bg-neutrals900 rounded-3xl p-6 shadow-xl border border-neutrals200 dark:border-neutrals800 gap-6">
         <View className="gap-4">
           <View className="flex-row gap-3">
-            {language === "vi" ? (
+            {language === "en" ? (
               <>
-                {LastNameInput}
                 {FirstNameInput}
+                {LastNameInput}
               </>
             ) : (
               <>
-                {FirstNameInput}
                 {LastNameInput}
+                {FirstNameInput}
               </>
             )}
           </View>
@@ -236,8 +225,6 @@ export default function SignUpScreen() {
               </Pressable>
             }
           />
-
-          {/* ❌ ĐÃ XÓA: Select Gender */}
         </View>
 
         <AppButton
@@ -256,20 +243,20 @@ export default function SignUpScreen() {
           }}
           textClassname="text-white font-sans-bold text-lg"
         >
-          {t("CREATE_ACCOUNT") || "Create Account"}
+          {t("CREATE_ACCOUNT")}
         </AppButton>
       </View>
 
       <View className="flex-row justify-center items-center mt-8 gap-1">
         <AppText className="text-neutrals600 dark:text-neutrals400 text-sm font-sans-regular">
-          {t("ALREADY_HAVE_AN_ACCOUNT") || "Already have an account?"}
+          {t("ALREADY_HAVE_AN_ACCOUNT")}
         </AppText>
         <Pressable onPress={() => router.push("/(auth)/sign-in")}>
           <AppText
             className="text-sm font-sans-bold"
             style={{ color: "#2563eb" }}
           >
-            {t("LOGIN") || "Sign In"}
+            {t("LOGIN")}
           </AppText>
         </Pressable>
       </View>

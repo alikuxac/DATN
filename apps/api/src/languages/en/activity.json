@@ -7,6 +7,7 @@
         "activeByAdmin": "Great news! Your account has been reactivated by our admin team.",
         "blockedByAdmin": "Your account access has been temporarily restricted by our admin team.",
         "changePassword": "Great! Your password has been successfully updated.",
-        "uploadProfile": "Perfect! Your new profile picture has been uploaded."
+        "uploadProfile": "Perfect! Your new profile picture has been uploaded.",
+        "updatePreferences": "Great! Your preferences have been successfully updated."
     }
 }
