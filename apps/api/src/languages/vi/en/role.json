@@ -1,0 +1,15 @@
+{
+  "list": "Thông tin vai trò đã được truy xuất thành công.",
+  "get": "Thông tin chi tiết về vai trò đã được truy xuất thành công.",
+  "create": "Vai trò mới đã được tạo thành công.",
+  "update": "Vai trò đã được cập nhật thành công.",
+  "delete": "Vai trò đã được xóa thành công.",
+  "inactive": "Vai trò được đánh dấu là không hoạt động.",
+  "active": "Vai trò được đánh dấu là đang hoạt động.",
+  "error": {
+    "exist": "Chức danh có tên này đã tồn tại.",
+    "used": "Chức vụ này hiện đang được sử dụng và không thể xóa.",
+    "isActiveInvalid": "Trạng thái hoạt động không hợp lệ cho vai trò này.",
+    "notFound": "Rất tiếc, chúng tôi không tìm thấy vai trò bạn yêu cầu."
+  }
+}
