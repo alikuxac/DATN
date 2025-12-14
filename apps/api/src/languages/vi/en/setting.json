@@ -1,0 +1,11 @@
+{
+  "list": "Danh sách cài đặt đã được truy xuất thành công.",
+  "get": "Thông tin cài đặt đã được tải thành công.",
+  "update": "Cài đặt đã được cập nhật thành công.",
+  "core": "Cài đặt cốt lõi đã được cập nhật thành công.",
+  "reload": "Cài đặt đã được tải lại thành công.",
+  "error": {
+    "valueNotAllowed": "Giá trị bạn cung cấp không được phép sử dụng cho thiết lập này.",
+    "notFound": "Rất tiếc, chúng tôi không tìm thấy cài đặt bạn yêu cầu."
+  }
+}
