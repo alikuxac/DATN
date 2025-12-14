@@ -1,0 +1,6 @@
+{
+  "error": {
+    "abilityForbidden": "Rất tiếc, bạn không có quyền thực hiện thao tác này.",
+    "roleForbidden": "Rất tiếc, vai trò của bạn không cho phép truy cập vào tài nguyên này."
+  }
+}
