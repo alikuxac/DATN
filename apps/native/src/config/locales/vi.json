@@ -1,0 +1,111 @@
+{
+  "COMMON": {
+    "HOME": "Trang chủ",
+    "ERROR": "Lỗi",
+    "SUCCESS": "Thành công",
+    "CANCEL": "Hủy bỏ",
+    "SAVE": "Lưu",
+    "EDIT": "Chỉnh sửa",
+    "DELETE": "Xóa",
+    "CONFIRM": "Xác nhận",
+    "LOADING": "Đang tải...",
+    "UNKNOWN_ERROR": "Đã xảy ra lỗi không xác định",
+    "BTN_SAVE_CHANGES": "Lưu thay đổi",
+    "ERR_UPDATE_FAILED": "Không thể lưu cài đặt"
+  },
+  "AUTH": {
+    "LOGIN_TITLE": "Đăng nhập",
+    "REGISTER_TITLE": "Đăng ký",
+    "FORGOT_PASSWORD": "Quên mật khẩu?",
+    "LABEL_EMAIL": "Email",
+    "LABEL_PASSWORD": "Mật khẩu",
+    "LABEL_CONFIRM_PASSWORD": "Xác nhận mật khẩu",
+    "LABEL_FIRST_NAME": "Tên",
+    "LABEL_LAST_NAME": "Họ",
+    "BTN_LOGIN": "Đăng nhập",
+    "BTN_REGISTER": "Tạo tài khoản",
+    "BTN_LOGOUT": "Đăng xuất",
+    "HINT_NO_ACCOUNT": "Bạn chưa có tài khoản?",
+    "HINT_HAS_ACCOUNT": "Bạn đã có tài khoản?",
+    "LINK_REGISTER": "Đăng ký ngay",
+    "LINK_LOGIN": "Đăng nhập tại đây",
+    "MSG_WELCOME_BACK": "Chào mừng bạn trở lại!",
+    "MSG_LOGIN_SUCCESS": "Đăng nhập thành công",
+    "ERR_LOGIN_FAILED": "Đăng nhập thất bại",
+    "ERR_NO_TOKEN": "Không nhận được mã truy cập từ máy chủ.",
+    "ERR_EMAIL_NOT_EXIST": "Địa chỉ email không tồn tại.",
+    "ERR_INCORRECT_PASSWORD": "Mật khẩu không chính xác",
+    "ERR_SOMETHING_WENT_WRONG": "Đã xảy ra lỗi. Vui lòng thử lại sau."
+  },
+  "VALIDATION": {
+    "REQUIRED": "{{field}} là bắt buộc",
+    "EMAIL_INVALID": "Địa chỉ email không hợp lệ",
+    "PASSWORD_MIN_LENGTH": "Mật khẩu phải có ít nhất 6 ký tự.",
+    "PASSWORD_MISMATCH": "Mật khẩu không khớp",
+    "PASSWORD_WEAK": "Mật khẩu phải bao gồm chữ hoa, chữ thường và một số.",
+    "GENDER_REQUIRED": "Vui lòng chọn giới tính"
+  },
+  "PROFILE": {
+    "TITLE": "Hồ sơ",
+    "EDIT_PROFILE": "Chỉnh sửa hồ sơ",
+    "PERSONAL_INFO": "Thông tin cá nhân",
+    "CONTACT_INFO": "Thông tin liên hệ",
+    "AVATAR_UPLOAD": "Thay đổi ảnh đại diện",
+    "LABEL_PHONE": "Số điện thoại",
+    "LABEL_GENDER": "Giới tính",
+    "LABEL_SELECT_GENDER": "Chọn giới tính",
+    "VALUE_NO_PHONE": "Chưa thêm số điện thoại",
+    "VALUE_NOT_SPECIFIED": "Không được chỉ định",
+    "GENDER_OPTIONS": {
+      "MALE": "Nam",
+      "FEMALE": "Nữ",
+      "OTHER": "Khác"
+    },
+    "MSG_PROFILE_UPDATED": "Hồ sơ đã được cập nhật thành công."
+  },
+  "SETTINGS": {
+    "TITLE": "Cài đặt",
+    "SECTION_ACCOUNT": "Tài khoản",
+    "SECTION_APP": "Cài đặt ứng dụng",
+    "SECTION_INFO": "Thông tin",
+    "EDIT_PROFILE": "Chỉnh sửa hồ sơ",
+    "PROFILE_DESC": "Họ và tên, email, số điện thoại",
+    "SECURITY": "Bảo mật & Đăng nhập",
+    "SECURITY_DESC": "Mật khẩu, Thiết bị",
+    "PREFERENCES": "Tùy chọn",
+    "PREFERENCES_DESC": "Ngôn ngữ, Ngoại hình",
+    "NOTIFICATIONS": "Thông báo",
+    "ABOUT": "Giới thiệu về ứng dụng",
+    "LOGOUT": "Đăng xuất",
+    "LOGOUT_CONFIRM": "Bạn có chắc chắn muốn đăng xuất không?",
+    "THEME": {
+      "TITLE": "Appearance",
+      "SYSTEM": "Đồng bộ với hệ thống",
+      "LIGHT": "Chế độ sáng",
+      "DARK": "Chế độ tối"
+    },
+    "LANGUAGE": {
+      "TITLE": "Ngôn ngữ",
+      "SYSTEM": "Mặc định hệ thống",
+      "VI": "Tiếng Việt",
+      "EN": "Tiếng Anh"
+    }
+  },
+  "SECURITY": {
+    "TITLE": "Bảo mật",
+    "CHANGE_PASSWORD": "Thay đổi mật khẩu",
+    "ACTIVE_SESSIONS": "Phiên hoạt động",
+    "THIS_DEVICE": "Thiết bị này",
+    "LABEL_CURRENT_PASSWORD": "Mật khẩu hiện tại",
+    "LABEL_NEW_PASSWORD": "Mật khẩu mới",
+    "LABEL_CONFIRM_NEW_PASSWORD": "Xác nhận mật khẩu mới",
+    "LABEL_ACTIVE_SESSIONS": "Phiên hoạt động",
+    "BTN_UPDATE_PASSWORD": "Cập nhật mật khẩu",
+    "MSG_PASSWORD_CHANGED": "Mật khẩu đã được thay đổi thành công.",
+    "MSG_PASSWORD_ERROR": "Không thể thay đổi mật khẩu."
+  },
+  "FEATURE": {
+    "SURVIVAL_MODE": "Chế độ sinh tồn",
+    "SURVIVAL_DESC": "Kích hoạt bản đồ ngoại tuyến và thông tin liên lạc khẩn cấp"
+  }
+}
