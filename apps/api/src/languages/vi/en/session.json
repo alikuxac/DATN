@@ -1,0 +1,7 @@
+{
+  "list": "Phiên làm việc đã được truy xuất thành công.",
+  "revoke": "Phiên đăng nhập đã bị hủy thành công.",
+  "error": {
+    "forbiddenRevoke": "Bạn không thể hủy bỏ phiên làm việc hiện tại."
+  }
+}
