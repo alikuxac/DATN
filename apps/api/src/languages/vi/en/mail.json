@@ -1,0 +1,9 @@
+{
+  "welcome_subject": "Chào mừng bạn đến với dịch vụ của chúng tôi!",
+  "verification_subject": "Mã xác minh OTP của bạn",
+  "reset_password_subject": "Yêu cầu đặt lại mật khẩu",
+  "change_password_subject": "Mật khẩu của bạn đã được thay đổi",
+  "account_created_subject": "Tài khoản của bạn đã được tạo.",
+  "temp_password_subject": "Mật khẩu tạm thời của bạn",
+  "email_verified_subject": "Email của bạn đã được xác minh."
+}

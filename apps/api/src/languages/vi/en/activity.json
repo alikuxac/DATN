@@ -1,0 +1,17 @@
+{
+  "list": "Chào mừng! Đây là lịch sử hoạt động của bạn.",
+  "user": {
+    "create": "Chào mừng! Tài khoản của bạn đã được thiết lập thành công.",
+    "createByAdmin": "Chào mừng! Tài khoản của bạn đã được đội ngũ quản trị viên của chúng tôi thiết lập thành công.",
+    "update": "Thông tin tài khoản của bạn đã được cập nhật thành công.",
+    "updateByAdmin": "Thông tin tài khoản của bạn đã được nhóm quản trị viên cập nhật.",
+    "delete": "Tài khoản của bạn đã được xóa thành công.",
+    "inactiveByAdmin": "Tài khoản của bạn đã bị quản trị viên tạm thời vô hiệu hóa.",
+    "activeByAdmin": "Tin vui! Tài khoản của bạn đã được đội ngũ quản trị viên kích hoạt lại.",
+    "blockedByAdmin": "Quyền truy cập tài khoản của bạn đã bị nhóm quản trị viên tạm thời hạn chế.",
+    "changePassword": "Tuyệt vời! Mật khẩu của bạn đã được cập nhật thành công.",
+    "uploadProfile": "Tuyệt vời! Ảnh đại diện mới của bạn đã được tải lên.",
+    "updatePreferences": "Tuyệt vời! Tùy chọn của bạn đã được cập nhật thành công.",
+    "updateLocation": "Vị trí của bạn đã được cập nhật thành công."
+  }
+}

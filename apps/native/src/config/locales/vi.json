@@ -9,6 +9,7 @@
     "DELETE": "Xóa",
     "CONFIRM": "Xác nhận",
     "LOADING": "Đang tải...",
+    "VERSION": "Phiên bản",
     "UNKNOWN_ERROR": "Đã xảy ra lỗi không xác định",
     "BTN_SAVE_CHANGES": "Lưu thay đổi",
     "ERR_UPDATE_FAILED": "Không thể lưu cài đặt"
@@ -31,6 +32,8 @@
     "LINK_LOGIN": "Đăng nhập tại đây",
     "MSG_WELCOME_BACK": "Chào mừng bạn trở lại!",
     "MSG_LOGIN_SUCCESS": "Đăng nhập thành công",
+    "MSG_SIGNUP_SUCCESS": "Chào mừng bạn đến với FloodAid, {{firstName}}",
+    "TITLE_ACCOUNT_CREATED": "Tài khoản đã được tạo",
     "ERR_LOGIN_FAILED": "Đăng nhập thất bại",
     "ERR_NO_TOKEN": "Không nhận được mã truy cập từ máy chủ.",
     "ERR_EMAIL_NOT_EXIST": "Địa chỉ email không tồn tại.",
@@ -61,7 +64,11 @@
       "FEMALE": "Nữ",
       "OTHER": "Khác"
     },
-    "MSG_PROFILE_UPDATED": "Hồ sơ đã được cập nhật thành công."
+    "MSG_PROFILE_UPDATED": "Hồ sơ đã được cập nhật thành công.",
+    "VOLUNTEER_MODE": "Chế độ tình nguyện",
+    "VOLUNTEER_DESC": "Bật tính năng này để nhận thông báo cứu hộ gần bạn.",
+    "UPDATE_VOLUNTEER_SUCCESS": "Trạng thái tình nguyện viên đã được cập nhật thành công.",
+    "UPDATE_VOLUNTEER_FAILED": "Không thể cập nhật trạng thái tình nguyện viên."
   },
   "SETTINGS": {
     "TITLE": "Cài đặt",
