@@ -1,0 +1,18 @@
+{
+  "list": "Reports list retrieved successfully",
+  "create": "Report created successfully",
+  "update": "Report updated successfully",
+  "delete": "Report deleted successfully",
+  "bounds": "Get reports list in bounds successfully",
+  "error": {
+    "cannotCreate": "You cannot create a relief report while in Volunteer Mode.",
+    "tooClose": "You cannot create a report that is too close to another report.",
+    "alreadyAccepted": "Report has already been accepted",
+    "notFound": "Report not found",
+    "cannotUpOther": "You cannot update another user's report.",
+    "cannotUp": "You cannot update a report while in Volunteer Mode.",
+    "alreadyProcessed": "Report has already been processed",
+    "cannotDelOther": "You cannot delete another user's report.",
+    "cannotDel": "You cannot delete a report while in Volunteer Mode."
+  }
+}

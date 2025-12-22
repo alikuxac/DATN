@@ -1,0 +1,9 @@
+{
+  "welcome_subject": "Welcome to Our Service!",
+  "verification_subject": "Your OTP Verification Code",
+  "reset_password_subject": "Password Reset Request",
+  "change_password_subject": "Your Password Has Been Changed",
+  "account_created_subject": "Your Account Has Been Created",
+  "temp_password_subject": "Your Temporary Password",
+  "email_verified_subject": "Your Email Has Been Verified"
+}

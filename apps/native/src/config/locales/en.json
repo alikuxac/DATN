@@ -9,6 +9,7 @@
     "DELETE": "Delete",
     "CONFIRM": "Confirm",
     "LOADING": "Loading...",
+    "VERSION": "Version",
     "UNKNOWN_ERROR": "An unknown error occurred",
 
     "BTN_SAVE_CHANGES": "Save Changes",
@@ -38,6 +39,9 @@
 
     "MSG_WELCOME_BACK": "Welcome back!",
     "MSG_LOGIN_SUCCESS": "Login successful",
+    "MSG_SIGNUP_SUCCESS": "Welcome to FloodAid, {{firstName}}",
+
+    "TITLE_ACCOUNT_CREATED": "Account Created",
 
     "ERR_LOGIN_FAILED": "Login Failed",
     "ERR_NO_TOKEN": "No access token received from server",
@@ -74,7 +78,12 @@
       "OTHER": "Other"
     },
 
-    "MSG_PROFILE_UPDATED": "Profile updated successfully"
+    "MSG_PROFILE_UPDATED": "Profile updated successfully",
+
+    "VOLUNTEER_MODE": "Volunteer Mode",
+    "VOLUNTEER_DESC": "Enable to receive rescue notifications near you.",
+    "UPDATE_VOLUNTEER_SUCCESS": "Volunteer status updated successfully.",
+    "UPDATE_VOLUNTEER_FAILED": "Failed to update volunteer status."
   },
 
   "SETTINGS": {

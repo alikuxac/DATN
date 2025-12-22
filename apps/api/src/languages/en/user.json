@@ -11,6 +11,7 @@
     "deleteSelf": "User deleted successfully.",
     "updateMobileNumber": "Mobile number updated successfully.",
     "updateClaimUsername": "Username claimed successfully.",
+    "updateVolunteerStatus": "Volunteer status updated successfully",
     "error": {
         "mobileNumberExist": "This mobile number already exists.",
         "emailExist": "This email already exists.",
