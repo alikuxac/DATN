@@ -26,6 +26,7 @@ import {
 import { UserDocument } from '@modules/users/repository/entities/user.entity';
 import { UsersService } from '@modules/users/services/users.service';
 import { UserUpdatePreferencesRequestDto } from '../dto/request/user.update-preferences.request.dto';
+import { UserUpdateSettingsDto } from '../dto/request/user.update-settings.request.dto';
 
 @Controller({
     version: '1',
@@ -37,7 +38,7 @@ export class UserSharedController {
         private readonly userService: UsersService,
         private readonly activityService: ActivityService,
         private readonly messageService: MessageService
-    ) {}
+    ) { }
 
     @Response('user.profile')
     @UserProtected([false])
@@ -60,7 +61,7 @@ export class UserSharedController {
         @AuthJwtPayload<IAuthJwtAccessTokenPayload>('user', UserParsePipe)
         user: UserDocument,
         @Body()
-        {  ...body }: UserUpdateProfileRequestDto
+        { ...body }: UserUpdateProfileRequestDto
     ): Promise<void> {
 
         const session: ClientSession =
@@ -123,7 +124,7 @@ export class UserSharedController {
 
         try {
             await this.userService.updatePreferences(
-                user, 
+                user,
                 { ...body },
                 { session }
             );
@@ -149,7 +150,139 @@ export class UserSharedController {
             });
         }
 
-        
+
         return;
+    }
+
+    @Response('user.updateLocation')
+    @UserProtected()
+    @AuthJwtAccessProtected()
+    @Put('/location/update')
+    async updateLocation(
+        @AuthJwtPayload<IAuthJwtAccessTokenPayload>('user', UserParsePipe)
+        user: UserDocument,
+        @Body()
+        { latitude, longitude }: { latitude: number; longitude: number }
+    ): Promise<void> {
+        const session: ClientSession =
+            await this.databaseService.createTransaction();
+
+        try {
+            await this.userService.updateLocation(user, latitude, longitude, {
+                session,
+            });
+
+            await this.activityService.createByUser(
+                user,
+                {
+                    description: this.messageService.setMessage(
+                        'activity.user.updateLocation'
+                    ),
+                },
+                { session }
+            );
+
+            await this.databaseService.commitTransaction(session);
+        } catch (err: unknown) {
+            await this.databaseService.abortTransaction(session);
+            throw new InternalServerErrorException({
+                statusCode: ENUM_STATUS_CODE_ERROR.APP_UNKNOWN,
+                message: 'http.serverError.internalServerError',
+                _error: err,
+            });
+        }
+    }
+
+    @Response('user.updatePushToken')
+    @UserProtected()
+    @AuthJwtAccessProtected()
+    @Put('/push-token/update')
+    async updatePushToken(
+        @AuthJwtPayload<IAuthJwtAccessTokenPayload>('user', UserParsePipe)
+        user: UserDocument,
+        @Body()
+        { pushToken }: { pushToken: string }
+    ): Promise<void> {
+        const session: ClientSession =
+            await this.databaseService.createTransaction();
+
+        try {
+            await this.userService.updateExpoPushToken(user, pushToken, {
+                session,
+            });
+
+            await this.databaseService.commitTransaction(session);
+        } catch (err: unknown) {
+            await this.databaseService.abortTransaction(session);
+            throw new InternalServerErrorException({
+                statusCode: ENUM_STATUS_CODE_ERROR.APP_UNKNOWN,
+                message: 'http.serverError.internalServerError',
+                _error: err,
+            });
+        }
+    }
+
+    @Response('user.updateNotificationSettings')
+    @UserProtected()
+    @AuthJwtAccessProtected()
+    @Put('/settings/notification/update')
+    async updateNotificationSettings(
+        @AuthJwtPayload<IAuthJwtAccessTokenPayload>('user', UserParsePipe)
+        user: UserDocument,
+        @Body()
+        { pushEnabled, sosAlerts, activityUpdates, newsLetters }: UserUpdateSettingsDto
+    ): Promise<void> {
+        const session: ClientSession =
+            await this.databaseService.createTransaction();
+
+        try {
+            await this.userService.updateNotificationSettings(user, { pushEnabled, sosAlerts, activityUpdates, newsLetters }, { session });
+
+            await this.databaseService.commitTransaction(session);
+        } catch (err: unknown) {
+            await this.databaseService.abortTransaction(session);
+            throw new InternalServerErrorException({
+                statusCode: ENUM_STATUS_CODE_ERROR.APP_UNKNOWN,
+                message: 'http.serverError.internalServerError',
+                _error: err,
+            });
+        }
+    }
+
+    @Response('user.updateVolunteerStatus')
+    @UserProtected()
+    @AuthJwtAccessProtected()
+    @Put('/volunteer/update')
+    async updateVolunteer(
+        @AuthJwtPayload<IAuthJwtAccessTokenPayload>('user', UserParsePipe)
+        user: UserDocument,
+    ): Promise<void> {
+        const session: ClientSession =
+            await this.databaseService.createTransaction();
+
+        try {
+            await this.userService.updateVolunterStatus(user, {
+                session,
+            });
+
+            await this.activityService.createByUser(
+                user,
+                {
+                    description: this.messageService.setMessage(
+                        'activity.user.updateVolunteer'
+                    ),
+                },
+                { session }
+            );
+
+            await this.databaseService.commitTransaction(session);
+        } catch (err: unknown) {
+            await this.databaseService.abortTransaction(session);
+            throw new InternalServerErrorException({
+                statusCode: ENUM_STATUS_CODE_ERROR.APP_UNKNOWN,
+                message: 'http.serverError.internalServerError',
+                _error: err,
+            });
+        }
     }
 }

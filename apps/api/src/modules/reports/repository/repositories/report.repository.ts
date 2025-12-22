@@ -28,6 +28,13 @@ export class ReportRepository extends DatabaseObjectIdRepositoryBase<
         model: UserEntity.name,
         justOne: true,
       },
+      {
+        path: 'rescuer',
+        localField: 'rescuer',
+        foreignField: '_id',
+        model: UserEntity.name,
+        justOne: true,
+      }
     ]);
   }
 }

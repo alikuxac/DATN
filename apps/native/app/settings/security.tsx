@@ -120,7 +120,7 @@ export default function SecurityScreen() {
                 <AppText
                   style={{ color: colors.foreground, fontWeight: "600" }}
                 >
-                  iPhone 15 Pro
+                  Samsung A52
                 </AppText>
                 <AppText style={{ color: colors.neutrals400, fontSize: 12 }}>
                   Hồ Chí Minh • Vừa truy cập
@@ -129,7 +129,7 @@ export default function SecurityScreen() {
               <AppText
                 style={{ color: "#22c55e", fontSize: 12, fontWeight: "bold" }}
               >
-                THIS DEVICE
+                THIẾT BỊ NÀY
               </AppText>
             </View>
           </View>

@@ -9,6 +9,7 @@ import { UserVerificationResponseDto } from '@modules/users/dto/response/user.ve
 import { DatabaseObjectIdDto } from '@common/database/dtos/database.object-id.dto';
 import { Exclude } from 'class-transformer';
 import { UserPreferencesResponseDto } from './user.preference.response.dto';
+import { UserSettingsResponseDto } from './user.settings.response.dto';
 
 export class UserGetResponseDto extends DatabaseObjectIdDto implements IUserGetResponse {
   firstName: string;
@@ -21,17 +22,23 @@ export class UserGetResponseDto extends DatabaseObjectIdDto implements IUserGetR
   password: string;
   @Exclude()
   passwordExpiredAt: Date;
-
   @Exclude()
   passwordCreatedAt: Date;
-
   @Exclude()
   passwordAttempts: number;
+
+  isVerified: boolean;
+  isVolunteer: boolean;
+
   signUpDate: Date;
   signUpFrom: ENUM_USER_SIGN_UP_FROM;
   status: ENUM_USER_STATUS;
   gender: ENUM_USER_GENDER;
 
+  location?: { type: string; coordinates: number[] };
+  lastLocationAt?: Date;
+
   verification: UserVerificationResponseDto;
   preferences: UserPreferencesResponseDto;
+  settings: UserSettingsResponseDto;
 }

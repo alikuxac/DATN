@@ -10,9 +10,12 @@ import { DatabaseProp, DatabaseEntity, DatabaseSchema,  } from '@common/database
 import { IDatabaseDocument } from '@common/database/interfaces/database.interface';
 import { DatabaseObjectIdEntityBase } from '@common/database/bases/database.object-id.entity';
 import { UserPreferencesEntity, UserPreferencesSchema } from './user.preferences.entity';
+import { NotificationSettingsEntity, NotificationSettingsSchema } from './user.settings.entity';
 
 @DatabaseEntity({
   collection: 'users',
+  timestamps: true,
+  versionKey: false,
 })
 export class UserEntity extends DatabaseObjectIdEntityBase {
   @DatabaseProp({
@@ -73,11 +76,26 @@ export class UserEntity extends DatabaseObjectIdEntityBase {
   @DatabaseProp()
   mobileNumber: string;
 
+  @DatabaseProp()
+  expoPushToken?: string;
+
+  @DatabaseProp({
+    type: { type: String, enum: ['Point'], default: 'Point' },
+    coordinates: { type: [Number], index: '2dsphere' }, // [Lng, Lat]
+  })
+  location?: { type: string; coordinates: number[] };
+
+  @DatabaseProp({ type: Date })
+  lastLocationAt?: Date;
+
   @DatabaseProp({ required: true, schema: UserVerificationSchema })
   verification: UserVerificationEntity;
 
   @DatabaseProp({ required: true, schema: UserPreferencesSchema })
   preferences: UserPreferencesEntity;
+
+  @DatabaseProp({ _id: false, required: true, schema: NotificationSettingsSchema })
+  settings: NotificationSettingsEntity
 }
 
 export const UserSchema = DatabaseSchema(UserEntity);

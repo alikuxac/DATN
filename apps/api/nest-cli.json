@@ -10,7 +10,7 @@
         "outDir": "dist"
       },
       {
-        "include": "**/**/templates/*",
+        "include": "modules/email/templates/*.hbs",
         "outDir": "dist"
       }
     ],

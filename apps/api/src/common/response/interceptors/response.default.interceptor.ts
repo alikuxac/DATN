@@ -75,6 +75,7 @@ export class ResponseInterceptor
             );
           
           let metadata: ResponseMetadataDto = {
+            language: xLanguage,
             timestamp: xTimestamp,
             timezone: xTimezone,
             path: xPath,

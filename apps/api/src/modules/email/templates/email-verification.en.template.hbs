@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+</head>
+
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0;">
+  <div style="max-width: 600px; margin: 20px auto; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
+    <div style="background-color: #ef4444; padding: 25px; text-align: center;">
+      <h2 style="color: #ffffff; margin: 0;">Verification Code</h2>
+    </div>
+    <div style="padding: 30px;">
+      <p>Hi <strong>{{name}}</strong>,</p>
+      <p>Here is your OTP for verification. It is valid for a limited time.</p>
+      <div style="margin: 30px 0; text-align: center;">
+        <span
+          style="font-size: 36px; font-weight: bold; color: #ef4444; background-color: #fef2f2; padding: 10px 30px; border-radius: 8px; border: 1px solid #fee2e2; letter-spacing: 8px;">{{otp}}</span>
+      </div>
+      <p style="font-size: 14px; color: #6b7280;">Expires until: {{expiredAt}}</p>
+      <p style="font-size: 12px; color: #9ca3af;">Ref: {{reference}}</p>
+      <div style="margin-top: 25px; border-top: 1px solid #f1f5f9; padding-top: 20px;">
+        <p style="font-size: 13px; color: #94a3b8;">Support: {{supportEmail}}</p>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

@@ -3,7 +3,7 @@ import { View, Pressable, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router"; // Giả sử dùng Expo Router
 import { useTranslation } from "react-i18next"; // Dựa trên file i18n config
 import { cn } from "@/utils";
-import { apiService } from "@/services/api.service";
+import { ApiError, apiService } from "@/services/api.service";
 
 // Components của bạn
 import AuthContainer from "@/components/auth/AuthContainer";
@@ -15,6 +15,7 @@ import { setLanguage, setTheme, setToken } from "@/store/slices/appSlice"; // Gi
 import { useToast } from "@/components/ui/ToastProvider";
 
 import AuthHeader from "@/components/auth/header";
+import { ENUM_STATUS_CODE_ERROR } from "@repo/shared";
 
 export default function SignInScreen() {
   const router = useRouter();
@@ -31,11 +32,6 @@ export default function SignInScreen() {
   const [errors, setErrors] = useState<{ email?: string; password?: string }>(
     { email: '', password: '' }
   );
-
-  // Handlers
-  const handleToggleTheme = () => {
-    dispatch(setTheme(theme === "dark" ? "light" : "dark"));
-  };
 
   const validate = () => {
     const newErrors: typeof errors = {};
@@ -88,17 +84,27 @@ export default function SignInScreen() {
       }
 
     } catch (error: any) {
-      // ❌ XỬ LÝ LỖI
-      console.log(error)
-      if (error.message === "EMAIL_NOT_FOUND") {
-        showError(t("AUTH.ERR_LOGIN_FAILED"), t("AUTH.ERR_EMAIL_NOT_EXIST"));
-        setErrors((prev) => ({ ...prev, email: "Email not found" })); // Hiển thị lỗi đỏ dưới ô Email
-      } else if (error.message === "WRONG_PASSWORD") {
-        showError(t("AUTH.ERR_LOGIN_FAILED"), t("AUTH.ERR_INCORRECT_PASSWORD"));
-        setErrors((prev) => ({ ...prev, password: "Wrong password" })); // Hiển thị lỗi đỏ dưới ô Password
-      } else {
-        showError(t("COMMON.ERROR"), t("AUTH.ERR_SOMETHING_WENT_WRONG"));
+      if (error instanceof ApiError) {
+        switch (error.code) {
+          case ENUM_STATUS_CODE_ERROR.USER_NOT_FOUND:
+            showError(t("AUTH.ERR_LOGIN_FAILED"), t("AUTH.ERR_USER_NOT_FOUND"));
+            setErrors((prev) => ({
+              ...prev,
+              email: t("AUTH.ERR_EMAIL_NOT_EXIST"),
+            }));
+            break;
+          case ENUM_STATUS_CODE_ERROR.USER_PASSWORD_NOT_MATCH:
+            showError(t("AUTH.ERR_LOGIN_FAILED"), t("AUTH.ERR_INCORRECT_PASSWORD"));
+            setErrors((prev) => ({
+              ...prev,
+              password: t("AUTH.ERR_INCORRECT_PASSWORD"),
+            }));
+            break;
+          default:
+            showError(t("COMMON.ERROR"), t("AUTH.ERR_SOMETHING_WENT_WRONG"));
+        }
       }
+      console.log(error)
     } finally {
       setLoading(false);
     }
@@ -173,7 +179,7 @@ export default function SignInScreen() {
             {t("AUTH.BTN_LOGIN")}
           </AppButton>
 
-          <AppButton
+          {/* <AppButton
             variant="ghost"
             size="lg"
             onPress={() => {}} // Handle Survival Mode
@@ -199,7 +205,7 @@ export default function SignInScreen() {
             }
           >
             {t("FEATURE.SURVIVAL_MODE")}
-          </AppButton>
+          </AppButton> */}
         </View>
       </View>
       {/* 5. Footer: Register Link */}

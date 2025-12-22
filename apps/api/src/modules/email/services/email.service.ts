@@ -1,273 +1,174 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ENUM_SEND_EMAIL_PROCESS } from '@modules/email/enums/email.enum';
-import { title } from 'case';
+import { MailerService } from '@nestjs-modules/mailer';
 import { ConfigService } from '@nestjs/config';
-import { HttpService } from '@nestjs/axios';
-import { EmailSendDto } from '@modules/email/dtos/email.send.dto';
+import { I18nService } from 'nestjs-i18n';
+import { title } from 'case';
+
+// DTOs
+import { EmailSendDto } from '../dtos/email.send.dto';
+import { EmailCreateDto } from '../dtos/email.create.dto';
+import { EmailTempPasswordDto } from '../dtos/email.temp-password.dto';
+// import { EmailResetPasswordDto } from '../dtos/email.reset-password.dto';
+import { EmailVerificationDto } from '../dtos/email.verification.dto';
+import { EmailVerifiedDto } from '../dtos/email.verified.dto';
 import { HelperDateService } from '@common/helper/services/helper.date.service';
-import { EmailTempPasswordDto } from '@modules/email/dtos/email.temp-password.dto';
-import { EmailResetPasswordDto } from '@modules/email/dtos/email.reset-password.dto';
-import { EmailCreateDto } from '@modules/email/dtos/email.create.dto';
-import { EmailVerificationDto } from '@modules/email/dtos/email.verification.dto';
-import { EmailVerifiedDto } from '@modules/email/dtos/email.verified.dto';
-import { EmailMobileNumberVerifiedDto } from '@modules/email/dtos/email.mobile-number-verified.dto';
-import { Resend } from 'resend';
+import { EmailResetPasswordDto } from '../dtos/email.reset-password.dto';
+
 @Injectable()
 export class EmailService {
     private readonly logger = new Logger(EmailService.name);
-
     private readonly fromEmail: string;
     private readonly supportEmail: string;
 
-    private readonly homeName: string;
-    private readonly homeUrl: string;
-
-    private readonly resendClient: Resend;
-
     constructor(
-        private readonly helperDateService: HelperDateService,
+        private readonly mailerService: MailerService,
         private readonly configService: ConfigService,
-        private readonly httpService: HttpService
+        private readonly helperDateService: HelperDateService,
+        private readonly i18n: I18nService,
     ) {
         this.fromEmail = this.configService.get<string>('email.fromEmail');
-        this.supportEmail =
-            this.configService.get<string>('email.supportEmail');
-
-        this.homeName = this.configService.get<string>('home.name');
-        this.homeUrl = this.configService.get<string>('home.url');
-
-        this.resendClient = new Resend(this.configService.get<string>('email.resendApiKey'));
+        this.supportEmail = this.configService.get<string>('email.supportEmail');
     }
 
-    async sendChangePassword({ name, email }: EmailSendDto): Promise<boolean> {
+    private async sendMail(
+        to: string,
+        subjectKey: string,
+        templateName: string,
+        context: Record<string, any>,
+        lang: string = 'en'
+    ): Promise<boolean> {
         try {
-            await this.resendClient.emails.send({
-                from: this.fromEmail,
-                to: email,
-                template: {
-                    id: ENUM_SEND_EMAIL_PROCESS.CHANGE_PASSWORD,
-                    variables: {
-                        homeName: this.homeName,
-                        name: title(name),
-                        supportEmail: this.supportEmail,
-                        homeUrl: this.homeUrl,
-                    },
-                },
+            const subject = await this.i18n.t(`mail.${subjectKey}`, { lang });
+            const templateFile = `${templateName}.${lang}.template.hbs`;
 
+            await this.mailerService.sendMail({
+                to: to,
+                from: this.fromEmail,
+                subject: subject,
+                template: templateFile,
+                context: {
+                    ...context,
+                    supportEmail: this.supportEmail,
+                },
             });
 
             return true;
-        } catch (err: unknown) {
-            this.logger.error(err);
-
+        } catch (err) {
+            this.logger.error(`Failed to send email ${templateName} to ${to}:`, err);
             return false;
         }
     }
 
-    async sendWelcome({ name, email }: EmailSendDto): Promise<boolean> {
-        try {
-            await this.resendClient.emails.send({
-                from: this.fromEmail,
-                to: email,
-                template: {
-                    id: ENUM_SEND_EMAIL_PROCESS.WELCOME,
-                    variables: {
-                        homeName: this.homeName,
-                        name: title(name),
-                        email: title(email),
-                        supportEmail: this.supportEmail,
-                        homeUrl: this.homeUrl,
-                    },
-                },
-            })
+    async sendChangePassword({ name, email, lang }: EmailSendDto): Promise<boolean> {
+        return this.sendMail(
+            email,
+            'change_password_subject',
+            'change-password',
+            { name: title(name) },
+            lang
+        );
+    }
 
-            return true;
-        } catch (err: unknown) {
-            this.logger.error(err);
+    async sendWelcome({ name, email, lang }: EmailSendDto): Promise<boolean> {
+        const nameParts = name.split(' ');
+        const firstName = title(nameParts.pop() || '');
+        const lastName = title(nameParts.join(' ') || '');
 
-            return false;
-        }
+        return this.sendMail(
+            email,
+            'welcome_subject',
+            'welcome',
+            {
+                firstName,
+                lastName,
+                email
+            },
+            lang
+        );
     }
 
     async sendCreate(
-        { name, email }: EmailSendDto,
-        { password: passwordString, passwordExpiredAt }: EmailCreateDto
+        { name, email, lang }: EmailSendDto,
+        { password, passwordExpiredAt }: EmailCreateDto
     ): Promise<boolean> {
-        try {
-            await this.resendClient.emails.send({
-                from: this.fromEmail,
-                to: email,
-                template: {
-                    id: ENUM_SEND_EMAIL_PROCESS.CREATE,
-                    variables: {
-                        homeName: this.homeName,
-                        name: title(name),
-                        password: passwordString,
-                        supportEmail: this.supportEmail,
-                        homeUrl: this.homeUrl,
-                        passwordExpiredAt:
-                            this.helperDateService.formatToRFC2822(
-                                passwordExpiredAt
-                            ),
-                    },
-                },
-            })
-
-            return true;
-        } catch (err: unknown) {
-            this.logger.error(err);
-
-            return false;
-        }
+        return this.sendMail(
+            email,
+            'account_created_subject',
+            'create',
+            {
+                name: title(name),
+                password,
+                passwordExpiredAt: this.helperDateService.formatToRFC2822(passwordExpiredAt),
+            },
+            lang
+        );
     }
 
     async sendTempPassword(
-        { name, email }: EmailSendDto,
-        { password: passwordString, passwordExpiredAt }: EmailTempPasswordDto
+        { name, email, lang }: EmailSendDto,
+        { password, passwordExpiredAt }: EmailTempPasswordDto
     ): Promise<boolean> {
-        try {
-            await this.resendClient.emails.send({
-                from: this.fromEmail,
-                to: email,
-                template: {
-                    id: ENUM_SEND_EMAIL_PROCESS.TEMPORARY_PASSWORD,
-                    variables: {
-                        homeName: this.homeName,
-                        name: title(name),
-                        password: passwordString,
-                        supportEmail: this.supportEmail,
-                        homeUrl: this.homeUrl,
-                        passwordExpiredAt:
-                            this.helperDateService.formatToRFC2822(
-                                passwordExpiredAt
-                            ),
-                    },
-                },
-            })
-
-            return true;
-        } catch (err: unknown) {
-            this.logger.error(err);
-
-            return false;
-        }
+        return this.sendMail(
+            email,
+            'temp_password_subject',
+            'temp-password',
+            {
+                name: title(name),
+                password,
+                passwordExpiredAt: this.helperDateService.formatToRFC2822(passwordExpiredAt),
+            },
+            lang
+        );
     }
 
     async sendResetPassword(
-        { name, email }: EmailSendDto,
-        { expiredDate, url }: EmailResetPasswordDto
+        { name, email, lang }: EmailSendDto,
+        { password, expiredDate }: EmailResetPasswordDto // Giả định dùng chung cấu trúc mật khẩu mới
     ): Promise<boolean> {
-        try {
-            await this.resendClient.emails.send({
-                from: this.fromEmail,
-                to: email,
-                template: {
-                    id: ENUM_SEND_EMAIL_PROCESS.RESET_PASSWORD,
-                    variables: {
-                        homeName: this.homeName,
-                        name: title(name),
-                        supportEmail: this.supportEmail,
-                        homeUrl: this.homeUrl,
-                        expiredDate:
-                            this.helperDateService.formatToRFC2822(expiredDate),
-                        url,
-                    },
-                },
-            })
-
-            return true;
-        } catch (err: unknown) {
-            this.logger.error(err);
-
-            return false;
-        }
+        return this.sendMail(
+            email,
+            'reset_password_subject',
+            'reset-password',
+            {
+                name: title(name),
+                password,
+                passwordExpiredAt: this.helperDateService.formatToRFC2822(expiredDate),
+            },
+            lang
+        );
     }
 
     async sendVerification(
-        { name, email }: EmailSendDto,
+        { name, email, lang }: EmailSendDto,
         { expiredAt, reference, otp }: EmailVerificationDto
     ): Promise<boolean> {
-        try {
-            await this.resendClient.emails.send({
-                from: this.fromEmail,
-                to: email,
-                template: {
-                    id: ENUM_SEND_EMAIL_PROCESS.VERIFICATION,
-                    variables: {
-                        homeName: this.homeName,
-                        name: title(name),
-                        supportEmail: this.supportEmail,
-                        homeUrl: this.homeUrl,
-                        expiredAt:
-                            this.helperDateService.formatToRFC2822(expiredAt),
-                        reference,
-                        otp,
-                    },
-                },
-            })
-
-            return true;
-        } catch (err: unknown) {
-            this.logger.error(err);
-
-            return false;
-        }
+        return this.sendMail(
+            email,
+            'verification_subject',
+            'email-verification',
+            {
+                name: title(name),
+                otp,
+                reference,
+                expiredAt: this.helperDateService.formatToRFC2822(expiredAt),
+            },
+            lang
+        );
     }
 
     async sendEmailVerified(
-        { name, email }: EmailSendDto,
+        { name, email, lang }: EmailSendDto,
         { reference }: EmailVerifiedDto
     ): Promise<boolean> {
-        try {
-            await this.resendClient.emails.send({
-                from: this.fromEmail,
-                to: email,
-                template: {
-                    id: ENUM_SEND_EMAIL_PROCESS.EMAIL_VERIFIED,
-                    variables: {
-                        homeName: this.homeName,
-                        name: title(name),
-                        supportEmail: this.supportEmail,
-                        homeUrl: this.homeUrl,
-                        reference,
-                    },
-                },
-            })
-
-            return true;
-        } catch (err: unknown) {
-            this.logger.error(err);
-
-            return false;
-        }
-    }
-
-    async sendMobileNumberVerified(
-        { name, email }: EmailSendDto,
-        { reference, mobileNumber }: EmailMobileNumberVerifiedDto
-    ): Promise<boolean> {
-        try {
-            await this.resendClient.emails.send({
-                from: this.fromEmail,
-                to: email,
-                template: {
-                    id: ENUM_SEND_EMAIL_PROCESS.MOBILE_NUMBER_VERIFIED,
-                    variables: {
-                        homeName: this.homeName,
-                        name: title(name),
-                        supportEmail: this.supportEmail,
-                        homeUrl: this.homeUrl,
-                        reference,
-                        mobileNumber,
-                    },
-                },
-            })
-
-            return true;
-        } catch (err: unknown) {
-            this.logger.error(err);
-
-            return false;
-        }
+        return this.sendMail(
+            email,
+            'email_verified_subject',
+            'email-verified',
+            {
+                name: title(name),
+                reference,
+            },
+            lang
+        );
     }
 }

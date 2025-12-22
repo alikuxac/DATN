@@ -1,5 +1,5 @@
 export class EmailResetPasswordDto {
-    url: string;
+    password: string;
 
     expiredDate: Date;
 }

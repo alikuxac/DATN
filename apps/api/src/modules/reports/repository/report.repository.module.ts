@@ -5,7 +5,7 @@ import { ReportRepository } from './repositories/report.repository';
 import { DATABASE_CONNECTION_NAME } from '@common/database/constants/database.constant';
 @Module({
   providers: [ReportRepository],
-  exports: [ReportRepository],
+  exports: [ReportRepository, MongooseModule],
   controllers: [],
   imports: [
     MongooseModule.forFeature([

@@ -25,8 +25,8 @@ export class EmailTemplateService {
                 name: ENUM_SEND_EMAIL_PROCESS.CHANGE_PASSWORD,
                 subject: `Change Password`,
                 html: readFileSync(templatePath, 'utf8'),
-            })
-
+            }).publish()
+            
             return true;
         } catch (err: unknown) {
             this.logger.error(err);
@@ -62,7 +62,7 @@ export class EmailTemplateService {
                 name: ENUM_SEND_EMAIL_PROCESS.WELCOME,
                 subject: `Welcome`,
                 html: readFileSync(templatePath, 'utf8'),
-            })
+            }).publish()
 
             return true;
         } catch (err: unknown) {
@@ -99,7 +99,7 @@ export class EmailTemplateService {
                 name: ENUM_SEND_EMAIL_PROCESS.CREATE,
                 subject: `Create Account`,
                 html: readFileSync(templatePath, 'utf8'),
-            })
+            }).publish()
 
             return true;
         } catch (err: unknown) {
@@ -136,7 +136,7 @@ export class EmailTemplateService {
                 name: ENUM_SEND_EMAIL_PROCESS.TEMPORARY_PASSWORD,
                 subject: `Temporary Password`,
                 html: readFileSync(templatePath, 'utf8'),
-            })
+            }).publish()
 
             return true;
         } catch (err: unknown) {
@@ -173,7 +173,7 @@ export class EmailTemplateService {
                 name: ENUM_SEND_EMAIL_PROCESS.RESET_PASSWORD,
                 subject: `Reset Password`,
                 html: readFileSync(templatePath, 'utf8'),
-            })
+            }).publish()
 
             return true;
         } catch (err: unknown) {
@@ -210,7 +210,7 @@ export class EmailTemplateService {
                 name: ENUM_SEND_EMAIL_PROCESS.VERIFICATION,
                 subject: `Email Verification`,
                 html: readFileSync(templatePath, 'utf8'),
-            })
+            }).publish()
 
             return true;
         } catch (err: unknown) {
@@ -247,7 +247,7 @@ export class EmailTemplateService {
                 name: ENUM_SEND_EMAIL_PROCESS.EMAIL_VERIFIED,
                 subject: `Email Verified`,
                 html: readFileSync(templatePath, 'utf8'),
-            })
+            }).publish()
 
             return true;
         } catch (err: unknown) {
@@ -284,7 +284,7 @@ export class EmailTemplateService {
                 name: ENUM_SEND_EMAIL_PROCESS.MOBILE_NUMBER_VERIFIED,
                 subject: `Mobile Number Verified`,
                 html: readFileSync(templatePath, 'utf8'),
-            })
+            }).publish()
 
             return true;
         } catch (err: unknown) {

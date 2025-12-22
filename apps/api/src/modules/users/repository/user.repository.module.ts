@@ -9,7 +9,7 @@ import { UserRepository } from '@modules/users/repository/repositories/user.repo
 
 @Module({
     providers: [UserRepository],
-    exports: [UserRepository],
+    exports: [UserRepository, MongooseModule],
     controllers: [],
     imports: [
         MongooseModule.forFeature(

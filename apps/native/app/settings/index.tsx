@@ -15,6 +15,7 @@ import { setToken } from "@/store/slices/appSlice";
 import { AppText, Icon } from "@/components/ui";
 import { useColors } from "@/hooks/useColors";
 import { cn } from "@/utils";
+import * as Application from "expo-application";
 
 // --- 1. MENU LINK COMPONENT (Tách ra ngoài) ---
 interface MenuLinkProps extends TouchableOpacityProps {
@@ -84,7 +85,6 @@ const MenuLink = (prop: MenuLinkProps) => {
               "w-5 h-5",
               isDestructive ? "text-red-500" : "text-foreground"
             )}
-            // Fallback nếu chưa config xong NativeWind cho Icon
             size={20}
             color={contentColor}
           />
@@ -151,13 +151,13 @@ export default function SettingsScreen() {
           <MenuLink
             icon="User"
             label={t("SETTINGS.EDIT_PROFILE")}
-            subLabel={t("SETTINGS.PROFILE_DESC")} // ✅ Đã thay thế chuỗi cứng
+            subLabel={t("SETTINGS.PROFILE_DESC")}
             href="/settings/account"
           />
           <MenuLink
             icon="Shield"
             label={t("SETTINGS.SECURITY")}
-            subLabel={t("SETTINGS.SECURITY_DESC")} // ✅ Đã thay thế chuỗi cứng
+            subLabel={t("SETTINGS.SECURITY_DESC")}
             href="/settings/security"
           />
         </View>
@@ -175,9 +175,9 @@ export default function SettingsScreen() {
           ]}
         >
           <MenuLink
-            icon="Sliders"
+            icon="Settings2"
             label={t("SETTINGS.PREFERENCES")}
-            subLabel={t("SETTINGS.PREFERENCES_DESC")} // ✅ Đã thay thế chuỗi cứng
+            subLabel={t("SETTINGS.PREFERENCES_DESC")}
             href="/settings/preferences"
           />
           <MenuLink
@@ -226,7 +226,11 @@ export default function SettingsScreen() {
             onPress={handleLogout}
           />
         </View>
-        <AppText style={styles.versionText}> Version 1.0.0(Build 1) </AppText>
+        <AppText style={styles.versionText}>
+          {" "}
+          {t("COMMON.VERSION")} {Application.nativeApplicationVersion} (Build{" "}
+          {Application.nativeBuildVersion}){" "}
+        </AppText>
       </View>
     </ScrollView>
   );

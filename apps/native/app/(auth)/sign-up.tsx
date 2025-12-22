@@ -1,26 +1,23 @@
 import React, { useState } from "react";
-import { View, Pressable, TouchableOpacity, ScrollView } from "react-native";
+import { View, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { z } from "zod";
 
 // Components
 import AuthContainer from "@/components/auth/AuthContainer";
 import { AppText, AppInput, AppButton, Icon } from "@/components/ui"; // ❌ Bỏ import Select
 
 // Redux & Logic
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { setTheme, setLanguage } from "@/store/slices/appSlice";
 import { useToast } from "@/components/ui/ToastProvider";
 import { getRegisterSchema, RegisterFormData } from "@/validations/common";
-import { apiService } from "@/services/api.service";
+import { apiService, ApiError } from "@/services/api.service";
 import { getDeviceLanguage } from "@/utils/getDeviceLanguage";
+import { ENUM_STATUS_CODE_ERROR } from "@repo/shared";
+import AuthHeader from "@/components/auth/header";
 
 export default function SignUpScreen() {
   const router = useRouter();
   const { t } = useTranslation();
-  const dispatch = useAppDispatch();
-  const { theme } = useAppSelector((state) => state.app);
   const { showError, showSuccess } = useToast();
   const language = getDeviceLanguage();
   // State
@@ -85,39 +82,40 @@ export default function SignUpScreen() {
       await apiService.post("/public/auth/sign-up", payload);
 
       showSuccess(
-        "Account Created",
-        `Welcome to FloodAid, ${formData.firstName}! Please verify your email.`
+        t("AUTH.TITLE_ACCOUNT_CREATED"),
+        t("AUTH.MSG_SIGNUP_SUCCESS", { firstName: formData.firstName })
       );
 
       setTimeout(() => {
         router.replace("/(auth)/sign-in");
       }, 1000);
     } catch (error: any) {
-      console.error("Register Error:", error);
-      if (error.message && error.message.includes("email")) {
-        setErrors((prev) => ({
-          ...prev,
-          email: t("VALIDATION.EMAIL_EXISTS"),
-        }));
-        showError("Registration Failed", "This email is already in use.");
-      } else {
-        showError(
-          "Error",
-          error.message || "Something went wrong. Please try again."
-        );
+      if (error instanceof ApiError) {
+        switch (error.code) {
+          case ENUM_STATUS_CODE_ERROR.USER_EMAIL_EXIST:
+            setErrors((prev) => ({
+              ...prev,
+              email: t("VALIDATION.EMAIL_EXISTS"),
+            }));
+            break;
+          default:
+            showError(
+              "Error",
+              error.message || "Something went wrong. Please try again."
+            );
+            break;
+        }
       }
+      console.error("Register Error:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleToggleTheme = () =>
-    dispatch(setTheme(theme === "dark" ? "light" : "dark"));
-
   const FirstNameInput = (
     <View className="flex-1">
       <AppInput
-        label={t("FIRST_NAME")}
+        label={t("AUTH.LABEL_FIRST_NAME")}
         placeholder="John"
         value={formData.firstName}
         onChangeText={(val) => updateForm("firstName", val)}
@@ -129,7 +127,7 @@ export default function SignUpScreen() {
   const LastNameInput = (
     <View className="flex-1">
       <AppInput
-        label={t("LAST_NAME")}
+        label={t("AUTH.LABEL_LAST_NAME")}
         placeholder="Doe"
         value={formData.lastName}
         onChangeText={(val) => updateForm("lastName", val)}
@@ -140,29 +138,7 @@ export default function SignUpScreen() {
 
   return (
     <AuthContainer>
-      <View className="flex-row justify-between items-center mb-6">
-        <TouchableOpacity
-          onPress={handleToggleTheme}
-          className="w-10 h-10 rounded-full bg-neutrals200 dark:bg-neutrals800 items-center justify-center border border-neutrals300 dark:border-neutrals700"
-        >
-          <Icon
-            name={theme === "dark" ? "Moon" : "Sun"}
-            className="text-foreground w-5 h-5"
-          />
-        </TouchableOpacity>
-      </View>
-
-      <View className="items-center mb-8">
-        <View className="w-16 h-16 items-center justify-center mb-2">
-          <AppText style={{ fontSize: 50 }}>💧</AppText>
-        </View>
-        <AppText variant="heading1" weight="bold" className="mb-1 text-3xl">
-          FloodAid
-        </AppText>
-        <AppText variant="body" color="muted">
-          Create Your Account
-        </AppText>
-      </View>
+      <AuthHeader />
 
       <View className="bg-white dark:bg-neutrals900 rounded-3xl p-6 shadow-xl border border-neutrals200 dark:border-neutrals800 gap-6">
         <View className="gap-4">
@@ -181,7 +157,7 @@ export default function SignUpScreen() {
           </View>
 
           <AppInput
-            label={t("EMAIL")}
+            label={t("AUTH.LABEL_EMAIL")}
             placeholder="you@example.com"
             value={formData.email}
             onChangeText={(val) => updateForm("email", val)}
@@ -191,7 +167,7 @@ export default function SignUpScreen() {
           />
 
           <AppInput
-            label={t("PASSWORD")}
+            label={t("AUTH.LABEL_PASSWORD")}
             placeholder="At least 6 characters"
             value={formData.password}
             onChangeText={(val) => updateForm("password", val)}
@@ -208,7 +184,7 @@ export default function SignUpScreen() {
           />
 
           <AppInput
-            label={t("CONFIRM_PASSWORD")}
+            label={t("AUTH.LABEL_CONFIRM_PASSWORD")}
             placeholder="Re-enter password"
             value={formData.confirmPassword}
             onChangeText={(val) => updateForm("confirmPassword", val)}
@@ -243,20 +219,20 @@ export default function SignUpScreen() {
           }}
           textClassname="text-white font-sans-bold text-lg"
         >
-          {t("CREATE_ACCOUNT")}
+          {t("AUTH.BTN_REGISTER")}
         </AppButton>
       </View>
 
       <View className="flex-row justify-center items-center mt-8 gap-1">
         <AppText className="text-neutrals600 dark:text-neutrals400 text-sm font-sans-regular">
-          {t("ALREADY_HAVE_AN_ACCOUNT")}
+          {t("AUTH.HINT_HAS_ACCOUNT")}
         </AppText>
         <Pressable onPress={() => router.push("/(auth)/sign-in")}>
           <AppText
             className="text-sm font-sans-bold"
             style={{ color: "#2563eb" }}
           >
-            {t("LOGIN")}
+            {t("AUTH.LINK_LOGIN")}
           </AppText>
         </Pressable>
       </View>

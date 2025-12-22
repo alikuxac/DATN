@@ -35,6 +35,7 @@ import { IAuthPassword } from '@modules/auth/interfaces/auth.interface';
 import { ResetPasswordVerifyRequestDto } from '@modules/reset-password/dtos/request/reset-password.verify.request.dto';
 import { DatabaseService } from '@common/database/services/database.service';
 import { ENUM_PASSWORD_HISTORY_TYPE, ENUM_STATUS_CODE_ERROR } from '@repo/shared';
+import { HeaderLang } from '@common/message/decorators/message.decorator';
 
 @ApiTags('modules.public.resetPassword')
 @Controller({
@@ -56,6 +57,7 @@ export class ResetPasswordPublicController {
     @HttpCode(HttpStatus.OK)
     @Post('/request')
     async request(
+        @HeaderLang() lang: string,
         @Body() { email }: ResetPasswordCreateRequestDto
     ): Promise<IResponse<ResetPasswordCreteResponseDto>> {
         const user: UserDocument =
@@ -97,7 +99,7 @@ export class ResetPasswordPublicController {
             await this.emailQueue.add(
                 ENUM_SEND_EMAIL_PROCESS.RESET_PASSWORD,
                 {
-                    send: { email, name: user.firstName },
+                    send: { email, name: user.firstName, lang },
                     data: resetPassword.created,
                 },
                 {
@@ -200,6 +202,7 @@ export class ResetPasswordPublicController {
     @HttpCode(HttpStatus.OK)
     @Post('/reset/:token')
     async reset(
+        @HeaderLang() lang: string,
         @Param(
             'token',
             RequestRequiredPipe,
@@ -239,7 +242,7 @@ export class ResetPasswordPublicController {
             await this.emailQueue.add(
                 ENUM_SEND_EMAIL_PROCESS.CHANGE_PASSWORD,
                 {
-                    send: { email: user.email, name: user.firstName },
+                    send: { email: user.email, name: user.firstName, lang },
                 },
                 {
                     debounce: {

@@ -31,8 +31,10 @@ import {
 import {
     ENUM_POLICY_ACTION,
     ENUM_POLICY_SUBJECT,
+    ENUM_USER_ROLE,
     ENUM_USER_SIGN_UP_FROM,
-    ENUM_USER_STATUS
+    ENUM_USER_STATUS,
+    IAuthJwtAccessTokenPayload
 } from '@repo/shared';
 import {
     AuthJwtAccessProtected,
@@ -67,6 +69,7 @@ import { VerificationService } from '@modules/verification/services/verification
 import { UserProtected } from '@modules/users/decorators/user.decorator';
 import { DatabaseService } from '@common/database/services/database.service';
 import { ENUM_STATUS_CODE_ERROR, ENUM_PASSWORD_HISTORY_TYPE, } from '@repo/shared';
+import { HeaderLang } from '@common/message/decorators/message.decorator';
 @Controller({
     version: '1',
     path: '/user',
@@ -83,7 +86,7 @@ export class UserAdminController {
         private readonly activityService: ActivityService,
         private readonly messageService: MessageService,
         private readonly verificationService: VerificationService
-    ) {}
+    ) { }
 
     @ResponsePaging('user.list')
     @PolicyAbilityProtected({
@@ -162,6 +165,7 @@ export class UserAdminController {
     @AuthJwtAccessProtected()
     @Post('/create')
     async create(
+        @HeaderLang() lang: string,
         @AuthJwtPayload('user') createBy: string,
         @Body()
         dto: UserCreateRequestDto
@@ -223,11 +227,13 @@ export class UserAdminController {
                 { session }
             );
 
+            const fullName = lang === 'vi' ? `${created.firstName} ${created.lastName}` : `${created.lastName} ${created.firstName}`
+
             await Promise.all([
                 this.emailQueue.add(
                     ENUM_SEND_EMAIL_PROCESS.CREATE,
                     {
-                        send: { email: created.email, name: created.firstName },
+                        send: { email: created.email, name: fullName, lang },
                         data: {
                             passwordExpiredAt: password.passwordExpired,
                             password: passwordString,
@@ -243,7 +249,7 @@ export class UserAdminController {
                 this.emailQueue.add(
                     ENUM_SEND_EMAIL_PROCESS.VERIFICATION,
                     {
-                        send: { email, name: created.firstName },
+                        send: { email, name: fullName, lang },
                         data: {
                             otp: verification.otp,
                             expiredAt: verification.expiredDate,
@@ -382,6 +388,19 @@ export class UserAdminController {
                 message: 'http.serverError.internalServerError',
                 _error: err,
             });
+        }
+    }
+
+    @Response('user.getNearbyVolunteers')
+    @UserProtected()
+    @AuthJwtAccessProtected()
+    @Get('/volunteer/nearby')
+    async getNearbyVolunteers(
+        @AuthJwtPayload<IAuthJwtAccessTokenPayload>('user', UserParsePipe)
+        user: UserDocument
+    ): Promise<void> {
+        if ([ENUM_USER_ROLE.SUPER_ADMIN, ENUM_USER_ROLE.ADMIN].includes(user.role)) {
+            await this.userService.getNearbyVolunteer(user);
         }
     }
 }

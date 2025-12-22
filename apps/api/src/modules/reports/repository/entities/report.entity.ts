@@ -7,7 +7,8 @@ import { DatabaseObjectIdEntityBase } from "@common/database/bases/database.obje
 import { 
   ENUM_REPORT_STATUS,
   ENUM_REPORT_LOCATION_TYPE,
-  ENUM_REPORT_SEVERITY
+  ENUM_REPORT_SEVERITY,
+  ENUM_REPORT_TYPE
 } from "@repo/shared";
 import { IDatabaseDocument } from "@common/database/interfaces/database.interface";
 import { UserEntity } from "@modules/users/repository/entities/user.entity";
@@ -63,10 +64,13 @@ export class ReportEntity extends DatabaseObjectIdEntityBase{
   location: ReportLocation;
 
   @DatabaseProp({
-    required: true,
+    required: false, 
     trim: true,
+    type: String,
+    ref: UserEntity.name, 
+    index: true,
   })
-  address: string;
+  rescuer?: string;
 
   @DatabaseProp({
     required: false,
@@ -102,6 +106,20 @@ export class ReportEntity extends DatabaseObjectIdEntityBase{
     default: true,
   })
   isPublic: boolean;
+
+  @DatabaseProp({
+    required: true,
+    enum: ENUM_REPORT_TYPE,
+    index: true,
+  })
+  type: ENUM_REPORT_TYPE;
+
+  @DatabaseProp({
+    required: true,
+    trim: true,
+    index: true,
+  })
+  regionId: string;
 }
 
 export const ReportSchema = DatabaseSchema(ReportEntity);

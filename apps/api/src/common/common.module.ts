@@ -1,7 +1,8 @@
 import { Global, Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { MongooseModule } from '@nestjs/mongoose';
-
+import { EventEmitterModule} from '@nestjs/event-emitter';
+import { MailerModule } from '@nestjs-modules/mailer';
 import configs from "../configs";
 
 import { PolicyModule } from "@modules/policy/policy.module";
@@ -17,6 +18,8 @@ import { DATABASE_CONNECTION_NAME } from "./database/constants/database.constant
 import { BullModule } from "@nestjs/bullmq";
 import { CacheModule, CacheOptions } from "@nestjs/cache-manager";
 import KeyvRedis from "@keyv/redis";
+import path from "path";
+import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 
 @Global()
 @Module({
@@ -105,6 +108,35 @@ import KeyvRedis from "@keyv/redis";
       }),
       inject: [ConfigService],
     }),
+    MailerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        transport: {
+          host: configService.get<string>('email.smtp.host'),
+          port: configService.get<number>('email.smtp.port'),
+          secure: configService.get<boolean>('email.smtp.secure'),
+          auth: {
+            user: configService.get<string>('email.smtp.username'),
+            pass: configService.get<string>('email.smtp.password'),
+          },
+        },
+        defaults: {
+          from: `"No Reply" <${configService.get<string>('email.fromEmail')}>`,
+        },
+        preview: false,
+        template: {
+          dir: path.join(__dirname, '..', 'modules', 'email', 'templates'),
+          adapter: new HandlebarsAdapter(undefined, {
+            inlineCssEnabled: true,
+          }),
+          options: {
+            strict: false,
+          },
+        }
+      })
+    }),
+    EventEmitterModule.forRoot(),
     MessageModule.forRoot(),
     HelperModule.forRoot(),
     RequestModule,

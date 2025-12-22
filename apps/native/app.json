@@ -18,6 +18,7 @@
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {
+      "buildNumber": "1",
       "supportsTablet": true,
       "bundleIdentifier": "com.cuutro.app",
       "infoPlist": {
@@ -25,7 +26,9 @@
       }
     },
     "android": {
+      "buildNumber": "1",
       "package": "com.cuutro.app",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
@@ -35,6 +38,12 @@
         "googleMaps": {
           "apiKey": "YOUR_GOOGLE_MAPS_API_KEY_HERE"
         }
+      },
+      "keystore": {
+        "keystorePath": "android/keystores/release.keystore",
+        "keystorePassword": "KEYSTORE_PASSWORD",
+        "keyAlias": "KEY_ALIAS",
+        "keyPassword": "KEY_PASSWORD"
       }
     },
     "web": {
@@ -49,11 +58,12 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Cho phép Cứu Trợ VN truy cập vị trí của bạn để hỗ trợ khẩn cấp."
         }
-      ]
+      ],
+      "@vietmap/vietmap-gl-react-native"
     ],
     "extra": {
       "eas": {
-        "projectId": "your-project-id-here"
+        "projectId": "61d03a7a-7a9c-4dfb-bb58-059392bc12a3"
       }
     }
   }

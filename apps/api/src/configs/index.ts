@@ -2,6 +2,7 @@ import appConfig from "./app.config";
 import authConfig from "./auth.config";
 import databaseConfig from "./database.config";
 import debugConfig from "./debug.config";
+import emailConfig from "./email.config";
 import helperConfig from "./helper.config";
 import messageConfig from "./message.config";
 import middlewareConfig from "./middleware.config";
@@ -16,6 +17,7 @@ const configs = [
   authConfig,
   databaseConfig, 
   debugConfig,
+  emailConfig,
   helperConfig,
   messageConfig,
   middlewareConfig,

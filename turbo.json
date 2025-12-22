@@ -31,7 +31,14 @@
     "REDIS_PORT",
     "REDIS_PASSWORD",
     "REDIS_USERNAME",
-    "RESEND_API_KEY"
+    "RESEND_API_KEY",
+    "EMAIL_FROM",
+    "EMAIL_SUPPORT",
+    "EMAIL_SMTP_HOST",
+    "EMAIL_SMTP_PORT",
+    "EMAIL_SMTP_SECURE",
+    "EMAIL_SMTP_USERNAME",
+    "EMAIL_SMTP_PASSWORD"
   ],
   "tasks": {
     "build": {

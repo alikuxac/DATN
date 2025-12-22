@@ -36,6 +36,7 @@ import { ENUM_WORKER_QUEUES } from '@workers/enums/worker.enum';
 import { Queue } from 'bullmq';
 import { ClientSession } from 'mongoose';
 import { ENUM_STATUS_CODE_ERROR } from '@repo/shared';
+import { HeaderLang } from '@common/message/decorators/message.decorator';
 
 @ApiTags('modules.user.verification')
 @Controller({
@@ -54,10 +55,8 @@ export class VerificationUserController {
     ) {}
 
     @Response('verification.getEmail')
-    
     @UserProtected([false])
     @AuthJwtAccessProtected()
-    
     @Get('/get/email')
     async getEmail(
         @AuthJwtPayload<IAuthJwtAccessTokenPayload>('user', UserParsePipe)
@@ -81,10 +80,8 @@ export class VerificationUserController {
     }
 
     @Response('verification.getMobileNumber')
-    
     @UserProtected()
     @AuthJwtAccessProtected()
-    
     @Get('/get/mobile-number')
     async getMobileNumber(
         @AuthJwtPayload<IAuthJwtAccessTokenPayload>('user', UserParsePipe)
@@ -110,10 +107,8 @@ export class VerificationUserController {
     }
 
     @Response('verification.resendEmail')
-    
     @UserProtected([false])
     @AuthJwtAccessProtected()
-    
     @Post('/resend/email')
     async resendEmail(
         @AuthJwtPayload<IAuthJwtAccessTokenPayload>('user', UserParsePipe)
@@ -181,10 +176,8 @@ export class VerificationUserController {
     }
 
     @Response('verification.resendMobileNumber')
-    
     @UserProtected()
     @AuthJwtAccessProtected()
-    
     @Post('/resend/mobile-number')
     async resendMobileNumber(
         @AuthJwtPayload<IAuthJwtAccessTokenPayload>('user', UserParsePipe)
@@ -256,13 +249,12 @@ export class VerificationUserController {
     }
 
     @Response('verification.verifyEmail')
-    
     @UserProtected([false])
     @AuthJwtAccessProtected()
-    
     @HttpCode(HttpStatus.OK)
     @Post('/verify/email')
     async verifyEmail(
+        @HeaderLang() lang: string,
         @AuthJwtPayload<IAuthJwtAccessTokenPayload>(
             'user',
             UserParsePipe,
@@ -291,6 +283,8 @@ export class VerificationUserController {
             });
         }
 
+        const fullName = lang === 'vi' ? `${user.firstName} ${user.lastName}` : `${user.lastName} ${user.firstName}`;
+
         const session: ClientSession =
             await this.databaseService.createTransaction();
 
@@ -307,7 +301,7 @@ export class VerificationUserController {
             await this.emailQueue.add(
                 ENUM_SEND_EMAIL_PROCESS.EMAIL_VERIFIED,
                 {
-                    send: { email: user.email, name: user.firstName },
+                    send: { email: user.email, name: fullName, lang },
                     data: {
                         reference: verification.reference,
                     },

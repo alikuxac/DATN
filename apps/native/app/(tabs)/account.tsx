@@ -16,7 +16,9 @@ import { useAppSelector } from "@/store/hooks";
 
 import { AppText, Icon, Avatar, Switch } from "@/components/ui";
 import { useColors } from "@/hooks/useColors";
-import { apiService } from "@/services/api.service";
+import { ApiError, apiService } from "@/services/api.service";
+import { IResponse, IUserProfileReponse } from "@repo/shared";
+import { useToast } from "@/components/ui/ToastProvider";
 
 export default function AccountScreen() {
   const router = useRouter();
@@ -24,12 +26,13 @@ export default function AccountScreen() {
   const { theme } = useAppSelector((state) => state.app);
   const colors = useColors();
   const systemScheme = useColorScheme();
+  const { showSuccess, showError} = useToast();
 
-  const isDarkMode =
-    theme === "system" ? systemScheme === "dark" : theme === "dark";
+  const isDarkMode = theme === "dark";
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isUpdatingVolunteer, setIsUpdatingVolunteer] = useState(false);
   const [userData, setUserData] = useState<any>(null);
 
   // Load data mỗi khi màn hình được focus (để cập nhật dữ liệu mới nếu vừa sửa ở settings về)
@@ -41,7 +44,9 @@ export default function AccountScreen() {
 
   const fetchUserProfile = async () => {
     try {
-      const response = await apiService.get<any>("/shared/user/profile");
+      const response = await apiService.get<IResponse<IUserProfileReponse>>(
+        "/shared/user/profile"
+      );
       setUserData(response.data);
     } catch (error) {
       console.error(error);
@@ -50,6 +55,36 @@ export default function AccountScreen() {
       setRefreshing(false);
     }
   };
+
+  const updateVolunteer = async (newValue: boolean) => {
+    if (!userData) return;
+
+    const previousState = userData.isVolunteer;
+
+    setUserData({ ...userData, isVolunteer: newValue });
+    setIsUpdatingVolunteer(true);
+    try {
+      const response = await apiService.put<any>(
+        "/shared/user/volunteer/update",
+        {
+          isVolunteer: !userData?.isVolunteer,
+        }
+      );
+      showSuccess(t("COMMON.SUCCESS", t("PROFILE.UPDATE_VOLUNTEER_SUCCESS")));
+      await fetchUserProfile();
+    } catch (error) {
+      setUserData({ ...userData, isVolunteer: previousState });
+      console.error("Update volunteer error:", error);
+
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : t("PROFILE.UPDATE_VOLUNTEER_FAILED");
+      showError(t("COMMON.ERROR"), message);
+    } finally {
+      setIsUpdatingVolunteer(false);
+    }
+  }
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -111,7 +146,7 @@ export default function AccountScreen() {
                   ]}
                 >
                   <AppText style={[styles.badgeText, { color: "#2563eb" }]}>
-                    {userData?.role?.toUpperCase() || "USER"}
+                    {userData?.role?.toUpperCase()}
                   </AppText>
                 </View>
 
@@ -142,13 +177,13 @@ export default function AccountScreen() {
           <View style={styles.infoContainer}>
             <InfoRow label="Email" value={userData?.email} colors={colors} />
             <InfoRow
-              label={t("PHONE")}
+              label={t("PROFILE.LABEL_PHONE")}
               value={userData?.phone}
               colors={colors}
-              placeholder={t("NO_PHONE")}
+              placeholder={t("PROFILE.VALUE_NO_PHONE")}
             />
             <InfoRow
-              label={t("GENDER.NAME")}
+              label={t("PROFILE.LABEL_GENDER")}
               value={
                 userData?.gender
                   ? userData.gender.charAt(0).toUpperCase() +
@@ -156,7 +191,7 @@ export default function AccountScreen() {
                   : ""
               }
               colors={colors}
-              placeholder={t("GENDER.NOT_SPECIFIED")}
+              placeholder={t("PROFILE.GENDER_OPTIONS.OTHER")}
             />
           </View>
         </View>
@@ -175,7 +210,7 @@ export default function AccountScreen() {
           <View style={styles.rowBetween}>
             <View style={{ flex: 1, marginRight: 16 }}>
               <AppText style={[styles.cardTitle, { color: colors.foreground }]}>
-                {t("VOLUNTEER_MODE")}
+                {t("PROFILE.VOLUNTEER_MODE")}
               </AppText>
               <AppText
                 style={{
@@ -184,15 +219,14 @@ export default function AccountScreen() {
                   marginTop: 4,
                 }}
               >
-                {t("VOLUNTEER_DESC") ||
+                {t("PROFILE.VOLUNTEER_DESC") ||
                   "Bật chế độ này để nhận thông báo cứu trợ xung quanh bạn."}
               </AppText>
             </View>
             <Switch
-              value={userData?.isVolunteer}
-              onValueChange={() => {
-                /* Logic toggle API here */
-              }}
+              value={!!userData?.isVolunteer}
+              onValueChange={updateVolunteer}
+              disabled={isUpdatingVolunteer}
             />
           </View>
         </View>

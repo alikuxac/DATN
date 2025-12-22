@@ -6,6 +6,6 @@ import { ReportRepositoryModule } from './repository/report.repository.module';
 @Module({
   imports: [ReportRepositoryModule],
   providers: [ReportService],
-  exports: [ReportService],
+  exports: [ReportService, ReportRepositoryModule],
 })
 export class ReportsModule {}

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "400181281402",
+    "project_id": "do-an-d55bf",
+    "storage_bucket": "do-an-d55bf.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:400181281402:android:8057a4f9076e74e6c071c3",
+        "android_client_info": {
+          "package_name": "com.cuutro.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAxOEIYw19KH7FrWCtq7SMmpa2yOVc3UIw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useRef } from "react";
+import React, { useCallback, useState, useRef, useEffect } from "react";
 import {
   View,
   ScrollView,
@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { setTheme, setLanguage, Theme } from "@/store/slices/appSlice";
+import { toggleTheme, setLanguage, Theme, setTheme } from "@/store/slices/appSlice";
 import { AppText, Icon } from "@/components/ui";
 import { useColors } from "@/hooks/useColors";
 import { apiService } from "@/services/api.service";
@@ -36,11 +36,10 @@ export default function PreferencesScreen() {
   // Ref để lưu trữ timer debounce
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const isDarkMode =
-    theme === "system" ? systemScheme === "dark" : theme === "dark";
+  const isDarkMode = theme === "dark";
 
   // Lấy preferences từ DB khi vào màn hình
-  useFocusEffect(
+  useEffect(
     useCallback(() => {
       fetchUserPreferences();
       // Cleanup timer khi unmount/blur
@@ -52,18 +51,21 @@ export default function PreferencesScreen() {
 
   const fetchUserPreferences = async () => {
     try {
-      setLoading(true);
       const response = await apiService.get<{ data: UserPreferences }>(
         "/shared/user/preferences"
       );
       const prefs = response.data;
 
       // Đồng bộ dữ liệu từ Server về Redux/App nếu khác biệt
-      if (prefs.theme && prefs.theme !== theme) {
+      if (prefs.theme && (prefs.theme === 'light' || prefs.theme === 'dark') && prefs.theme !== theme) {
         dispatch(setTheme(prefs.theme as Theme));
       }
 
       // Lưu ý: Logic language cần cẩn thận để tránh override nhầm system
+      if (prefs.language && prefs.language !== language) {
+        dispatch(setLanguage(prefs.language as any));
+        i18n.changeLanguage(prefs.language);
+      }
     } catch (error) {
       console.error("Failed to fetch preferences:", error);
     } finally {
@@ -95,7 +97,7 @@ export default function PreferencesScreen() {
           t("COMMON.ERR_UPDATE_FAILED")
         );
       }
-    }, 1000);
+    }, 500);
   };
 
   // Xử lý Theme
@@ -130,11 +132,6 @@ export default function PreferencesScreen() {
   ];
 
   const themes = [
-    {
-      code: "system",
-      label: t("SETTINGS.THEME.SYSTEM"),
-      icon: "Smartphone",
-    },
     {
       code: "light",
       label: t("SETTINGS.THEME.LIGHT"),
@@ -183,7 +180,7 @@ export default function PreferencesScreen() {
     </TouchableOpacity>
   );
 
-  if (loading) {
+  if (!theme && loading) {
     return (
       <View
         style={[

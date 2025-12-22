@@ -22,6 +22,7 @@ import { UserGetResponseDto } from '@modules/users/dto/response/user.get.respons
 import { UserUpdateStatusRequestDto } from '@modules/users/dto/request/user.update-status.request.dto';
 import { UserUpdateProfileRequestDto } from '@modules/users/dto/request/user.update-profile.request.dto';
 import { UserUpdatePreferencesRequestDto } from '../dto/request/user.update-preferences.request.dto';
+import { UserUpdateSettingsDto } from '../dto/request/user.update-settings.request.dto';
 @Injectable()
 export class UsersService {
   constructor(
@@ -55,6 +56,19 @@ export class UsersService {
       mobileNumber: false,
       mobileNumberVerifiedAt: null
     }
+
+    newUser.preferences = {
+      language: ENUM_MESSAGE_LANGUAGE.EN,
+      theme: ENUM_USER_THEME.LIGHT
+    };
+
+    newUser.settings = {
+      pushEnabled: true,
+      sosAlerts: true,
+      activityUpdates: true,
+      newsLetters: true
+    }
+    
     return this.userRepository.create<UserEntity>(newUser, options);
   }
 
@@ -241,6 +255,53 @@ async update(respository: UserDocument, updateUserDto: UserUpdateRequestDto, opt
     return this.userRepository.save(repository, options);
   }
 
+  async updateLocation(
+    repository: UserDocument,
+    latitude: number,
+    longitude: number,
+    options?: IDatabaseSaveOptions
+  ) {
+    repository.location = {
+      type: 'Point',
+      coordinates: [longitude, latitude],
+    }
+
+    repository.lastLocationAt = this.helperDateService.create();
+
+    return this.userRepository.save(repository, options);
+  }
+
+  async updateExpoPushToken(
+    repository: UserDocument,
+    expoPushToken: string,
+    options?: IDatabaseSaveOptions
+  ) {
+    repository.expoPushToken = expoPushToken;
+
+    return this.userRepository.save(repository, options);
+  }
+
+  async updateNotificationSettings(
+    repository: UserDocument,
+    { pushEnabled, sosAlerts, activityUpdates, newsLetters }: UserUpdateSettingsDto,
+    options?: IDatabaseSaveOptions
+  ) {
+    repository.settings.pushEnabled = pushEnabled;
+    repository.settings.sosAlerts = sosAlerts;
+    repository.settings.activityUpdates = activityUpdates;
+    repository.settings.newsLetters = newsLetters;
+
+    return this.userRepository.save(repository, options);
+  }
+
+  async updateVolunterStatus(
+    repository: UserDocument,
+    options?: IDatabaseSaveOptions
+  ) {
+    repository.isVolunteer = !repository.isVolunteer;
+
+    return this.userRepository.save(repository, options);
+  }
 
   async signUp(
     data: IAuthPassword, 
@@ -270,6 +331,13 @@ async update(respository: UserDocument, updateUserDto: UserUpdateRequestDto, opt
       language: language,
       theme: ENUM_USER_THEME.SYSTEM
     };
+
+    user.settings = {
+      pushEnabled: true,
+      sosAlerts: true,
+      activityUpdates: true,
+      newsLetters: true
+    }
 
     const newUser = await this.userRepository.create<UserEntity>(user, options);
     return newUser;
@@ -313,5 +381,25 @@ async update(respository: UserDocument, updateUserDto: UserUpdateRequestDto, opt
       UserGetResponseDto,
       user instanceof Document ? user.toObject() : user
     );
+  }
+
+  // SOS / Report function
+  async findRescuersNearby(lat: number, long: number, radiusInMeters: number, find?: Record<string, any>, options?: IDatabaseFindAllOptions) {
+    return this.userRepository.findAll({
+      location: {
+        $near: {
+          $geometry: { type: "Point", coordinates: [long, lat] },
+          $maxDistance: radiusInMeters
+        }
+      },
+      'settings.pushEnabled': true,
+      'settings.sosAlerts': true
+    }, options);
+  }
+
+  async getNearbyVolunteer(user: UserDocument, options?: IDatabaseFindAllOptions) {
+    return this.findRescuersNearby(user.location.coordinates[1], user.location.coordinates[0], 5000, 
+      { isVolunteer: true },
+      options);
   }
 }

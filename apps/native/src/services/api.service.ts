@@ -1,12 +1,28 @@
 import { store } from "@/store";
 import { setToken } from "@/store/slices/appSlice";
-// src/services/api.service.ts
+
+// 1. Cập nhật ApiError để chứa "code" (App Status Code)
+export class ApiError extends Error {
+  status: number; // HTTP Status (400, 401, 500)
+  code: number;   // App Status Code (5310, 5000...) << QUAN TRỌNG
+  data: any;      // Body response
+
+  constructor(status: number, code: number, message: string, data?: any) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.code = code; // Lưu lại để switch case
+    this.data = data;
+  }
+}
 
 class ApiService {
-  // Thay đổi URL này tùy theo môi trường của bạn (localhost, IP LAN, v.v.)
-  private baseUrl = 'http://localhost:3000/api';
-
+  private baseUrl = `${process.env.EXPO_PUBLIC_API_URL}/api`;
   private accessToken: string | null = null;
+
+  constructor(){
+    console.log('API Base URL:', process.env.EXPO_PUBLIC_API_URL);
+  }
 
   setAuthToken(token: string) {
     this.accessToken = token;
@@ -20,7 +36,6 @@ class ApiService {
     const state = store.getState();
     const language = state.app.language;
 
-    // Tự động thêm Authorization Header nếu có token
     const defaultHeaders: Record<string, string> = {
       'Content-Type': 'application/json',
       'x-custom-lang': language
@@ -31,56 +46,61 @@ class ApiService {
     }
 
     const config: RequestInit = {
-      ...options, // Spread các options khác (method, signal...)
-      headers: {
-        ...defaultHeaders,
-        ...options.headers, // Ghi đè headers nếu truyền từ bên ngoài
-      },
+      ...options,
+      headers: { ...defaultHeaders, ...options.headers },
     };
 
     try {
       const response = await fetch(url, config);
 
-      // 1. Xử lý 401 (Unauthorized) - Ưu tiên cao nhất
+      // Xử lý 401
       if (response.status === 401) {
         store.dispatch(setToken(null));
-        throw new Error('Session expired');
+        // Với 401, thường App Code cũng là 51xx, ta có thể hardcode hoặc parse body nếu có
+        throw new ApiError(401, 5100, 'Session expired');
       }
 
-      // 2. Xử lý 204 (No Content) 
-      // Rất quan trọng cho API PUT/DELETE update preferences của bạn
       if (response.status === 204) {
-        return {} as any; // Trả về object rỗng nếu server không trả dữ liệu
+        return {} as any;
       }
 
-      // 3. Đọc body dưới dạng TEXT trước (Tránh lỗi Body used & JSON parse)
       const responseText = await response.text();
-
-      let data;
+      let responseBody: any;
       try {
-        // Cố gắng parse JSON
-        data = responseText ? JSON.parse(responseText) : {};
+        responseBody = responseText ? JSON.parse(responseText) : {};
       } catch (e) {
-        // Nếu server trả về HTML lỗi hoặc text thường -> gán data bằng text đó
-        data = { message: responseText };
+        responseBody = { message: responseText };
       }
 
-      // 4. Kiểm tra lỗi HTTP (!ok)
+      // 2. Logic ném lỗi mới
       if (!response.ok) {
-        // Lúc này 'data' chắc chắn đã có dữ liệu (JSON hoặc text)
-        throw new Error(data.message || `HTTP Error ${response.status}`);
+        // Ưu tiên lấy statusCode từ body, nếu không có thì lấy HTTP status
+        const appCode = responseBody.statusCode || response.status;
+
+        const errorMessage =
+          Array.isArray(responseBody.message)
+            ? responseBody.message[0]
+            : responseBody.message || `HTTP Error ${response.status}`;
+
+        throw new ApiError(
+          response.status, // HTTP Code (để debug)
+          appCode,         // App Code (để switch case logic)
+          errorMessage,
+          responseBody
+        );
       }
 
-      // 5. Trả về data thành công
-      return data;
+      return responseBody as T;
 
     } catch (error) {
+      if (error instanceof ApiError) throw error;
       console.error('[API Error]:', error);
-      throw error;
+      // Lỗi mạng hoặc lỗi không xác định -> Code 0 hoặc 5000 (APP_UNKNOWN)
+      throw new ApiError(0, 5000, 'Network Error', error);
     }
   }
 
-  // 👇 Cập nhật các hàm để nhận thêm tham số 'options'
+  // ... Các hàm get, post, put, delete giữ nguyên ...
   async get<T>(endpoint: string, options?: RequestInit): Promise<T> {
     return this.request<T>(endpoint, { ...options, method: 'GET' });
   }

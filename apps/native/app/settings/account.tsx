@@ -12,7 +12,6 @@ import { AppText, AppInput, AppButton, Select, Avatar } from "@/components/ui";
 import { useColors } from "@/hooks/useColors";
 import { useToast } from "@/components/ui/ToastProvider";
 import { apiService } from "@/services/api.service";
-// 👇 1. Import Enum và Interface từ shared package
 import {
   IUserProfileReponse,
   IUserUpdateProfileRequest,
@@ -27,10 +26,8 @@ export default function EditProfileScreen() {
   const { showSuccess, showError } = useToast();
 
   const [loading, setLoading] = useState(false);
-  // 👇 2. State dùng đúng Interface
   const [userData, setUserData] = useState<Partial<IUserProfileReponse>>({});
 
-  // 👇 3. Options dùng Enum chuẩn
   const genderOptions = [
     {
       label: t("PROFILE.GENDER_OPTIONS.MALE"),
@@ -76,7 +73,7 @@ export default function EditProfileScreen() {
         gender: (userData.gender as ENUM_USER_GENDER) || ENUM_USER_GENDER.OTHER,
       };
 
-      await apiService.put("/shared/user/profile", payload);
+      await apiService.put("/shared/user/profile/update", payload);
 
       showSuccess(
         t("COMMON.SUCCESS"),

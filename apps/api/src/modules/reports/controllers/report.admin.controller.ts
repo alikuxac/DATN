@@ -1,6 +1,6 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { ReportService } from '@modules/reports/services/reports.service';
-import { ReportCreateByAdminRequestDto   } from '@modules/reports/dtos/request/report.create-by-admin.request.dto';
+import { ReportCreateByAdminRequestDto } from '@modules/reports/dtos/request/report.create-by-admin.request.dto';
 import { ReportListResponseDto } from '@modules/reports/dtos/response/report.list.reponse.dto';
 import {
   AuthJwtAccessProtected,
@@ -20,6 +20,7 @@ import { ENUM_REPORT_SEVERITY, ENUM_REPORT_STATUS } from '@repo/shared';
 import { UserDocument } from '@modules/users/repository/entities/user.entity';
 import { UserParsePipe } from '@modules/users/pipes/user.parse.pipe';
 import { IResponsePaging } from '@common/response/interfaces/response.interface';
+import { ReportListRequestDto } from '../dtos/request/report.list.request.dto';
 
 @Controller({
   version: '1',
@@ -36,6 +37,7 @@ export class ReportAdminController {
   @AuthJwtAccessProtected()
   @ResponsePaging('report.list')
   async list(
+    @Query() dto: ReportListRequestDto,
     @PaginationQuery({
       defaultPerPage: 30,
       availableSearch: ['address', 'notes'],
@@ -45,24 +47,30 @@ export class ReportAdminController {
     @PaginationQueryFilterInEnum('severity', ENUM_REPORT_SEVERITY.MEDIUM, ENUM_REPORT_SEVERITY)
     severity: ENUM_REPORT_SEVERITY[],
     @PaginationQueryFilterInEnum('status', ENUM_REPORT_STATUS.IN_PROGRESS, ENUM_REPORT_STATUS)
-    status: ENUM_REPORT_STATUS[]
+    status: ENUM_REPORT_STATUS[],
+    @AuthJwtPayload('user', UserParsePipe) user: UserDocument,
   ): Promise<IResponsePaging<ReportListResponseDto>> {
     const find: Record<string, any> = {
       ..._search,
     };
 
-    if (severity) {
-      find.severity = { $in: severity };
+    if (severity && severity.length > 0) {
+      find.severity = { $in: Array.isArray(severity) ? severity : [severity] };
     }
-    if (status) {
+    if (status && status.length > 0) {
       find.status = { $in: status };
     }
 
-    const reports = await this.reportService.findAll(find, {
-      paging: { limit: _limit, offset: _offset },
-      order: _order,
-      // join: { path: 'user by' } // Uncomment nếu muốn populate user/by
-    });
+    const reports = await this.reportService.findAll(
+      find,
+      {
+        paging: { limit: _limit, offset: _offset },
+        order: _order,
+        join: true,
+      },
+      user,
+      dto
+    );
 
     const total: number = await this.reportService.getTotal(find);
     const totalPage: number = this.paginationService.totalPage(
@@ -77,7 +85,7 @@ export class ReportAdminController {
   }
 
   // 2. API Create By Admin
-  @Post('/create') // Hoặc '/' tuỳ chuẩn REST của bạn
+  @Post('/create')
   @AuthJwtAccessProtected()
   @Response('report.create')
   async createByAdmin(

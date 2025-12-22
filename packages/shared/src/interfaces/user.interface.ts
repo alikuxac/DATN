@@ -32,12 +32,24 @@ export interface IUserPreferencesResponse {
   theme: ENUM_USER_THEME;
 }
 
+export interface IUserSettingsResponse {
+  pushEnabled: boolean;
+  sosAlerts: boolean;
+  activityUpdates: boolean;
+  newsLetters: boolean;
+}
+
 export interface IUserGetResponse extends IDatabaseDto {
   firstName: string;
   lastName: string;
   email: string;
   mobileNumber: string;
   role: ENUM_USER_ROLE;
+  isVolunteer: boolean;
+  isVerified: boolean;
+
+  location?: { type: string; coordinates: number[] };
+  lastLocationAt?: Date;
 
   password: string;
   passwordExpiredAt: Date;
@@ -51,6 +63,7 @@ export interface IUserGetResponse extends IDatabaseDto {
 
   verification: IUserVerificationResponse;
   preferences: IUserPreferencesResponse;
+  settings: IUserSettingsResponse;
 }
 
 export type IUserListResponse =
@@ -59,7 +72,7 @@ export type IUserListResponse =
     'password' | 'passwordExpiredAt' | 'passwordCreatedAt' | 'signUpDate' | 'signUpFrom' | 'gender' | 'verification'
   >;
 
-export type IUserProfileReponse = Omit<IUserGetResponse, 'role' | 'mobileNumber' | 'password' | 'passwordExpiredAt' | 'passwordCreatedAt'>;
+export type IUserProfileReponse = Omit<IUserGetResponse,'mobileNumber' | 'password' | 'passwordExpiredAt' | 'passwordCreatedAt'>;
 
 export type IUserShortResponse = Omit<IUserListResponse, 'status' | 'createdAt' | 'updatedAt'> & {
   status: ENUM_USER_STATUS;

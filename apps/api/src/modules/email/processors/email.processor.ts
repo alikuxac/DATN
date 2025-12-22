@@ -2,7 +2,7 @@ import { Processor } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Job } from 'bullmq';
-import { EmailMobileNumberVerifiedDto } from '@modules/email/dtos/email.mobile-number-verified.dto';
+// import { EmailMobileNumberVerifiedDto } from '@modules/email/dtos/email.mobile-number-verified.dto';
 import { EmailResetPasswordDto } from '@modules/email/dtos/email.reset-password.dto';
 import { EmailSendDto } from '@modules/email/dtos/email.send.dto';
 import { EmailTempPasswordDto } from '@modules/email/dtos/email.temp-password.dto';
@@ -76,13 +76,13 @@ export class EmailProcessor extends WorkerBase implements IEmailProcessor {
                     );
 
                     break;
-                case ENUM_SEND_EMAIL_PROCESS.MOBILE_NUMBER_VERIFIED:
-                    await this.processMobileNumberVerified(
-                        job.data.send,
-                        job.data.data as EmailMobileNumberVerifiedDto
-                    );
+                // case ENUM_SEND_EMAIL_PROCESS.MOBILE_NUMBER_VERIFIED:
+                //     await this.processMobileNumberVerified(
+                //         job.data.send,
+                //         job.data.data as EmailMobileNumberVerifiedDto
+                //     );
 
-                    break;
+                //     break;
                 default:
                     break;
             }
@@ -138,10 +138,10 @@ export class EmailProcessor extends WorkerBase implements IEmailProcessor {
         return this.emailService.sendEmailVerified(data, resetPassword);
     }
 
-    async processMobileNumberVerified(
-        data: EmailSendDto,
-        resetPassword: EmailMobileNumberVerifiedDto
-    ): Promise<boolean> {
-        return this.emailService.sendMobileNumberVerified(data, resetPassword);
-    }
+    // async processMobileNumberVerified(
+    //     data: EmailSendDto,
+    //     resetPassword: EmailMobileNumberVerifiedDto
+    // ): Promise<boolean> {
+    //     return this.emailService.sendMobileNumberVerified(data, resetPassword);
+    // }
 }

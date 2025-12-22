@@ -2,8 +2,9 @@ import {createSlice, PayloadAction} from '@reduxjs/toolkit';
 import {colorScheme} from "nativewind";
 import {LanguageCode} from '@/config/i18n';
 import {getDeviceLanguage} from "@/utils/getDeviceLanguage.ts";
+import { IUserGetResponse } from '@repo/shared';
 
-export type Theme = 'light' | 'dark' | 'system';
+export type Theme = 'light' | 'dark';
 
 export interface Insets {
   left: number;
@@ -22,10 +23,12 @@ interface AppState {
   isFirstLaunch: boolean;
   isLoading: boolean;
   token: string | null;
+  user: IUserGetResponse | null;
+  regionId: string;
 }
 
 const initialState: AppState = {
-  theme: 'system',
+  theme: 'light',
   language: getDeviceLanguage(),
   insets: {
     left: 0,
@@ -35,7 +38,9 @@ const initialState: AppState = {
   },
   isFirstLaunch: true,
   isLoading: false,
-  token: null
+  token: null,
+  user: null,
+  regionId: 'unknown',
 };
 
 const appSlice = createSlice({
@@ -44,7 +49,11 @@ const appSlice = createSlice({
   reducers: {
     setTheme: (state, action: PayloadAction<Theme>) => {
       state.theme = action.payload;
-      colorScheme.set(action.payload);
+      colorScheme.set(state.theme);
+    },
+    toggleTheme: (state) => {
+      state.theme = state.theme === 'light' ? 'dark' : 'light';
+      colorScheme.set(state.theme);
     },
     setLanguage: (state, action: PayloadAction<LanguageCode>) => {
       state.language = action.payload;
@@ -61,8 +70,21 @@ const appSlice = createSlice({
     setToken: (state, action: PayloadAction<string | null>) => {
       state.token = action.payload;
     },
+    setUser: (state, action: PayloadAction<IUserGetResponse | null>) => {
+      state.user = action.payload;
+    },
+    setRegionId: (state, action: PayloadAction<string>) => {
+      state.regionId = action.payload;
+    },
+    logout: (state) => {
+      state.theme = 'light';
+      state.language = getDeviceLanguage();
+      state.token = null;
+      state.user = null;
+      state.regionId = 'unknown';
+    }
   },
 });
 
-export const {setTheme, setLanguage, setInsets, setIsFirstLaunch, setIsLoading, setToken} = appSlice.actions;
+export const {setTheme, toggleTheme, setLanguage, setInsets, setIsFirstLaunch, setIsLoading, setToken, setUser, setRegionId, logout} = appSlice.actions;
 export default appSlice.reducer;

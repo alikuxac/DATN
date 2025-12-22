@@ -1,6 +1,6 @@
 import { IsString, IsNotEmpty, IsNumber, IsBoolean, IsOptional, IsEnum, IsArray, ArrayMinSize, ArrayMaxSize } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ENUM_REPORT_SEVERITY, IReportCreateRequest } from '@repo/shared';
+import { ENUM_REPORT_SEVERITY, ENUM_REPORT_TYPE, IReportCreateRequest } from '@repo/shared';
 
 export class ReportCreateRequestDto implements IReportCreateRequest {
   @IsArray()
@@ -11,9 +11,9 @@ export class ReportCreateRequestDto implements IReportCreateRequest {
   @IsNotEmpty()
   coordinates: number[]; // [longitude, latitude]
 
-  @IsString()
+  @IsEnum(ENUM_REPORT_TYPE)
   @IsNotEmpty()
-  address: string;
+  type: ENUM_REPORT_TYPE;
 
   @IsString()
   @IsOptional()
@@ -31,4 +31,8 @@ export class ReportCreateRequestDto implements IReportCreateRequest {
   @IsBoolean()
   @IsOptional()
   isPublic?: boolean;
+
+  @IsString()
+  @IsNotEmpty()
+  regionId: string;
 }

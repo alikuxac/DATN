@@ -7,13 +7,15 @@ import { CommonModule } from '../common/common.module';
 import { RoutersModule } from '../routers/routers.module';
 import { WorkerModule } from '@workers/worker.module';
 import { AppMiddlewareModule } from './app.middleware.module';
+import { NotificationModule } from '@modules/notifications/notification.module';
 
 @Module({
   imports: [
     CommonModule,
     AppMiddlewareModule,
     RoutersModule, 
-    WorkerModule
+    WorkerModule,
+    NotificationModule
   ],
   controllers: [AppController],
   providers: [AppService],

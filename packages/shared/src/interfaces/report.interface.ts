@@ -1,14 +1,14 @@
-import { ENUM_REPORT_SEVERITY } from "../enums";
+import { ENUM_REPORT_SEVERITY, ENUM_REPORT_TYPE } from "../enums";
 import { IDatabaseDto } from "./database.interface";
 import { IUserShortResponse } from "./user.interface";
 
 export interface IReportCreateRequest {
   coordinates: number[];
-  address: string;
   notes?: string;
   severity?: ENUM_REPORT_SEVERITY;
   peopleCount?: number;
   isPublic?: boolean;
+  type: ENUM_REPORT_TYPE;
 }
 
 export interface IReportCreateByAdminRequest extends IReportCreateRequest {
@@ -22,11 +22,11 @@ export interface IReportListResponse extends IDatabaseDto {
     type: string;
     coordinates: number[];
   };
-  type: string;
   coordinates: number[];
   address: string;
   notes: string;
   severity: ENUM_REPORT_SEVERITY;
+  type: ENUM_REPORT_TYPE;
   status: string;
   peopleCount: number;
   isPublic: boolean;

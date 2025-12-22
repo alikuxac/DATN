@@ -29,6 +29,7 @@ import { ActivityService } from '@modules/activity/services/activity.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { VerificationService } from '@modules/verification/services/verification.service';
 import { DatabaseService } from '@common/database/services/database.service';
+import { MessageService } from '@common/message/services/message.service';
 import { 
   ENUM_STATUS_CODE_ERROR, 
   ENUM_PASSWORD_HISTORY_TYPE,
@@ -53,6 +54,7 @@ export class AuthPublicController {
     private readonly verificationService: VerificationService,
     private readonly sessionService: SessionService,
     private readonly activityService: ActivityService,
+    private readonly messageService: MessageService
   ) { }
 
   @Response('auth.loginWithCredential')
@@ -197,10 +199,10 @@ export class AuthPublicController {
         { session }
       );
 
-      const verification =
-        await this.verificationService.createEmailByUser(user, {
-          session,
-        });
+      // const verification =
+      //   await this.verificationService.createEmailByUser(user, {
+      //     session,
+      //   });
 
       await this.passwordHistoryService.createByUser(
         user,
@@ -213,7 +215,7 @@ export class AuthPublicController {
       await this.activityService.createByUser(
         user,
         {
-          description: 'New account created',
+          description: this.messageService.setMessage('activity.user.create'),
         },
         { session }
       );
@@ -222,7 +224,7 @@ export class AuthPublicController {
         this.emailQueue.add(
           ENUM_SEND_EMAIL_PROCESS.WELCOME,
           {
-            send: { email, name: user.firstName },
+            send: { email, name: user.firstName, lang: language },
           },
           {
             debounce: {
@@ -231,23 +233,23 @@ export class AuthPublicController {
             },
           }
         ),
-        this.emailQueue.add(
-          ENUM_SEND_EMAIL_PROCESS.VERIFICATION,
-          {
-            send: { email, name: user.firstName },
-            data: {
-              otp: verification.otp,
-              expiredAt: verification.expiredDate,
-              reference: verification.reference,
-            },
-          },
-          {
-            debounce: {
-              id: `${ENUM_SEND_EMAIL_PROCESS.VERIFICATION}-${user._id}`,
-              ttl: 1000,
-            },
-          }
-        ),
+        // this.emailQueue.add(
+        //   ENUM_SEND_EMAIL_PROCESS.VERIFICATION,
+        //   {
+        //     send: { email, name: user.firstName },
+        //     data: {
+        //       otp: verification.otp,
+        //       expiredAt: verification.expiredDate,
+        //       reference: verification.reference,
+        //     },
+        //   },
+        //   {
+        //     debounce: {
+        //       id: `${ENUM_SEND_EMAIL_PROCESS.VERIFICATION}-${user._id}`,
+        //       ttl: 1000,
+        //     },
+        //   }
+        // ),
       ]);
 
       await this.databaseService.commitTransaction(session);

@@ -1,6 +1,4 @@
-// app/_layout.tsx
-
-import "react-native-url-polyfill/auto"; // 1. Polyfill luôn ở đầu
+import "react-native-url-polyfill/auto";
 import "@/config/global.css";
 import "@/config/i18n";
 
@@ -12,50 +10,53 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { ThemeProvider, DefaultTheme } from "@react-navigation/native";
-import { Stack, SplashScreen, useSegments, useRouter, useRootNavigationState } from "expo-router"; // Dùng Stack của Expo Router
+import {
+  Stack,
+  SplashScreen,
+  useSegments,
+  useRouter,
+  useRootNavigationState,
+} from "expo-router";
 
-// Import từ code cũ của bạn
 import { persistor, store } from "@/store";
 import { useAppSelector } from "@/store/hooks";
+
 import LoadingScreen from "@/components/LoadingScreen";
 import { useColors } from "@/hooks/useColors";
-import InsetsHelper from "@/components/helpers/InsetsHelper.tsx";
-import { LanguageHelper } from "@/components/helpers/LanguageHelper.tsx";
-import { DialogProvider } from "@/components/ui/DialogProvider.tsx";
-import { ToastProvider } from "@/components/ui/ToastProvider.tsx";
+import { useSocketNotification } from "@/hooks/useSocketNotification";
+import { useLocationTracking } from "@/hooks/useUserLocation";
+import { useExpoPushToken } from "@/hooks/useExpoPushToken";
+import InsetsHelper from "@/components/helpers/InsetsHelper";
+import { LanguageHelper } from "@/components/helpers/LanguageHelper";
+import { DialogProvider } from "@/components/ui/DialogProvider";
+import { ToastProvider } from "@/components/ui/ToastProvider";
+import { PermissionGuard } from "@/components/PermissionGuard";
+import { SystemAlertModal } from "@/components/SystemAlertModal";
 
-// Ngăn màn hình splash ẩn đi cho đến khi load xong (tùy chọn)
 SplashScreen.preventAutoHideAsync();
 
-function InitialLayout() {
-  const { token } = useAppSelector((state) => state.app);
-  const segments = useSegments();
-  const router = useRouter();
+// ----------------------------------------------------------------------
+// 1. Root Navigator & Logic (Đã gộp lại để fix lỗi Context)
+// ----------------------------------------------------------------------
+function RootNavigator() {
+  const { token, theme } = useAppSelector((state) => state.app);
   const navigationState = useRootNavigationState();
-
-  useEffect(() => {
-    if (!navigationState?.key) return;
-
-    const inAuthGroup = segments[0] === '(auth)';
-
-    if (!token && !inAuthGroup) {
-      // A. Nếu KHÔNG có token và đang KHÔNG ở trang login -> Đá về login
-      router.replace('/(auth)/sign-in');
-    } else if (token && inAuthGroup) {
-      // B. Nếu CÓ token mà lại đang ở trang login -> Đá vào trong
-      router.replace('/(tabs)'); // Hoặc '/(tabs)/map' tùy bạn
-    }
-  }, [token, segments, navigationState?.key]);
-
-  return <Stack screenOptions={{ headerShown: false }} />; // Slot sẽ render các màn hình con (Stack/Tabs)
-}
-
-// Component con: Đã có Redux Context, có thể dùng hooks
-const AppLayoutNav = () => {
-  const { theme } = useAppSelector((state) => state.app);
   const colors = useColors();
 
-  // Tạo theme object cho React Navigation/Expo Router
+  // B. Logic App (Socket, Location, Push Token)
+  // Chỉ chạy các hook này khi Navigation đã sẵn sàng để tránh lỗi "No Navigation Context"
+  const isNavigationReady = navigationState?.key;
+
+  // Gọi hooks nhưng có điều kiện hoặc để hook tự handle null
+  useExpoPushToken();
+
+  // Quan trọng: useSocketNotification có thể dùng navigation bên trong
+  // Chúng ta truyền router hoặc check điều kiện bên trong hook
+  const { socket, alertData, setAlertData } = useSocketNotification();
+
+  useLocationTracking(token);
+
+  // C. Cấu hình Theme
   const navTheme = {
     ...DefaultTheme,
     dark: theme === "dark",
@@ -69,6 +70,49 @@ const AppLayoutNav = () => {
     },
   };
 
+  // D. Render Giao diện
+  return (
+    <ThemeProvider value={navTheme}>
+      {/* Các Helper & Modal toàn cục */}
+      <InsetsHelper />
+      <LanguageHelper />
+
+      {/* Chỉ hiện Modal khi App đã load xong */}
+      {isNavigationReady && (
+        <SystemAlertModal
+          visible={!!alertData}
+          data={alertData}
+          onClose={() => setAlertData(null)}
+        />
+      )}
+
+      {/* Stack điều hướng chính */}
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: "slide_from_right",
+
+          // 2. Cho phép vuốt cạnh trái để back (UX chuẩn)
+          gestureEnabled: true,
+          gestureDirection: "horizontal",
+
+          // 3. Màu nền khi chuyển trang (tránh nháy trắng/đen)
+          contentStyle: { backgroundColor: "#fff" },
+        }}
+      >
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      </Stack>
+    </ThemeProvider>
+  );
+}
+
+// ----------------------------------------------------------------------
+// 2. Providers Wrapper (UI & Redux)
+// ----------------------------------------------------------------------
+const AppProviders = () => {
+  const { theme } = useAppSelector((state) => state.app);
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <View style={{ flex: 1 }} className={theme === "dark" ? "dark" : ""}>
@@ -77,34 +121,31 @@ const AppLayoutNav = () => {
           backgroundColor="transparent"
           barStyle={theme === "dark" ? "light-content" : "dark-content"}
         />
-
-        {/* Thay thế NavigationContainer bằng ThemeProvider */}
-        <ThemeProvider value={navTheme}>
-          <BottomSheetModalProvider>
-            <SafeAreaProvider>
-              <DialogProvider>
-                <ToastProvider>
-                  <InsetsHelper />
-                  <LanguageHelper />
-
-                  {/* Đây là nơi các screen (như index.tsx) được render */}
-                  <InitialLayout />
-                </ToastProvider>
-              </DialogProvider>
-            </SafeAreaProvider>
-          </BottomSheetModalProvider>
-        </ThemeProvider>
+        <BottomSheetModalProvider>
+          <SafeAreaProvider>
+            <DialogProvider>
+              <ToastProvider>
+                {/* RootNavigator nằm trong cùng để tận dụng mọi Provider */}
+                <RootNavigator />
+              </ToastProvider>
+            </DialogProvider>
+          </SafeAreaProvider>
+        </BottomSheetModalProvider>
       </View>
     </GestureHandlerRootView>
   );
 };
 
-// Component cha: Chỉ chứa Provider
+// ----------------------------------------------------------------------
+// 3. Export Default (Root Entry)
+// ----------------------------------------------------------------------
 export default function RootLayout() {
   return (
     <Provider store={store}>
       <PersistGate loading={<LoadingScreen />} persistor={persistor}>
-        <AppLayoutNav />
+        <PermissionGuard>
+          <AppProviders />
+        </PermissionGuard>
       </PersistGate>
     </Provider>
   );

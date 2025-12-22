@@ -30,7 +30,7 @@ export class AuthModule {
         return {
             module: AuthModule,
             providers: [AuthJwtAccessStrategy, AuthJwtRefreshStrategy],
-            exports: [],
+            exports: [AuthService],
             controllers: [],
             imports: [],
         };

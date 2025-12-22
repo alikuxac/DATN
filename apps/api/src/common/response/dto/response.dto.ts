@@ -1,4 +1,5 @@
 export class ResponseMetadataDto {
+  language: string;
   timestamp: number;
   timezone: string;
   path: string;
