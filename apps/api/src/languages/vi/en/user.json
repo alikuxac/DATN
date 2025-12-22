@@ -11,6 +11,7 @@
   "deleteSelf": "Người dùng đã bị xóa thành công.",
   "updateMobileNumber": "Số điện thoại đã được cập nhật thành công.",
   "updateClaimUsername": "Tên người dùng đã được xác nhận thành công.",
+  "updateVolunteerStatus": "Trạng thái tình nguyện viên đã được cập nhật thành công.",
   "error": {
     "mobileNumberExist": "Số điện thoại này đã tồn tại.",
     "emailExist": "Địa chỉ email này đã tồn tại.",
