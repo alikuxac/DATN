@@ -1,0 +1,20 @@
+{
+  "list": "Liệt kê các điều khoản và chính sách thành công",
+  "get": "Đạt được thành công về nhiệm kỳ và chính sách",
+  "accept": "Điều khoản hoặc chính sách đã được chấp nhận",
+  "accepted": "Danh sách các điều khoản và chính sách được chấp nhận.",
+  "pending": "Danh sách các điều khoản và chính sách đang chờ xử lý.",
+  "delete": "Điều khoản và chính sách đã được xóa bỏ thành công.",
+  "update": "Cập nhật nhiệm kỳ và sự thành công của chính sách.",
+  "create": "Thuật ngữ và chính sách mới được ban hành.",
+  "error": {
+    "exist": "Điều khoản và chính sách với nội dung cụ thể như vậy đã tồn tại.",
+    "notFound": "Không tìm thấy điều khoản và chính sách.",
+    "notAccepted": "Bạn cần chấp nhận chính sách {property} trước khi có thể sử dụng tính năng này.",
+    "inactive": "Điều khoản và chính sách này hiện không còn hiệu lực, rất có thể đã có phiên bản mới hơn.",
+    "alreadyAccepted": "Điều khoản và chính sách đã được chấp nhận.",
+    "newerVersionExist": "Hiện đã có phiên bản mới hơn của điều khoản và chính sách này.",
+    "updateForbiddenStatusPublished": "Bạn không thể cập nhật điều khoản và chính sách đã được công bố, bạn cần tạo một phiên bản mới.",
+    "requireAgreement": "Cần có thỏa thuận cho ${property}"
+  }
+}
