@@ -1,0 +1,27 @@
+{
+  "list": "Danh sách người dùng đã được truy xuất thành công.",
+  "get": "Thông tin người dùng đã được tải thành công.",
+  "create": "Người dùng mới được tạo thành công.",
+  "updateStatus": "Trạng thái người dùng đã được cập nhật thành {status}.",
+  "profile": "Thông tin người dùng đã được truy xuất thành công.",
+  "preferences": "Thông tin tùy chọn người dùng đã được truy xuất thành công.",
+  "updateProfile": "Hồ sơ người dùng đã được cập nhật thành công.",
+  "uploadPhotoProfile": "Yêu cầu tải ảnh đại diện thành công.",
+  "updatePhotoProfile": "Ảnh đại diện đã được tải lên thành công.",
+  "deleteSelf": "Người dùng đã bị xóa thành công.",
+  "updateMobileNumber": "Số điện thoại đã được cập nhật thành công.",
+  "updateClaimUsername": "Tên người dùng đã được xác nhận thành công.",
+  "error": {
+    "mobileNumberExist": "Số điện thoại này đã tồn tại.",
+    "emailExist": "Địa chỉ email này đã tồn tại.",
+    "blocked": "Người dùng này đã bị chặn.",
+    "deleted": "Người dùng này đã bị xóa.",
+    "inactive": "Người dùng này không hoạt động.",
+    "mobileNumberNotAllowed": "Số điện thoại này không được phép sử dụng.",
+    "blockedInvalid": "Trạng thái bị chặn không hợp lệ.",
+    "notFound": "Rất tiếc, chúng tôi không tìm thấy người dùng mà bạn yêu cầu.",
+    "statusInvalid": "Trạng thái người dùng không hợp lệ.",
+    "usernameExist": "Tên người dùng này đã được sử dụng.",
+    "emailNotVerified": "Email chưa được xác minh."
+  }
+}
