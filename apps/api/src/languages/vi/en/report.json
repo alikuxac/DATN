@@ -1,0 +1,18 @@
+{
+  "list": "Danh sách báo cáo đã được truy xuất thành công.",
+  "create": "Báo cáo đã được tạo thành công",
+  "update": "Báo cáo đã được cập nhật thành công.",
+  "delete": "Báo cáo đã được xóa thành công.",
+  "bounds": "Lấy danh sách báo cáo trong phạm vi thành công",
+  "error": {
+    "cannotCreate": "Bạn không thể tạo báo cáo cứu trợ khi đang ở Chế độ Tình nguyện viên.",
+    "tooClose": "Bạn không thể tạo một báo cáo quá giống với một báo cáo khác.",
+    "alreadyAccepted": "Báo cáo đã được chấp nhận.",
+    "notFound": "Không tìm thấy báo cáo.",
+    "cannotUpOther": "Bạn không thể cập nhật báo cáo của người dùng khác.",
+    "cannotUp": "Bạn không thể cập nhật báo cáo khi đang ở Chế độ Tình nguyện viên.",
+    "alreadyProcessed": "Báo cáo đã được xử lý.",
+    "cannotDelOther": "Bạn không thể xóa báo cáo của người dùng khác.",
+    "cannotDel": "Bạn không thể xóa báo cáo khi đang ở Chế độ Tình nguyện viên."
+  }
+}
