@@ -9,7 +9,7 @@ export class AppUserAgentMiddleware implements NestMiddleware {
     const parserUserAgent = new UAParser(req['User-Agent']);
     const userAgent: IResult = parserUserAgent.getResult();
 
-    req.__userAgent = userAgent;
+    req.__userAgent = userAgent.toString();
     next()
   }
 }
