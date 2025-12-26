@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { faker } from '@faker-js/faker';
 
 @Injectable()
@@ -30,10 +30,21 @@ export class HelperNumberService {
     return Number.parseFloat((tValue * 100).toFixed(2));
   }
 
-  mapHttpCode(customCode: number): number {
-  if (customCode >= 5000 && customCode < 5100) return 500; // System Error
-  if (customCode >= 5100 && customCode < 5200) return 401; // Unauthorized
-  if (customCode >= 5200 && customCode < 5300) return 403; // Forbidden
-  return 400; // Bad Request (User, Verification...)
-}
+  mapHttpCode(customCode: number): HttpStatus {
+    if (!customCode || customCode === 200) {
+      return HttpStatus.OK;
+    }
+
+    if (customCode < 600) {
+      return customCode;
+    }
+
+    const httpStatus = Math.floor(customCode / 100);
+
+    if (httpStatus > 600 || httpStatus < 100) {
+      return HttpStatus.INTERNAL_SERVER_ERROR;
+    }
+
+    return httpStatus;
+  }
 }

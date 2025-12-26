@@ -65,6 +65,8 @@ export class ResponsePagingInterceptor
                     const today = this.helperDateService.create();
                     const xPath = request.path;
                     const xPagination = request.__pagination;
+                    const xId = request.__id ?? undefined;
+                    const xUserAgent = request.__userAgent ?? undefined;
                     const xLanguage: string =
                         request.__language ??
                         this.configService.get<ENUM_MESSAGE_LANGUAGE>(
@@ -122,7 +124,7 @@ export class ResponsePagingInterceptor
                         },
                     };
 
-                    httpStatus = statusCode === 200 ? HttpStatus.OK : this.helperNumberService.mapHttpCode(statusCode);
+                    httpStatus = this.helperNumberService.mapHttpCode(statusCode);
 
                     const message: string = this.messageService.setMessage(
                         messagePath,
@@ -131,9 +133,11 @@ export class ResponsePagingInterceptor
                             properties: messageProperties,
                         }
                     );
-                  
+
                     response.setHeader('x-timestamp', xTimestamp);
                     response.setHeader('x-timezone', xTimezone);
+                    response.setHeader('x-id', xId);
+                    response.setHeader('x-user-agent', xUserAgent);
                     response.status(httpStatus);
 
                     return {

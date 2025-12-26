@@ -115,7 +115,7 @@ export class ResponseInterceptor
             }
           );
 
-          httpStatus = statusCode === 200 ? HttpStatus.OK : this.helperNumberService.mapHttpCode(statusCode);
+          httpStatus = this.helperNumberService.mapHttpCode(statusCode);
 
           response.setHeader('x-timestamp', xTimestamp);
           response.setHeader('x-timezone', xTimezone);
