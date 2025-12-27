@@ -125,6 +125,7 @@
 
   "SECURITY": {
     "TITLE": "Security",
+    "REVOKE_TITLE": "Revoke Device",
     "CHANGE_PASSWORD": "Change Password",
     "ACTIVE_SESSIONS": "Active Sessions",
     "THIS_DEVICE": "This device",

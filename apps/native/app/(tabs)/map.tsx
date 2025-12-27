@@ -158,6 +158,10 @@ export default function MapScreen() {
     }, [])
   );
 
+  const isVolunteerMode = useMemo(() => {
+    return user?.role === ENUM_USER_ROLE.VOLUNTEER || user?.isRescueMode;
+  }, [user]);
+
   // --- LOGIC FILTER REPORTS ---
   const displayedReports = useMemo(() => {
     if (!user) return [];
@@ -165,7 +169,7 @@ export default function MapScreen() {
 
     if (user.role === ENUM_USER_ROLE.ADMIN) return reports; // Admin thấy hết report
 
-    if (user.isVolunteer) {
+    if (isVolunteerMode) {
       // Volunteer thấy PENDING (để nhận) & IN_PROGRESS của mình
       return reports.filter(
         (r) =>
@@ -234,7 +238,7 @@ export default function MapScreen() {
       cameraRef.current.setCamera({
         centerCoordinate: [userLocation.longitude, userLocation.latitude],
         zoomLevel: 15, // Zoom gần lại chút cho dễ nhìn
-        animationDuration: 1000, // Hiệu ứng bay trong 1 giây
+        animationDuration: 2000, // Hiệu ứng bay trong 1 giây
         animationMode: "flyTo",
       });
     } else {
@@ -259,14 +263,6 @@ export default function MapScreen() {
         return "bg-gray-500 border-gray-200";
     }
   };
-
-  if (!userLocation) {
-    return (
-      <View >
-        <ActivityIndicator size="large" color="#0000ff" />
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>
@@ -295,7 +291,10 @@ export default function MapScreen() {
 
         {/* 1. MY LOCATION */}
         {userLocation && (
-          <PointAnnotation id="user-location" coordinate={[userLocation.longitude, userLocation.latitude]}>
+          <PointAnnotation
+            id="user-location"
+            coordinate={[userLocation.longitude, userLocation.latitude]}
+          >
             <View style={styles.userMarkerContainer}>
               <View style={styles.userMarkerDot} />
               <View style={styles.userMarkerHalo} />
@@ -367,6 +366,12 @@ export default function MapScreen() {
         ))}
       </MapView>
 
+      {!userLocation && (
+        <View>
+          <ActivityIndicator size="large" color="#0000ff" />
+        </View>
+      )}
+
       {/* --- CREATE BUTTON (User/Volunteer) --- */}
       {user?.role !== ENUM_USER_ROLE.ADMIN && (
         <View className="absolute bottom-24 right-5 z-20">
@@ -392,7 +397,9 @@ export default function MapScreen() {
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         location={
-          userLocation ? { lat: userLocation.latitude, long: userLocation.longitude } : null
+          userLocation
+            ? { lat: userLocation.latitude, long: userLocation.longitude }
+            : null
         }
         onSuccess={() => fetchData()}
       />
@@ -471,7 +478,7 @@ export default function MapScreen() {
                   </View>
                 </View>
                 {/* Chỉ hiện nút gọi nếu là Volunteer/Admin */}
-                {(user?.isVolunteer || user?.role === ENUM_USER_ROLE.ADMIN) && (
+                {(isVolunteerMode || user?.role === ENUM_USER_ROLE.ADMIN) && (
                   <TouchableOpacity
                     onPress={() => handleCall(selectedReport.user?.phone)}
                     className="bg-green-500 p-2 rounded-full"
@@ -485,7 +492,7 @@ export default function MapScreen() {
             {/* ACTION BUTTONS (Logic quan trọng) */}
             <View className="flex-row gap-3">
               {/* 1. Nếu là VOLUNTEER và Report đang PENDING -> Nút NHẬN */}
-              {user?.isVolunteer &&
+              {isVolunteerMode &&
                 selectedReport.status === ENUM_REPORT_STATUS.PENDING && (
                   <AppButton
                     disabled={isActionLoading}
@@ -502,9 +509,9 @@ export default function MapScreen() {
                 )}
 
               {/* 2. Nếu là VOLUNTEER và Report đang IN_PROGRESS (của mình) -> Nút HỦY/HOÀN THÀNH */}
-              {user?.isVolunteer &&
+              {isVolunteerMode &&
                 selectedReport.status === ENUM_REPORT_STATUS.IN_PROGRESS &&
-                selectedReport.volunteer === user._id && (
+                selectedReport.volunteer === user?._id && (
                   <AppButton
                     disabled={isActionLoading}
                     onPress={() => handleReportAction("reject")}
