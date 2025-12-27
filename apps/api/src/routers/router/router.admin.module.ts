@@ -14,6 +14,7 @@ import { ENUM_WORKER_QUEUES } from "@workers/enums/worker.enum";
 import { VerificationModule } from "@modules/verification/verification.module";
 import { ReportsModule } from "@modules/reports/reports.module";
 import { ReportAdminController } from "@modules/reports/controllers/report.admin.controller";
+import { AuthAdminController } from "@modules/auth/controllers/auth.admin.controller";
 @Module({
   imports: [
     UsersModule,
@@ -31,6 +32,7 @@ import { ReportAdminController } from "@modules/reports/controllers/report.admin
     UserAdminController,
     SessionAdminController,
     PasswordHistoryAdminController,
+    AuthAdminController,
     ActivityAdminController,
     ReportAdminController
   ],

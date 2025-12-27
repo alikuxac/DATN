@@ -11,6 +11,7 @@ import { ActivityModule } from '@modules/activity/activity.module';
 import { ActivitySharedController } from '@modules/activity/controllers/activity.shared.controller';
 import { ENUM_WORKER_QUEUES } from '@workers/enums/worker.enum';
 import { AuthModule } from '@modules/auth/auth.module';
+import { AuthSharedController } from '@modules/auth/controllers/auth.shared.controller';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { AuthModule } from '@modules/auth/auth.module';
   ],
   controllers: [
     UserSharedController,
+    AuthSharedController,
     SessionSharedController,
     PasswordHistorySharedController,
     ActivitySharedController
