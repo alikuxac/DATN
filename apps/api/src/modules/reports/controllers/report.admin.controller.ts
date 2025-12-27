@@ -12,15 +12,16 @@ import {
 } from '@common/response/decorators/response.decorator';
 import {
   PaginationQuery,
+  PaginationQueryFilterDate,
+  PaginationQueryFilterDateTimeRange,
   PaginationQueryFilterInEnum
 } from '@common/pagination/decorators/pagination.decorator';
 import { PaginationListDto } from '@common/pagination/dtos/pagination.list.dto';
 import { PaginationService } from '@common/pagination/services/pagination.service';
-import { ENUM_REPORT_SEVERITY, ENUM_REPORT_STATUS } from '@repo/shared';
+import { ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS, ENUM_REPORT_SEVERITY, ENUM_REPORT_STATUS, ENUM_REPORT_TYPE } from '@repo/shared';
 import { UserDocument } from '@modules/users/repository/entities/user.entity';
 import { UserParsePipe } from '@modules/users/pipes/user.parse.pipe';
 import { IResponsePaging } from '@common/response/interfaces/response.interface';
-import { ReportListRequestDto } from '../dtos/request/report.list.request.dto';
 
 @Controller({
   version: '1',
@@ -29,7 +30,8 @@ import { ReportListRequestDto } from '../dtos/request/report.list.request.dto';
 export class ReportAdminController {
   constructor(
     private readonly reportService: ReportService,
-    private readonly paginationService: PaginationService
+    private readonly paginationService: PaginationService,
+    private readonly paginationFilterService: PaginationService
   ) { }
 
   // 1. API List All Reports
@@ -37,46 +39,56 @@ export class ReportAdminController {
   @AuthJwtAccessProtected()
   @ResponsePaging('report.list')
   async list(
-    @Query() dto: ReportListRequestDto,
     @PaginationQuery({
-      defaultPerPage: 30,
-      availableSearch: ['address', 'notes'],
-      availableOrderBy: ['createdAt', 'peopleCount'],
+      defaultPerPage: 20,
+      // Admin được search nhiều field hơn
+      availableSearch: ['q', 'address', 'notes', 'regionId', 'user.fullName', 'user.mobileNumber'],
+      availableOrderBy: ['createdAt', 'status', 'peopleCount', 'updatedAt'],
     })
     { _search, _limit, _offset, _order }: PaginationListDto,
+
+    // 2. Enum Filters
     @PaginationQueryFilterInEnum('severity', ENUM_REPORT_SEVERITY.MEDIUM, ENUM_REPORT_SEVERITY)
     severity: ENUM_REPORT_SEVERITY[],
+
     @PaginationQueryFilterInEnum('status', ENUM_REPORT_STATUS.IN_PROGRESS, ENUM_REPORT_STATUS)
     status: ENUM_REPORT_STATUS[],
-    @AuthJwtPayload('user', UserParsePipe) user: UserDocument,
+
+    @PaginationQueryFilterInEnum('type', ENUM_REPORT_TYPE.EVACUATION, ENUM_REPORT_TYPE)
+    type: ENUM_REPORT_TYPE[],
+
+    // 3. Dynamic Date Filters (Y hệt App)
+    @Query('dateField') rawDateField: string,
+    @PaginationQueryFilterDateTimeRange('timeRange') timeRange: Date,
+    @PaginationQueryFilterDate('fromDate', ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS.GREATER_THAN_EQUAL) fromDate: Date,
+        @PaginationQueryFilterDate('toDate', ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS.LESS_THAN_EQUAL) toDate: Date,
+        @PaginationQueryFilterDate('exactDate', ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS.EQUAL) exactDate: Date,
   ): Promise<IResponsePaging<ReportListResponseDto>> {
-    const find: Record<string, any> = {
-      ..._search,
-    };
+    const find: Record<string, any> = { ..._search };
 
-    if (severity && severity.length > 0) {
-      find.severity = { $in: Array.isArray(severity) ? severity : [severity] };
-    }
-    if (status && status.length > 0) {
-      find.status = { $in: status };
-    }
+    if (severity?.length) find.severity = { $in: severity };
+    if (status?.length) find.status = { $in: status };
+    if (type?.length) find.type = { $in: type };
 
-    const reports = await this.reportService.findAll(
+    // B. Merge Date Filters
+    const dateQuery = this.paginationFilterService.buildDateQuery(
+      { dateField: rawDateField, timeRange, fromDate, toDate, exactDate },
+      ['createdAt', 'updatedAt', 'deletedAt'] // Admin có thể lọc cả deletedAt nếu cần
+    );
+    Object.assign(find, dateQuery);
+
+    // C. Gọi Service ADMIN (Không cần user context)
+    const reports = await this.reportService.findAllByAdmin(
       find,
       {
         paging: { limit: _limit, offset: _offset },
         order: _order,
-        join: true,
-      },
-      user,
-      dto
+      }
     );
 
-    const total: number = await this.reportService.getTotal(find);
-    const totalPage: number = this.paginationService.totalPage(
-      total,
-      _limit
-    );
+    // D. Tính Total ADMIN
+    const total = await this.reportService.getTotal(find);
+    const totalPage = this.paginationService.totalPage(total, _limit);
 
     return {
       _pagination: { total, totalPage },

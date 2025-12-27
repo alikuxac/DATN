@@ -8,10 +8,12 @@ import {
   PAGINATION_PAGE,
   PAGINATION_PER_PAGE,
 } from '../constants/pagination.constant';
-import { IPaginationOrder } from '../interfaces/pagination.interface';
+import { IPaginationOrder, IDateFilterParams } from '../interfaces/pagination.interface';
+import { DatabaseService } from '@common/database/services/database.service';
 
 @Injectable()
 export class PaginationService {
+  constructor(private readonly databaseService: DatabaseService) {}
   offset(page: number, perPage: number): number {
     page = page > PAGINATION_MAX_PAGE ? PAGINATION_MAX_PAGE : page;
     perPage =
@@ -127,5 +129,50 @@ export class PaginationService {
     return {
       [field]: filterValue,
     };
+  }
+
+  buildDateQuery(
+    params: IDateFilterParams,
+    allowedFields: string[] = ['createdAt', 'updatedAt'] // Default allow list
+  ): Record<string, any> {
+    const { dateField, timeRange, fromDate, toDate, exactDate } = params;
+
+    // 1. Validate field name (Security check)
+    // Nếu field gửi lên không nằm trong whitelist -> Fallback về field đầu tiên (thường là createdAt)
+    const targetField =
+      dateField && allowedFields.includes(dateField)
+        ? dateField
+        : allowedFields[0];
+
+    // 2. Logic Priority: Exact > Between > Gte/Lte > Range
+    if (exactDate) {
+      // Xử lý tìm chính xác trong ngày
+      const startOfDay = new Date(exactDate);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date(exactDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      return this.databaseService.filterDateBetween(targetField, targetField, startOfDay, endOfDay);
+    }
+
+    if (fromDate && toDate) {
+      return this.databaseService.filterDateBetween(targetField, targetField, fromDate, toDate);
+    }
+
+    if (fromDate) {
+      return this.databaseService.filterGte(targetField, fromDate);
+    }
+
+    if (toDate) {
+      return this.databaseService.filterLte(targetField, toDate);
+    }
+
+    if (timeRange) {
+      return this.databaseService.filterGte(targetField, timeRange);
+    }
+
+    // Không có điều kiện nào -> Trả về rỗng
+    return {};
   }
 }

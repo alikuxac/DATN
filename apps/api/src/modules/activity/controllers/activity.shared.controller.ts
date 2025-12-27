@@ -1,6 +1,10 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { PaginationQuery } from '@common/pagination/decorators/pagination.decorator';
+import {
+    PaginationQuery,
+    PaginationQueryFilterDate,
+    PaginationQueryFilterDateTimeRange,
+} from '@common/pagination/decorators/pagination.decorator';
 import { PaginationListDto } from '@common/pagination/dtos/pagination.list.dto';
 import { PaginationService } from '@common/pagination/services/pagination.service';
 import { RequestRequiredPipe } from '@common/request/pipes/request.required.pipe';
@@ -13,6 +17,8 @@ import {
     AuthJwtAccessProtected,
     AuthJwtPayload,
 } from '@modules/auth/decorators/auth.jwt.decorator';
+import { ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS } from '@repo/shared';
+
 import { UserProtected } from '@modules/users/decorators/user.decorator';
 import { UserParsePipe } from '@modules/users/pipes/user.parse.pipe';
 import { UserDocument } from '@modules/users/repository/entities/user.entity';
@@ -26,7 +32,7 @@ export class ActivitySharedController {
     constructor(
         private readonly paginationService: PaginationService,
         private readonly activityService: ActivityService
-    ) {}
+    ) { }
 
     @ResponsePaging('activity.list')
     @UserProtected()
@@ -36,10 +42,33 @@ export class ActivitySharedController {
         @AuthJwtPayload('user', RequestRequiredPipe, UserParsePipe)
         user: UserDocument,
         @PaginationQuery()
-        { _search, _limit, _offset, _order }: PaginationListDto
+        { _search, _limit, _offset, _order }: PaginationListDto,
+        @PaginationQueryFilterDateTimeRange('timeRange') timeRange: Date,
+        @Query('dateField') rawDateField: string,
+        @PaginationQueryFilterDate(
+            'fromDate',
+            ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS.GREATER_THAN_EQUAL
+        )
+        fromDate: Date,
+        @PaginationQueryFilterDate(
+            'toDate',
+            ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS.LESS_THAN_EQUAL
+        )
+        toDate: Date,
+        @PaginationQueryFilterDate(
+            'exactDate',
+            ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS.EQUAL
+        )
+        exactDate: Date
     ): Promise<IResponsePaging<ActivityListResponseDto>> {
+        const dateQuery = this.paginationService.buildDateQuery(
+            { dateField: rawDateField, timeRange, fromDate, toDate, exactDate },
+            ['createdAt']
+        );
+
         const find: Record<string, any> = {
             ..._search,
+            ...dateQuery,
         };
 
         const userHistories: IActivityDoc[] =

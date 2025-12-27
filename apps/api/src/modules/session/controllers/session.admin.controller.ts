@@ -4,11 +4,16 @@ import {
     Get,
     NotFoundException,
     Param,
+    Query,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
-import { PaginationQuery } from '@common/pagination/decorators/pagination.decorator';
 import { PaginationListDto } from '@common/pagination/dtos/pagination.list.dto';
 import { PaginationService } from '@common/pagination/services/pagination.service';
+import {
+    PaginationQuery,
+    PaginationQueryFilterDate,
+    PaginationQueryFilterDateTimeRange,
+} from '@common/pagination/decorators/pagination.decorator';
+
 import { RequestRequiredPipe } from '@common/request/pipes/request.required.pipe';
 import {
     Response,
@@ -23,7 +28,9 @@ import {
     ENUM_POLICY_ACTION,
     ENUM_POLICY_SUBJECT,
     ENUM_STATUS_CODE_ERROR,
+    ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS,
 } from '@repo/shared';
+
 import { SessionListResponseDto } from '@modules/session/dtos/response/session.list.response.dto';
 import { SessionActiveParsePipe } from '@modules/session/pipes/session.parse.pipe';
 import { SessionDoc } from '@modules/session/repository/entities/session.entity';
@@ -33,7 +40,6 @@ import { UserNotSelfPipe } from '@modules/users/pipes/users.not-self.pipe';
 import { UserParsePipe } from '@modules/users/pipes/user.parse.pipe';
 import { UserDocument } from '@modules/users/repository/entities/user.entity';
 
-@ApiTags('modules.admin.session')
 @Controller({
     version: '1',
     path: '/session/:user',
@@ -42,7 +48,7 @@ export class SessionAdminController {
     constructor(
         private readonly paginationService: PaginationService,
         private readonly sessionService: SessionService
-    ) {}
+    ) { }
 
     @ResponsePaging('session.list')
     @PolicyAbilityProtected({
@@ -55,10 +61,33 @@ export class SessionAdminController {
     async list(
         @Param('user', RequestRequiredPipe, UserParsePipe) user: UserDocument,
         @PaginationQuery()
-        { _search, _limit, _offset, _order }: PaginationListDto
+        { _search, _limit, _offset, _order }: PaginationListDto,
+        @PaginationQueryFilterDateTimeRange('timeRange') timeRange: Date,
+        @Query('dateField') rawDateField: string,
+        @PaginationQueryFilterDate(
+            'fromDate',
+            ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS.GREATER_THAN_EQUAL
+        )
+        fromDate: Date,
+        @PaginationQueryFilterDate(
+            'toDate',
+            ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS.LESS_THAN_EQUAL
+        )
+        toDate: Date,
+        @PaginationQueryFilterDate(
+            'exactDate',
+            ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS.EQUAL
+        )
+        exactDate: Date
     ): Promise<IResponsePaging<SessionListResponseDto>> {
+        const dateQuery = this.paginationService.buildDateQuery(
+            { dateField: rawDateField, timeRange, fromDate, toDate, exactDate },
+            ['createdAt']
+        );
+
         const find: Record<string, any> = {
             ..._search,
+            ...dateQuery,
         };
 
         const sessions: SessionDoc[] = await this.sessionService.findAllByUser(

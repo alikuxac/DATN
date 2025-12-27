@@ -1,4 +1,4 @@
-import { ENUM_PAGINATION_ORDER_DIRECTION_TYPE } from '@repo/shared';
+import { ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS, ENUM_PAGINATION_ORDER_DIRECTION_TYPE } from '@repo/shared';
 
 export type IPaginationOrder = Record<
   string,
@@ -26,4 +26,16 @@ export interface IPaginationFilterDateBetweenOptions {
 export interface IPaginationFilterEqualOptions
   extends IPaginationFilterOptions {
   isNumber?: boolean;
+}
+
+export interface IPaginationFilterDateOptions {
+  time?: ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS;
+}
+
+export interface IDateFilterParams {
+  dateField?: string;      // Tên trường muốn filter (do client gửi)
+  timeRange?: Date;        // Khoảng thời gian tương đối
+  fromDate?: Date;         // Từ ngày
+  toDate?: Date;           // Đến ngày
+  exactDate?: Date;        // Chính xác ngày
 }
