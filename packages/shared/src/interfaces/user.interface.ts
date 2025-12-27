@@ -45,8 +45,7 @@ export interface IUserGetResponse extends IDatabaseDto {
   email: string;
   mobileNumber: string;
   role: ENUM_USER_ROLE;
-  isVolunteer: boolean;
-  isVerified: boolean;
+  isRescueMode: boolean;
 
   location?: { type: string; coordinates: number[] };
   lastLocationAt?: Date;

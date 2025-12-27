@@ -10,7 +10,7 @@ import { IAuthPassword } from '@modules/auth/interfaces/auth.interface';
 import { IDatabaseCreateOptions, IDatabaseDeleteManyOptions, IDatabaseExistsOptions, IDatabaseFindAllOptions, IDatabaseFindOneOptions, IDatabaseGetTotalOptions, IDatabaseSaveOptions, IDatabaseSoftDeleteOptions } from '@common/database/interfaces/database.interface';
 import { UserRepository } from '@modules/users/repository/repositories/user.repository';
 import { DatabaseHelperQueryContain } from '@common/database/decorators/database.decorator';
-import { ENUM_MESSAGE_LANGUAGE, ENUM_USER_SIGN_UP_FROM, ENUM_USER_STATUS, ENUM_USER_THEME } from '@repo/shared';
+import { ENUM_MESSAGE_LANGUAGE, ENUM_USER_ROLE, ENUM_USER_SIGN_UP_FROM, ENUM_USER_STATUS, ENUM_USER_THEME } from '@repo/shared';
 import { HelperDateService } from '@common/helper/services/helper.date.service';
 import { plainToInstance } from 'class-transformer';
 import { HelperStringService } from '@common/helper/services/helper.string.service';
@@ -33,7 +33,7 @@ export class UsersService {
 
   async create(
     { email, password, firstName, lastName }: UserCreateRequestDto,
-    { passwordCreated, passwordExpired, passwordHash}: IAuthPassword,
+    { passwordCreated, passwordExpired, passwordHash }: IAuthPassword,
     signUpFrom: ENUM_USER_SIGN_UP_FROM,
     options?: IDatabaseCreateOptions
   ) {
@@ -68,12 +68,12 @@ export class UsersService {
       activityUpdates: true,
       newsLetters: true
     }
-    
+
     return this.userRepository.create<UserEntity>(newUser, options);
   }
 
   async findAll(
-    find: Record<string, any>, 
+    find: Record<string, any>,
     options?: IDatabaseFindAllOptions
   ) {
     return this.userRepository.findAll<UserDocument>(find, options);
@@ -111,7 +111,7 @@ export class UsersService {
     );
   }
 
-async update(respository: UserDocument, updateUserDto: UserUpdateRequestDto, options?: IDatabaseSaveOptions) {
+  async update(respository: UserDocument, updateUserDto: UserUpdateRequestDto, options?: IDatabaseSaveOptions) {
     respository.firstName = updateUserDto.firstName;
     respository.lastName = updateUserDto.lastName;
     respository.gender = updateUserDto.gender;
@@ -294,17 +294,29 @@ async update(respository: UserDocument, updateUserDto: UserUpdateRequestDto, opt
     return this.userRepository.save(repository, options);
   }
 
-  async updateVolunterStatus(
+  async updateVolunteerStatus(
     repository: UserDocument,
     options?: IDatabaseSaveOptions
   ) {
-    repository.isVolunteer = !repository.isVolunteer;
+
+    if (repository.role === ENUM_USER_ROLE.ADMIN
+      || repository.role === ENUM_USER_ROLE.SUPER_ADMIN) {
+      repository.isRescueMode = !repository.isRescueMode;
+    }
+
+    if (repository.role === ENUM_USER_ROLE.VOLUNTEER) {
+      repository.role = ENUM_USER_ROLE.USER;
+      repository.isRescueMode = false;
+    } else if (repository.role === ENUM_USER_ROLE.USER) {
+      repository.role = ENUM_USER_ROLE.VOLUNTEER;
+      repository.isRescueMode = true;
+    }
 
     return this.userRepository.save(repository, options);
   }
 
   async signUp(
-    data: IAuthPassword, 
+    data: IAuthPassword,
     { email, firstName, lastName }: { email: string, lastName: string, firstName: string },
     language: ENUM_MESSAGE_LANGUAGE,
     signUpFrom: ENUM_USER_SIGN_UP_FROM,
@@ -329,7 +341,7 @@ async update(respository: UserDocument, updateUserDto: UserUpdateRequestDto, opt
 
     user.preferences = {
       language: language,
-      theme: ENUM_USER_THEME.SYSTEM
+      theme: ENUM_USER_THEME.LIGHT
     };
 
     user.settings = {
@@ -398,8 +410,8 @@ async update(respository: UserDocument, updateUserDto: UserUpdateRequestDto, opt
   }
 
   async getNearbyVolunteer(user: UserDocument, options?: IDatabaseFindAllOptions) {
-    return this.findRescuersNearby(user.location.coordinates[1], user.location.coordinates[0], 5000, 
-      { isVolunteer: true },
+    return this.findRescuersNearby(user.location.coordinates[1], user.location.coordinates[0], 5000,
+      {},
       options);
   }
 }

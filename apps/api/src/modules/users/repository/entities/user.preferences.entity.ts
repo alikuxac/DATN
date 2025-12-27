@@ -8,7 +8,7 @@ export class UserPreferencesEntity {
   @DatabaseProp({ enum: ENUM_MESSAGE_LANGUAGE, type: String, default: ENUM_MESSAGE_LANGUAGE.EN })
   language: ENUM_MESSAGE_LANGUAGE;
 
-  @DatabaseProp({ enum: ENUM_USER_THEME, type: String, default: ENUM_USER_THEME.SYSTEM })
+  @DatabaseProp({ enum: ENUM_USER_THEME, type: String, default: ENUM_USER_THEME.LIGHT })
   theme: ENUM_USER_THEME;
 }
 

@@ -1,7 +1,7 @@
 export enum ENUM_USER_ROLE {
   SUPER_ADMIN = 'Super Admin',
   ADMIN = 'Admin',
-  // RESCUER = 'Rescuer',
+  VOLUNTEER = 'Volunteer',
   USER = 'User',
 }
 

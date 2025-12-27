@@ -27,8 +27,7 @@ export class UserGetResponseDto extends DatabaseObjectIdDto implements IUserGetR
   @Exclude()
   passwordAttempts: number;
 
-  isVerified: boolean;
-  isVolunteer: boolean;
+  isRescueMode: boolean;
 
   signUpDate: Date;
   signUpFrom: ENUM_USER_SIGN_UP_FROM;

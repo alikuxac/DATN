@@ -41,7 +41,7 @@ export class UserEntity extends DatabaseObjectIdEntityBase {
   password: string;
 
   @DatabaseProp()
-  passwordExpiredAt: Date;w
+  passwordExpiredAt: Date;
 
   @DatabaseProp()
   passwordCreatedAt: Date;
@@ -50,10 +50,7 @@ export class UserEntity extends DatabaseObjectIdEntityBase {
   passwordAttempts: number;
 
   @DatabaseProp({ default: false })
-  isVolunteer: boolean;
-
-  @DatabaseProp({ default: false })
-  isVerified: boolean;
+  isRescueMode: boolean;
 
   @DatabaseProp({ type: Date, trim: true, required: true })
   signUpDate: Date;

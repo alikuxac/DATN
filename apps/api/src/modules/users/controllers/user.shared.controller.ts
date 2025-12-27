@@ -261,7 +261,7 @@ export class UserSharedController {
             await this.databaseService.createTransaction();
 
         try {
-            await this.userService.updateVolunterStatus(user, {
+            await this.userService.updateVolunteerStatus(user, {
                 session,
             });
 

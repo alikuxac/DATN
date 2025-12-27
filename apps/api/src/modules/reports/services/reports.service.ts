@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ReportRepository } from '@modules/reports/repository/repositories/report.repository';
 import { ReportCreateRequestDto } from '@modules/reports/dtos/request/report.create.request.dto';
 import { ReportDocument, ReportEntity } from '@modules/reports/repository/entities/report.entity';
-import { ENUM_REPORT_LOCATION_TYPE, ENUM_REPORT_STATUS } from '@repo/shared';
+import { ENUM_REPORT_LOCATION_TYPE, ENUM_REPORT_STATUS, ENUM_USER_ROLE } from '@repo/shared';
 import { IDatabaseCreateOptions, IDatabaseDeleteManyOptions, IDatabaseDeleteOptions, IDatabaseFindAllOptions, IDatabaseFindOneOptions, IDatabaseGetTotalOptions, IDatabaseUpdateOptions } from '@common/database/interfaces/database.interface';
 import { IReportDocument, IReportEntity } from '../interfaces/report.interface';
 import { ReportListResponseDto } from '../dtos/response/report.list.reponse.dto';
@@ -10,7 +10,6 @@ import { Document } from 'mongoose';
 import { plainToInstance } from 'class-transformer';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UserDocument } from '@modules/users/repository/entities/user.entity';
-import { ReportListRequestDto } from '../dtos/request/report.list.request.dto';
 import { HelperDateService } from '@common/helper/services/helper.date.service';
 import { HelperGeoService } from '@common/helper/services/helper.geo.service';
 import { ReportUpdateRequestDto } from '../dtos/request/report.update.request.dto';
@@ -28,56 +27,125 @@ export class ReportService {
     user: UserDocument,
     regionId: string,
   ): Record<string, any> {
-    const isVolunteer = user.isVolunteer;
+
+    if (
+      user.role === ENUM_USER_ROLE.ADMIN ||
+      user.role === ENUM_USER_ROLE.SUPER_ADMIN
+    ) {
+      return {};
+    }
+
+    const userId = user._id; 
+    const isVolunteer = user.role === ENUM_USER_ROLE.VOLUNTEER;
 
     // 🅰️ USER MODE: Chỉ xem tin của mình
     if (!isVolunteer) {
-      return { user: user._id.toString() };
-    } else {
+      return { user: userId };
+    } 
 
-      return {
-        $or: [
-          // 1. Nhiệm vụ của tôi (Đang làm hoặc Đã xong)
-          {
-            rescuer: user._id,
-            status: { $in: [ENUM_REPORT_STATUS.IN_PROGRESS, ENUM_REPORT_STATUS.RESOLVED] }
-          },
-          // 2. Tin SOS mới trong vùng (Chưa ai nhận)
-          {
-            regionId: regionId,
-            status: ENUM_REPORT_STATUS.PENDING,
-            rescuer: null
-          }
-        ]
-      };
+    const volunteerConditions: Record<string, any>[] = [
+      // A. Tin do chính mình tạo ra (Dù là volunteer vẫn có thể là nạn nhân)
+      { user: userId },
+
+      // B. Nhiệm vụ mình đang thực hiện hoặc đã làm xong
+      {
+        rescuer: userId,
+        status: {
+          $in: [ENUM_REPORT_STATUS.IN_PROGRESS, ENUM_REPORT_STATUS.RESOLVED],
+        },
+      },
+    ];
+
+    if (regionId) {
+      volunteerConditions.push({
+        regionId: regionId,
+        status: { $in: [ENUM_REPORT_STATUS.PENDING, ENUM_REPORT_STATUS.VERIFIED] },
+        rescuer: null, 
+      });
     }
+
+    return { $or: volunteerConditions };
   }
 
-  private buildAdvancedFilter(dto: ReportListRequestDto) {
-    const filter: Record<string, any> = {};
+  private extractTextSearch(find: Record<string, any>) {
+    const { q, ...restFind } = find;
 
-    // 1. Lọc theo Type (Loại cứu trợ)
-    if (dto.type && dto.type !== ('all' as any)) {
-      filter.type = dto.type;
+    let textQuery = {};
+
+    if (q) {
+      const regex = new RegExp(q, 'i');
+      textQuery = {
+        $or: [
+          { address: { $regex: regex } },
+          { notes: { $regex: regex } },
+        ],
+      };
     }
 
-    // 2. Lọc theo Time Range (Thời gian)
-    if (dto.timeRange && dto.timeRange > 0) {
-      const timeAgo = this.helperdateService.create();
-      timeAgo.setHours(timeAgo.getHours() - dto.timeRange); // Trừ đi số giờ
+    return { restFind, textQuery };
+  }
 
-      filter.createdAt = { $gte: timeAgo }; // Lấy từ thời điểm đó trở đi
+  private buildAppLogicFilter(
+    user: UserDocument,
+    regionId?: string,
+  ): Record<string, any> {
+    if (
+      user.role === ENUM_USER_ROLE.ADMIN ||
+      user.role === ENUM_USER_ROLE.SUPER_ADMIN
+    ) {
+      // Nếu Admin dùng App -> Có thể xem hết hoặc xử lý theo mode (như bài trước ta bàn)
+      // Ở đây giữ logic cũ của bạn: Admin thấy hết -> return rỗng
+      return {};
     }
 
-    // 3. Xử lý Search Query (q) - Tìm trong address hoặc notes
-    if (dto.q) {
-      filter.$or = [
-        { address: { $regex: new RegExp(dto.q, 'i') } },
-        { notes: { $regex: new RegExp(dto.q, 'i') } },
-      ];
+    const userId = user._id;
+    const isVolunteer = user.role === ENUM_USER_ROLE.VOLUNTEER;
+
+    // A. USER THƯỜNG: Chỉ xem tin của mình
+    if (!isVolunteer) {
+      return { user: userId };
     }
 
-    return filter;
+    // B. VOLUNTEER
+    const volunteerConditions: Record<string, any>[] = [
+      { user: userId }, // Tin mình tạo
+      {
+        rescuer: userId, // Tin mình đang cứu
+        status: { $in: [ENUM_REPORT_STATUS.IN_PROGRESS, ENUM_REPORT_STATUS.RESOLVED] },
+      },
+    ];
+
+    // C. Tin SOS xung quanh (Chưa ai nhận)
+    if (regionId) {
+      volunteerConditions.push({
+        regionId: regionId,
+        status: { $in: [ENUM_REPORT_STATUS.PENDING, ENUM_REPORT_STATUS.VERIFIED] },
+        rescuer: null,
+      });
+    }
+
+    return { $or: volunteerConditions };
+  }
+
+  private buildAppQuery(find: Record<string, any>, user: UserDocument): Record<string, any> {
+    // 1. Tách 'q' xử lý riêng
+    const { restFind, textQuery } = this.extractTextSearch(find);
+
+    // 2. Lấy Logic User/Volunteer (Cần regionId từ find để lọc tin xung quanh)
+    const logicFilter = this.buildAppLogicFilter(user, restFind.regionId);
+
+    // 3. Merge tất cả
+    return {
+      $and: [restFind, textQuery, logicFilter].filter(f => Object.keys(f).length > 0)
+    };
+  }
+
+  private buildAdminQuery(find: Record<string, any>): Record<string, any> {
+    const { restFind, textQuery } = this.extractTextSearch(find);
+
+    return {
+      $and: [restFind, textQuery].filter(f => Object.keys(f).length > 0)
+    };
   }
 
   async createByUser(
@@ -135,25 +203,35 @@ export class ReportService {
     return this.reportRepository.create<ReportEntity>(create, options);
   }
 
-  // 1. Find All
+  async findAllApp(
+    find: Record<string, any>,
+    options?: IDatabaseFindAllOptions,
+    user?: UserDocument,
+  ): Promise<IReportDocument[]> {
+    const query = this.buildAppQuery(find, user!);
+    return this.reportRepository.findAll<IReportDocument>(query, {
+      ...options,
+      join: true,
+    });
+  }
+
   async findAll(
     find?: Record<string, any>,
     options?: IDatabaseFindAllOptions,
     user?: UserDocument,
-    dto?: ReportListRequestDto,
   ): Promise<IReportDocument[]> {
-    const logicFilter = user && dto ? this.buildLogicFilter(user, dto.regionId) : {};
+    const query = this.buildAppQuery(find, user!);
+    return this.reportRepository.findAll<IReportDocument>(query, {
+      ...options,
+      join: true,
+    });
+  }
 
-    const advancedFilter = dto ? this.buildAdvancedFilter(dto) : {};
-
-    const query = {
-      $and: [
-        find,
-        logicFilter,
-        advancedFilter,
-      ].filter(f => Object.keys(f).length > 0) 
-    };
-
+  async findAllByAdmin(
+    find: Record<string, any>,
+    options?: IDatabaseFindAllOptions,
+  ): Promise<IReportDocument[]> {
+    const query = this.buildAdminQuery(find);
     return this.reportRepository.findAll<IReportDocument>(query, {
       ...options,
       join: true,
@@ -167,7 +245,7 @@ export class ReportService {
     options?: IDatabaseFindAllOptions
   ): Promise<IReportDocument[]> {
     return this.reportRepository.findAll<IReportDocument>(
-      { ...find, user: userId }, // Filter theo field 'user'
+      { ...find, user: userId },
       { ...options, join: true }
     );
   }
@@ -178,7 +256,7 @@ export class ReportService {
     options?: IDatabaseFindAllOptions
   ): Promise<IReportDocument[]> {
     return this.reportRepository.findAll<IReportDocument>(
-      { ...find, by: userId }, // Filter theo field 'user'
+      { ...find, by: userId },
       { ...options, join: true }
     );
   }
@@ -199,19 +277,6 @@ export class ReportService {
     return this.reportRepository.findOne<ReportDocument>(find, options);
   }
 
-  // 5. Get Totals
-  async getTotal(
-    find?: Record<string, any>,
-    options?: IDatabaseGetTotalOptions,
-    user?: UserDocument,
-    dto?: ReportListRequestDto
-  ): Promise<number> {
-    const logicFilter = user && dto ? this.buildLogicFilter(user, dto.regionId) : {};
-    const query = { $and: [find, logicFilter] };
-    return this.reportRepository.getTotal(query, options);
-  }
-
-  // 6. Get Totals By User
   async getTotalByUser(
     userId: string,
     find?: Record<string, any>,
@@ -221,6 +286,21 @@ export class ReportService {
       { ...find, user: userId },
       options
     );
+  }
+
+  async getTotal(
+    find: Record<string, any>,
+  ): Promise<number> {
+    const query = this.buildAdminQuery(find);
+    return this.reportRepository.getTotal(query);
+  }
+
+  async getTotalApp(
+    find: Record<string, any>,
+    user?: UserDocument,
+  ): Promise<number> {
+    const query = this.buildAppQuery(find, user!);
+    return this.reportRepository.getTotal(query);
   }
 
   async delete(_id: string, options?: IDatabaseDeleteOptions) {
@@ -288,6 +368,16 @@ export class ReportService {
   ) {
     report.status = ENUM_REPORT_STATUS.PENDING;
     report.rescuer = null;
+    return this.reportRepository.save(report, options);
+  }
+
+  async completeReport(report: ReportDocument, options?: IDatabaseUpdateOptions) {
+    report.status = ENUM_REPORT_STATUS.RESOLVED;
+    return this.reportRepository.save(report, options);
+  }
+
+  async cancelReport(report: ReportDocument, options?: IDatabaseUpdateOptions) {
+    report.status = ENUM_REPORT_STATUS.PENDING;
     return this.reportRepository.save(report, options);
   }
 
