@@ -2,116 +2,17 @@ import React from "react";
 import {
   View,
   ScrollView,
-  TouchableOpacity,
   Alert,
   StyleSheet,
 } from "react-native";
-// 👇 Import type rõ ràng để tránh lỗi "Value used as Type"
-import type { TouchableOpacityProps } from "react-native";
-import { useRouter, Href } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { useAppDispatch } from "@/store/hooks";
 import { setToken } from "@/store/slices/appSlice";
 import { AppText, Icon } from "@/components/ui";
 import { useColors } from "@/hooks/useColors";
-import { cn } from "@/utils";
 import * as Application from "expo-application";
+import { MenuLink } from "@/components/settings/MenuLink";
 
-// --- 1. MENU LINK COMPONENT (Tách ra ngoài) ---
-interface MenuLinkProps extends TouchableOpacityProps {
-  icon: string;
-  label: string;
-  subLabel?: string;
-  href?: Href<string>;
-  isDestructive?: boolean;
-  // Props bổ sung để render UI đúng theme (truyền từ cha vào hoặc gọi hook bên trong)
-}
-
-const MenuLink = (prop: MenuLinkProps) => {
-  const {
-    icon,
-    label,
-    subLabel,
-    href,
-    isDestructive,
-    onPress,
-    style,
-    ...props
-  } = prop;
-  const router = useRouter();
-  const { theme } = useAppSelector((state) => state.app);
-  const colors = useColors();
-
-  const handlePress = (e: any) => {
-    if (onPress) {
-      // Nếu có onPress tùy chỉnh (ví dụ Logout) thì chạy nó
-      onPress(e);
-    } else if (href) {
-      // Nếu không thì chuyển trang
-      router.push(href);
-    }
-  };
-
-  const iconBgColor = isDestructive
-    ? "#fee2e2"
-    : theme === "dark"
-      ? "#333"
-      : "#f3f4f6";
-
-  const contentColor = isDestructive ? "#ef4444" : colors.foreground;
-
-  return (
-    <TouchableOpacity
-      onPress={handlePress}
-      style={[
-        styles.menuItem,
-        {
-          borderBottomColor: theme === "dark" ? "#333" : "#f1f5f9",
-          backgroundColor: isDestructive
-            ? theme === "dark"
-              ? "#331111"
-              : "#fef2f2"
-            : "transparent",
-        },
-        style,
-      ]}
-      {...props}
-    >
-      <View style={styles.menuLeft}>
-        <View style={[styles.iconContainer, { backgroundColor: iconBgColor }]}>
-          <Icon
-            name={icon as any}
-            className={cn(
-              "w-5 h-5",
-              isDestructive ? "text-red-500" : "text-foreground"
-            )}
-            size={20}
-            color={contentColor}
-          />
-        </View>
-        <View>
-          <AppText style={[styles.menuLabel, { color: contentColor }]}>
-            {label}
-          </AppText>
-          {subLabel ? (
-            <AppText style={styles.subLabel}> {subLabel} </AppText>
-          ) : null}
-        </View>
-      </View>
-
-      {!isDestructive && (
-        <Icon
-          name="ChevronRight"
-          size={20}
-          color={colors.neutrals400}
-          className="w-5 h-5 text-gray-400"
-        />
-      )}
-    </TouchableOpacity>
-  );
-};
-
-// --- 2. MAIN SCREEN ---
 export default function SettingsScreen() {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
@@ -253,23 +154,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     overflow: "hidden",
   },
-  menuItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 16,
-    borderBottomWidth: 1,
-  },
-  menuLeft: { flexDirection: "row", alignItems: "center", gap: 14 },
-  iconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  menuLabel: { fontSize: 16, fontWeight: "500" },
-  subLabel: { fontSize: 12, color: "#94a3b8", marginTop: 2 },
   versionText: {
     textAlign: "center",
     marginTop: 12,

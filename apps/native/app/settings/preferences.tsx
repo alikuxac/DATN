@@ -2,20 +2,19 @@ import React, { useCallback, useState, useRef, useEffect } from "react";
 import {
   View,
   ScrollView,
-  TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
   useColorScheme,
 } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { toggleTheme, setLanguage, Theme, setTheme } from "@/store/slices/appSlice";
-import { AppText, Icon } from "@/components/ui";
+import { setLanguage, Theme, setTheme } from "@/store/slices/appSlice";
+import { AppText } from "@/components/ui";
 import { useColors } from "@/hooks/useColors";
 import { apiService } from "@/services/api.service";
-import { useFocusEffect } from "expo-router";
 import { getDeviceLanguage } from "@/utils/getDeviceLanguage";
 import { useToast } from "@/components/ui/ToastProvider";
+import { OptionItem } from "@/components/settings/OptionItem";
 
 // Định nghĩa kiểu dữ liệu cho Preferences từ API
 interface UserPreferences {
@@ -144,42 +143,6 @@ export default function PreferencesScreen() {
     },
   ];
 
-  const RenderOptionItem = ({
-    label,
-    isSelected,
-    onPress,
-    icon,
-    flag,
-    isLast,
-  }: any) => (
-    <TouchableOpacity
-      onPress={onPress}
-      style={[
-        styles.row,
-        !isLast && { borderBottomWidth: 1, borderBottomColor: colors.border },
-      ]}
-    >
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-        {icon ? (
-          <View
-            style={[
-              styles.iconBox,
-              { backgroundColor: isDarkMode ? "#333" : "#f3f4f6" },
-            ]}
-          >
-            <Icon name={icon} size={20} color={colors.foreground} />
-          </View>
-        ) : (
-          <AppText style={{ fontSize: 24 }}>{flag}</AppText>
-        )}
-        <AppText style={{ fontSize: 16, color: colors.foreground }}>
-          {label}
-        </AppText>
-      </View>
-      {isSelected && <Icon name="Check" size={20} color={colors.primary} />}
-    </TouchableOpacity>
-  );
-
   if (!theme && loading) {
     return (
       <View
@@ -213,13 +176,14 @@ export default function PreferencesScreen() {
           ]}
         >
           {themes.map((item, index) => (
-            <RenderOptionItem
+            <OptionItem
               key={item.code}
               label={item.label}
               icon={item.icon}
               isSelected={theme === item.code}
               onPress={() => handleSetTheme(item.code)}
               isLast={index === themes.length - 1}
+              isDarkMode={isDarkMode}
             />
           ))}
         </View>
@@ -237,7 +201,7 @@ export default function PreferencesScreen() {
           ]}
         >
           {languages.map((item, index) => (
-            <RenderOptionItem
+            <OptionItem
               key={item.code}
               label={item.label}
               flag={item.flag}
@@ -264,17 +228,4 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   card: { borderRadius: 16, borderWidth: 1, overflow: "hidden" },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 16,
-  },
-  iconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-  },
 });

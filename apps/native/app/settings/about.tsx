@@ -3,43 +3,17 @@ import {
   View,
   ScrollView,
   StyleSheet,
-  TouchableOpacity,
   Image,
-  Linking,
 } from "react-native";
 import { useTranslation } from "react-i18next";
-import { AppText, Icon } from "@/components/ui";
+import { AppText } from "@/components/ui";
 import { useColors } from "@/hooks/useColors";
 import * as Application from "expo-application";
+import { LinkItem } from "@/components/settings/LinkItem";
 
 export default function AboutScreen() {
   const { t } = useTranslation();
   const colors = useColors();
-
-  const handleOpenLink = async (url: string) => {
-    const supported = await Linking.canOpenURL(url);
-    if (supported) {
-      await Linking.openURL(url);
-    }
-  };
-
-  const RenderLinkItem = ({ label, icon, url, isLast }: any) => (
-    <TouchableOpacity
-      onPress={() => handleOpenLink(url)}
-      style={[
-        styles.row,
-        !isLast && { borderBottomWidth: 1, borderBottomColor: colors.border },
-      ]}
-    >
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-        <Icon name={icon} size={20} color={colors.foreground} />
-        <AppText style={{ fontSize: 16, color: colors.foreground }}>
-          {label}
-        </AppText>
-      </View>
-      <Icon name="ExternalLink" size={16} color={colors.neutrals400} />
-    </TouchableOpacity>
-  );
 
   return (
     <ScrollView
@@ -71,12 +45,12 @@ export default function AboutScreen() {
             { backgroundColor: colors.card, borderColor: colors.border },
           ]}
         >
-          <RenderLinkItem
+          <LinkItem
             label="Điều khoản sử dụng"
             icon="FileText"
             url="https://your-domain.com/terms"
           />
-          <RenderLinkItem
+          <LinkItem
             label="Chính sách bảo mật"
             icon="ShieldCheck"
             url="https://your-domain.com/privacy"
@@ -94,17 +68,17 @@ export default function AboutScreen() {
             { backgroundColor: colors.card, borderColor: colors.border },
           ]}
         >
-          <RenderLinkItem
+          <LinkItem
             label="Website trang chủ"
             icon="Globe"
             url="https://your-domain.com"
           />
-          <RenderLinkItem
+          <LinkItem
             label="Gửi phản hồi (Email)"
             icon="Mail"
             url="mailto:support@your-domain.com"
           />
-          <RenderLinkItem
+          <LinkItem
             label="Đánh giá ứng dụng"
             icon="Star"
             url="market://details?id=com.cuutro.app" // Link CH Play/AppStore
@@ -162,10 +136,4 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   card: { borderRadius: 16, borderWidth: 1, overflow: "hidden" },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 16,
-  },
 });

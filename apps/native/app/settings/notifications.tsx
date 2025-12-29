@@ -1,11 +1,10 @@
 import React, { useState, useRef } from "react";
-import { View, ScrollView, StyleSheet, ActivityIndicator } from "react-native";
+import { View, ScrollView, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
-import { AppText, Icon } from "@/components/ui";
-import Switch from "@/components/ui/Switch"; // Dùng Switch custom của bạn
+import { AppText } from "@/components/ui";
 import { useColors } from "@/hooks/useColors";
 import { useToast } from "@/components/ui/ToastProvider";
-import { apiService } from "@/services/api.service";
+import { SwitchItem } from "@/components/settings/SwitchItem";
 
 // Định nghĩa các loại thông báo
 interface NotificationSettings {
@@ -53,49 +52,6 @@ export default function NotificationsScreen() {
     }, 1000);
   };
 
-  const RenderSwitchItem = ({
-    label,
-    description,
-    value,
-    onToggle,
-    icon,
-    isLast,
-  }: any) => (
-    <View
-      style={[
-        styles.row,
-        !isLast && { borderBottomWidth: 1, borderBottomColor: colors.border },
-      ]}
-    >
-      <View
-        style={{ flexDirection: "row", alignItems: "center", flex: 1, gap: 12 }}
-      >
-        <View style={[styles.iconBox, { backgroundColor: colors.background }]}>
-          <Icon name={icon} size={20} color={colors.foreground} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <AppText
-            style={{
-              fontSize: 16,
-              fontWeight: "500",
-              color: colors.foreground,
-            }}
-          >
-            {label}
-          </AppText>
-          {description && (
-            <AppText
-              style={{ fontSize: 12, color: colors.neutrals500, marginTop: 2 }}
-            >
-              {description}
-            </AppText>
-          )}
-        </View>
-      </View>
-      <Switch value={value} onValueChange={onToggle} />
-    </View>
-  );
-
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
@@ -109,7 +65,7 @@ export default function NotificationsScreen() {
             { backgroundColor: colors.card, borderColor: colors.border },
           ]}
         >
-          <RenderSwitchItem
+          <SwitchItem
             label="Cho phép thông báo"
             description="Nhận thông báo trên thiết bị này"
             icon="Bell"
@@ -129,7 +85,7 @@ export default function NotificationsScreen() {
             { backgroundColor: colors.card, borderColor: colors.border },
           ]}
         >
-          <RenderSwitchItem
+          <SwitchItem
             label="Cảnh báo Khẩn cấp (SOS)"
             description="Rung chuông khi có người kêu cứu gần bạn"
             icon="Siren" // Hoặc AlertTriangle
@@ -137,7 +93,7 @@ export default function NotificationsScreen() {
             onToggle={() => handleToggle("sosAlerts")}
           />
 
-          <RenderSwitchItem
+          <SwitchItem
             label="Cập nhật Hoạt động"
             description="Khi báo cáo của bạn được duyệt hoặc xử lý"
             icon="Activity"
@@ -145,7 +101,7 @@ export default function NotificationsScreen() {
             onToggle={() => handleToggle("activityUpdates")}
           />
 
-          <RenderSwitchItem
+          <SwitchItem
             label="Tin tức & Hệ thống"
             description="Các bản cập nhật ứng dụng và tin tức cứu trợ"
             icon="Newspaper"
@@ -171,17 +127,4 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   card: { borderRadius: 16, borderWidth: 1, overflow: "hidden" },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 16,
-  },
-  iconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-  },
 });
