@@ -63,7 +63,7 @@ COPY packages/shared/package.json ./packages/shared/
 
 # Install production dependencies only
 ENV NODE_ENV=production
-RUN yarn install --production --frozen-lockfile --ignore-scripts
+RUN yarn install --production --frozen-lockfile
 
 # Cleanup unnecessary files
 RUN find . -name "*.md" -type f -delete && \
