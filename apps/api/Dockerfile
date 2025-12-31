@@ -35,7 +35,12 @@ COPY --from=deps /apps/package.json ./package.json
 # Copy workspace packages (shared dependencies)
 COPY packages ./packages
 
+# Build shared package first (required by API)
+WORKDIR /apps/packages/shared
+RUN yarn build
+
 # Copy API source code
+WORKDIR /apps
 COPY apps/api ./apps/api
 
 # Build the API application
@@ -56,21 +61,17 @@ COPY package.json yarn.lock* ./
 COPY apps/api/package.json ./apps/api/
 COPY packages/shared/package.json ./packages/shared/
 
-# Copy source code for shared package (needed for build)
-COPY packages/shared ./packages/shared
-
 # Install production dependencies only
 ENV NODE_ENV=production
-RUN yarn install --production --frozen-lockfile --ignore-scripts && \
-    # Remove unnecessary files to reduce size
-    find . -name "*.md" -type f -delete && \
-    find . -name "*.ts" -not -path "*/node_modules/*" -type f -delete && \
+RUN yarn install --production --frozen-lockfile --ignore-scripts
+
+# Cleanup unnecessary files
+RUN find . -name "*.md" -type f -delete && \
     find . -name "*.map" -type f -delete && \
     find ./node_modules -name "test" -type d -exec rm -rf {} + 2>/dev/null || true && \
     find ./node_modules -name "tests" -type d -exec rm -rf {} + 2>/dev/null || true && \
     find ./node_modules -name "*.spec.js" -type f -delete && \
     find ./node_modules -name "*.test.js" -type f -delete && \
-    # Remove cache
     yarn cache clean
 
 # ============================================
@@ -94,8 +95,9 @@ COPY --from=production-deps --chown=nestjs:nodejs /apps/apps/api/node_modules ./
 # Copy package.json
 COPY --from=builder --chown=nestjs:nodejs /apps/apps/api/package.json ./package.json
 
-# Copy shared package if needed at runtime
-COPY --from=production-deps --chown=nestjs:nodejs /apps/packages/shared ./packages/shared
+# Copy shared package if needed at runtime (built dist from builder)
+COPY --from=builder --chown=nestjs:nodejs /apps/packages/shared/dist ./packages/shared/dist
+COPY --from=builder --chown=nestjs:nodejs /apps/packages/shared/package.json ./packages/shared/package.json
 
 # Switch to non-root user
 USER nestjs
