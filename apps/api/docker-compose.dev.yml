@@ -1,0 +1,90 @@
+version: '3.8'
+
+services:
+  api-dev:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+      target: builder
+    container_name: datn-api-dev
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-3000}:3000"
+    environment:
+      # App Configuration
+      NODE_ENV: development
+      APP_NAME: ${APP_NAME:-DATN API Dev}
+      APP_ENV: development
+      APP_TIMEZONE: ${APP_TIMEZONE:-Asia/Ho_Chi_Minh}
+      APP_LANGUAGE: ${APP_LANGUAGE:-vi}
+      
+      # HTTP Configuration
+      HTTP_HOST: ${HTTP_HOST:-0.0.0.0}
+      HTTP_PORT: ${HTTP_PORT:-3000}
+      
+      # URL Versioning
+      URL_VERSIONING_ENABLE: ${URL_VERSIONING_ENABLE:-true}
+      URL_VERSION: ${URL_VERSION:-1}
+      
+      # Database (External)
+      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_DEBUG: ${DATABASE_DEBUG:-true}
+      MONGO_URL: ${MONGO_URL}
+      
+      # CORS
+      MIDDLEWARE_CORS_ORIGIN: ${MIDDLEWARE_CORS_ORIGIN:-*}
+      
+      # JWT Configuration
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_PREFIX: ${JWT_PREFIX:-Bearer}
+      JWT_AUDIENCE: ${JWT_AUDIENCE}
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_JWKS_URI: ${JWT_JWKS_URI}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-RS256}
+      
+      # JWT Access Token
+      JWT_ACCESS_TOKEN_KID: ${JWT_ACCESS_TOKEN_KID}
+      JWT_ACCESS_TOKEN_PRIVATE_KEY_PATH: ${JWT_ACCESS_TOKEN_PRIVATE_KEY_PATH}
+      JWT_ACCESS_TOKEN_PUBLIC_KEY_PATH: ${JWT_ACCESS_TOKEN_PUBLIC_KEY_PATH}
+      JWT_ACCESS_TOKEN_EXPIRATION_TIME: ${JWT_ACCESS_TOKEN_EXPIRATION_TIME:-15m}
+      
+      # JWT Refresh Token
+      JWT_REFRESH_TOKEN_KID: ${JWT_REFRESH_TOKEN_KID}
+      JWT_REFRESH_TOKEN_PRIVATE_KEY_PATH: ${JWT_REFRESH_TOKEN_PRIVATE_KEY_PATH}
+      JWT_REFRESH_TOKEN_PUBLIC_KEY_PATH: ${JWT_REFRESH_TOKEN_PUBLIC_KEY_PATH}
+      JWT_REFRESH_TOKEN_EXPIRATION_TIME: ${JWT_REFRESH_TOKEN_EXPIRATION_TIME:-7d}
+      
+      # Redis (External)
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_USERNAME: ${REDIS_USERNAME}
+      
+      # Email Configuration (External)
+      EMAIL_SMTP_HOST: ${EMAIL_SMTP_HOST}
+      EMAIL_SMTP_PORT: ${EMAIL_SMTP_PORT:-587}
+      EMAIL_SMTP_SECURE: ${EMAIL_SMTP_SECURE:-false}
+      EMAIL_SMTP_USERNAME: ${EMAIL_SMTP_USERNAME}
+      EMAIL_SMTP_PASSWORD: ${EMAIL_SMTP_PASSWORD}
+      EMAIL_FROM: ${EMAIL_FROM}
+      EMAIL_SUPPORT: ${EMAIL_SUPPORT}
+      
+      # Resend API
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      
+    volumes:
+      # Hot reload for development
+      - ./src:/apps/src:ro
+      - ./keys:/apps/keys:ro
+    networks:
+      - datn-network
+    command: yarn dev
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  datn-network:
+    driver: bridge
