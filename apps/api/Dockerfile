@@ -61,9 +61,18 @@ COPY package.json yarn.lock* ./
 COPY apps/api/package.json ./apps/api/
 COPY packages/shared/package.json ./packages/shared/
 
-# Install production dependencies only
-ENV NODE_ENV=production
-RUN yarn install --production --frozen-lockfile
+# Install ALL dependencies (--production in monorepo can skip packages)
+RUN yarn install --frozen-lockfile
+
+# Remove dev dependencies manually (safer than --production flag)
+RUN rm -rf node_modules/typescript \
+           node_modules/@types \
+           node_modules/eslint* \
+           node_modules/prettier \
+           node_modules/jest* \
+           node_modules/@swc \
+           node_modules/@typescript-eslint \
+           2>/dev/null || true
 
 # Cleanup unnecessary files
 RUN find . -name "*.md" -type f -delete && \
