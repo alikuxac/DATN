@@ -56,10 +56,13 @@ RUN apk add --no-cache libc6-compat
 
 WORKDIR /apps
 
-# Copy package files
+# Copy package files (all workspaces for yarn to resolve)
 COPY package.json yarn.lock* ./
 COPY apps/api/package.json ./apps/api/
 COPY packages/shared/package.json ./packages/shared/
+COPY packages/eslint-config/package.json ./packages/eslint-config/
+COPY packages/jest-config/package.json ./packages/jest-config/
+COPY packages/typescript-config/package.json ./packages/typescript-config/
 
 # Install ALL dependencies (--production in monorepo can skip packages)
 RUN yarn install --frozen-lockfile
