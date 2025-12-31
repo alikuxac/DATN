@@ -13,6 +13,7 @@ import { UserDocument } from '@modules/users/repository/entities/user.entity';
 import { HelperDateService } from '@common/helper/services/helper.date.service';
 import { HelperGeoService } from '@common/helper/services/helper.geo.service';
 import { ReportUpdateRequestDto } from '../dtos/request/report.update.request.dto';
+import { ReportDetailResponseDto } from '../dtos/response/report.detail.response.dto';
 
 @Injectable()
 export class ReportService {
@@ -35,13 +36,13 @@ export class ReportService {
       return {};
     }
 
-    const userId = user._id; 
+    const userId = user._id;
     const isVolunteer = user.role === ENUM_USER_ROLE.VOLUNTEER;
 
     // 🅰️ USER MODE: Chỉ xem tin của mình
     if (!isVolunteer) {
       return { user: userId };
-    } 
+    }
 
     const volunteerConditions: Record<string, any>[] = [
       // A. Tin do chính mình tạo ra (Dù là volunteer vẫn có thể là nạn nhân)
@@ -60,7 +61,7 @@ export class ReportService {
       volunteerConditions.push({
         regionId: regionId,
         status: { $in: [ENUM_REPORT_STATUS.PENDING, ENUM_REPORT_STATUS.VERIFIED] },
-        rescuer: null, 
+        rescuer: null,
       });
     }
 
@@ -269,6 +270,16 @@ export class ReportService {
     return this.reportRepository.findOneById<ReportDocument>(_id, options);
   }
 
+  async findOneByIdJoined(
+    _id: string,
+    options?: IDatabaseFindOneOptions
+  ): Promise<IReportDocument> {
+    return this.reportRepository.findOneById<IReportDocument>(_id, {
+      ...options,
+      join: true,
+    });
+  }
+
   // 4. Find One (General)
   async findOne(
     find: Record<string, any>,
@@ -340,7 +351,15 @@ export class ReportService {
       reports.map((r: IReportEntity | IReportDocument) =>
         r instanceof Document ? r.toObject() : r
       )
-    )
+    );
+  }
+
+  mapDetail(
+    report: IReportEntity | IReportDocument
+  ): ReportDetailResponseDto {
+    const plain = report instanceof Document ? report.toObject() : report;
+    (plain as any).images = [];
+    return plainToInstance(ReportDetailResponseDto, plain);
   }
 
   async acceptReport(
@@ -396,7 +415,7 @@ export class ReportService {
   }
 
   async checkLastReport(
-    userId:string,
+    userId: string,
     lat: number,
     long: number
   ) {

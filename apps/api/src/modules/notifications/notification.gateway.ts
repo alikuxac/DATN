@@ -7,8 +7,9 @@ import {
   MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Logger } from '@nestjs/common';
+import { Logger, Inject, forwardRef } from '@nestjs/common';
 import { UsersService } from '../users/services/users.service';
+import { NotificationService } from './notification.service';
 
 @WebSocketGateway({
   cors: { origin: '*' },
@@ -18,7 +19,11 @@ export class NotificationGateway implements OnGatewayConnection {
   @WebSocketServer() server: Server;
   private logger = new Logger('NotificationGateway');
 
-  constructor(private readonly usersService: UsersService) { }
+  constructor(
+    private readonly usersService: UsersService,
+    @Inject(forwardRef(() => NotificationService))
+    private readonly notificationService: NotificationService
+  ) { }
 
 
   async handleConnection(client: Socket) {
@@ -48,6 +53,21 @@ export class NotificationGateway implements OnGatewayConnection {
       await this.usersService.updateLocation(userId, payload.lat, payload.lng);
     } catch (error) {
       this.logger.error(`Error updating location for user ${userId}`, error);
+    }
+  }
+
+  @SubscribeMessage('mark_read')
+  async handleMarkRead(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { id: string }
+  ) {
+    if (!payload.id) return;
+    try {
+      await this.notificationService.markAsRead(payload.id);
+      // Optional: Log success
+      // this.logger.debug(`Notification ${payload.id} marked as read via socket`);
+    } catch (error: any) {
+      this.logger.error(`Error marking notification as read: ${error?.message || error}`);
     }
   }
 

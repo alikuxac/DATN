@@ -7,6 +7,7 @@ export * from "./auth.enum";
 export * from "./database.enum";
 export * from "./helper.enum";
 export * from "./message.enum";
+export * from "./notification.enum";
 export * from "./pagination.enum";
 export * from "./password-history.enum";
 export * from "./policy.enum";

@@ -46,7 +46,7 @@ export class ReportUserController {
     @PaginationQueryFilterDate('toDate', ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS.LESS_THAN_EQUAL) toDate: Date,
     @PaginationQueryFilterDate('exactDate', ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS.EQUAL) exactDate: Date,
     @AuthJwtPayload('user', UserParsePipe) user: UserDocument,
-  ) { 
+  ) {
     const find: Record<string, any> = { ..._search };
 
     if (severity?.length) find.severity = { $in: severity };
@@ -154,6 +154,20 @@ export class ReportUserController {
         _error: err,
       });
     }
+  }
+
+  @Get(':id')
+  @AuthJwtAccessProtected()
+  @Response('report.detail')
+  async get(@AuthJwtPayload('user', UserParsePipe) user: UserDocument, @Param('id') id: string) {
+    const report = await this.reportService.findOneByIdJoined(id);
+    if (!report) {
+      throw new BadRequestException('report.error.notFound');
+    }
+
+    return {
+      data: this.reportService.mapDetail(report),
+    };
   }
 
   @Delete(':id')

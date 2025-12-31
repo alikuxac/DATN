@@ -1,156 +1,173 @@
-import React from "react";
-import { Dimensions, TouchableOpacity, View } from "react-native";
-import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import { useColors } from "@/hooks/useColors.ts";
-// Import đúng các icon bạn cần dùng
-import { Home, MapPin, FileText, User } from "lucide-react-native";
-import { AppText } from "@/components/ui";
-import { useTranslation } from "react-i18next";
+import React, { useEffect } from 'react';
+import { View, TouchableOpacity, StyleSheet, Text, Platform } from 'react-native';
+import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { Home, Bell, User, FileText, MapPin } from 'lucide-react-native';
+import { useColors } from '@/hooks/useColors';
+import Animated, { 
+  useAnimatedStyle, 
+  useSharedValue, 
+  withSequence, 
+  withTiming, 
+  withRepeat,
+  withSpring
+} from 'react-native-reanimated';
+import { useAppSelector } from '@/store/hooks';
 
-const { width: screenWidth } = Dimensions.get("window");
-
-interface TabIconProps {
-  name: string;
-  color: string;
-  size: number;
-}
-
-// Map route name sang Icon tương ứng
-const TabIcon: React.FC<TabIconProps> = ({ name, color, size }) => {
-  switch (name) {
-    case "map":
-      return <MapPin size={size} color={color} />; // fill={color} tuỳ thuộc icon có hỗ trợ fill không
-    case "reports":
-      return <FileText size={size} color={color} />;
-    case "account":
-      return <User size={size} color={color} />;
-    default:
-      return <Home size={size} color={color} />;
-  }
-};
-
-const CustomTabBar: React.FC<BottomTabBarProps> = ({
-  state,
-  descriptors,
-  navigation,
-}) => {
+export default function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const colors = useColors();
-  const { t } = useTranslation();
+  const unreadCount = useAppSelector(state => state.notification.unreadCount);
+  
+  // Animation value for the bell icon
+  const rotation = useSharedValue(0);
 
-  // Lọc bỏ route 'index' hoặc các route ẩn khác trước khi map
-  // Trong Expo Router, route 'index' vẫn nằm trong state.routes dù set href: null
-  const visibleRoutes = state.routes.filter(
-    (route) =>
-      route.name !== "index" &&
-      route.name !== "_sitemap" &&
-      route.name !== "+not-found"
-  );
+  // Trigger animation when unreadCount increases
+  useEffect(() => {
+    if (unreadCount > 0) {
+      rotation.value = withSequence(
+        withTiming(-10, { duration: 50 }),
+        withRepeat(withTiming(10, { duration: 100 }), 5, true),
+        withTiming(0, { duration: 50 })
+      );
+    }
+  }, [unreadCount]);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ rotate: `${rotation.value}deg` }],
+    };
+  });
 
   return (
-    <View
-      className={
-        "bg-background flex-row py-2 border-t border-neutrals900 pb-safe-offset-0"
-      }
-      style={{
-        backgroundColor: "#ffffff", // Đảm bảo nền trắng
-        paddingBottom: 20, // Padding đáy cho an toàn trên iOS (hoặc dùng pb-safe-offset)
-        height: 80, // Chiều cao cố định nếu cần
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 3,
-        elevation: 5,
-      }}
-    >
-      {visibleRoutes.map((route, index) => {
-        // Lưu ý: Phải lấy index từ state gốc để check focused chính xác
-        const originalIndex = state.routes.findIndex(
-          (r) => r.key === route.key
-        );
+    <View style={[styles.container, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
+      {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
 
-        const label =
-          options.tabBarLabel !== undefined
-            ? options.tabBarLabel
-            : options.title !== undefined
-              ? options.title
-              : route.name;
-
-        const isFocused = state.index === originalIndex;
+        const isFocused = state.index === index;
 
         const onPress = () => {
           const event = navigation.emit({
-            type: "tabPress",
+            type: 'tabPress',
             target: route.key,
             canPreventDefault: true,
           });
 
           if (!isFocused && !event.defaultPrevented) {
-            navigation.navigate(route.name, route.params);
+            navigation.navigate(route.name);
           }
         };
 
         const onLongPress = () => {
           navigation.emit({
-            type: "tabLongPress",
+            type: 'tabLongPress',
             target: route.key,
           });
         };
 
-        // Màu sắc dựa trên trạng thái active
-        const activeColor = "#2563eb"; // Màu xanh primary
-        const inactiveColor = "#94a3b8"; // Màu xám
+        let IconComponent = Home;
+        if (route.name === 'index') IconComponent = Home;
+        else if (route.name === 'map') IconComponent = MapPin;
+        else if (route.name === 'reports') IconComponent = FileText;
+        else if (route.name === 'notifications') IconComponent = Bell;
+        else if (route.name === 'account' || route.name === 'profile') IconComponent = User;
 
-        const iconColor = isFocused ? activeColor : inactiveColor;
-        const labelColor = isFocused ? activeColor : inactiveColor;
+        const color = isFocused ? colors.primary : colors.secondary;
+
+        if (route.name === 'notifications') {
+             return (
+            <TouchableOpacity
+              key={index}
+              accessibilityRole="button"
+              accessibilityState={isFocused ? { selected: true } : {}}
+              accessibilityLabel={options.tabBarAccessibilityLabel}
+              testID={options.tabBarButtonTestID}
+              onPress={onPress}
+              onLongPress={onLongPress}
+              style={styles.tabItem}
+            >
+              <View>
+                <Animated.View style={animatedStyle}>
+                  <IconComponent size={24} color={color} />
+                </Animated.View>
+                {unreadCount > 0 && (
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </Text>
+                  </View>
+                )}
+              </View>
+              <Text style={[styles.label, { color }]}>
+                {options.title || route.name}
+              </Text>
+            </TouchableOpacity>
+          );
+        }
 
         return (
           <TouchableOpacity
-            key={route.key}
-            activeOpacity={0.9}
+            key={index}
             accessibilityRole="button"
             accessibilityState={isFocused ? { selected: true } : {}}
             accessibilityLabel={options.tabBarAccessibilityLabel}
             testID={options.tabBarButtonTestID}
             onPress={onPress}
             onLongPress={onLongPress}
-            style={{
-              flex: 1,
-              alignItems: "center",
-              justifyContent: "center",
-              paddingVertical: 4,
-            }}
+            style={styles.tabItem}
           >
-            <View style={{ marginBottom: 4 }}>
-              <TabIcon name={route.name} color={iconColor} size={24} />
-            </View>
-
-            <AppText
-              style={{
-                color: labelColor,
-                fontSize: 12,
-                fontFamily: isFocused
-                  ? "SourceSans3-Bold"
-                  : "SourceSans3-Medium",
-                fontWeight: isFocused ? "700" : "500",
-                textAlign: "center",
-              }}
-            >
-              {/* Nếu label là function (từ _layout trả về) thì gọi function, nếu string thì translate */}
-              {typeof label === "function"
-                ? label({
-                    focused: isFocused,
-                    color: labelColor,
-                    position: "below-icon",
-                    children: "",
-                  })
-                : t(label as string).toUpperCase()}
-            </AppText>
+            <IconComponent size={24} color={color} />
+            <Text style={[styles.label, { color }]}>
+              {options.title || route.name}
+            </Text>
           </TouchableOpacity>
         );
       })}
     </View>
   );
-};
+}
 
-export default CustomTabBar;
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    height: 80, // Tăng chiều cao lên
+    paddingBottom: 20, // Đẩy content lên trên safe area
+    borderTopWidth: 1,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  tabItem: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 10,
+  },
+  label: {
+    fontSize: 10,
+    marginTop: 4,
+    fontWeight: '500',
+  },
+  badge: {
+    position: 'absolute',
+    right: -6,
+    top: -3,
+    backgroundColor: '#FF3B30',
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+  },
+  badgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+});

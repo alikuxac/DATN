@@ -8,9 +8,11 @@ import { persistStore, persistReducer, FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import appReducer from './slices/appSlice'; // (Ví dụ reducer của bạn)
+import notificationReducer from './slices/notificationSlice';
 
 const rootReducer = combineReducers({
   app: appReducer,
+  notification: notificationReducer,
   // ... các reducer khác
 });
 

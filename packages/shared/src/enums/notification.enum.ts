@@ -1,0 +1,5 @@
+export enum ENUM_NOTIFICATION_TYPE {
+  SOS = 'SOS',
+  ACTIVITY = 'ACTIVITY',
+  SYSTEM = 'SYSTEM',
+}

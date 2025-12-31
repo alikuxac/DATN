@@ -46,11 +46,13 @@
     "class-validator": "^0.14.2",
     "compression": "^1.8.1",
     "crypto-js": "^4.2.0",
+    "expo-server-sdk": "^4.0.0",
     "geolib": "^3.3.4",
     "handlebars": "^4.7.8",
     "helmet": "^8.1.0",
     "joi": "^18.0.1",
     "jwks-rsa": "^3.2.0",
+    "keyv": "^4",
     "lodash": "^4.17.21",
     "mongoose": "^8.19.3",
     "ms": "^2.1.3",
@@ -88,8 +90,5 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "5.5.4"
-  },
-  "resolutions": {
-    "keyv": "^4.6.0"
   }
 }

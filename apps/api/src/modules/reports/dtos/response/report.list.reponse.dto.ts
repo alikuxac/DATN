@@ -14,6 +14,10 @@ export class ReportListResponseDto extends DatabaseObjectIdDto {
   by: UserShortResponseDto;
 
   @Expose()
+  @Type(() => UserShortResponseDto)
+  rescuer: UserShortResponseDto;
+
+  @Expose()
   @Type(() => Object)
   location: {
     type: string;
