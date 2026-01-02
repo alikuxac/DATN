@@ -1,6 +1,6 @@
-import { IsEmail, IsEnum, IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 import { IsPassword } from '@common/request/validations/request.is-password.validation';
-import { ENUM_MESSAGE_LANGUAGE, ISignUpPayload } from '@repo/shared';
+import { ENUM_MESSAGE_LANGUAGE, ENUM_USER_THEME, ISignUpPayload } from '@repo/shared';
 
 export class AuthSignUpRequestDto implements ISignUpPayload {
     @IsString()
@@ -29,4 +29,8 @@ export class AuthSignUpRequestDto implements ISignUpPayload {
     @IsEnum(ENUM_MESSAGE_LANGUAGE)
     @IsNotEmpty()
     language: ENUM_MESSAGE_LANGUAGE;
+
+    @IsEnum(ENUM_USER_THEME)
+    @IsOptional()
+    theme?: ENUM_USER_THEME;
 }

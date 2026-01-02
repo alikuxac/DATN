@@ -11,7 +11,7 @@ import { AppText, AppInput, AppButton, Icon } from "@/components/ui";
 
 // Redux (để đổi theme/lang - dựa trên context cũ)
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { setLanguage, setTheme, setToken } from "@/store/slices/appSlice"; // Giả định action
+import { setLanguage, setTheme, setToken, setIsFirstLaunch } from "@/store/slices/appSlice"; // Giả định action
 import { useToast } from "@/components/ui/ToastProvider";
 
 import AuthHeader from "@/components/auth/header";
@@ -19,7 +19,7 @@ import { ENUM_STATUS_CODE_ERROR } from "@repo/shared";
 
 export default function SignInScreen() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const dispatch = useAppDispatch();
   const { theme, language } = useAppSelector((state) => state.app);
   const { showError, showSuccess } = useToast();
@@ -70,9 +70,29 @@ export default function SignInScreen() {
       const token = response?.data?.accessToken;
 
       if (token) {
-        // ✅ Lưu token và chuyển trang
+        // ✅ Lưu token
         dispatch(setToken(token));
         apiService.setAuthToken(token);
+
+        // ✅ Lấy profile từ server để sync preferences
+        try {
+          const profileResponse = await apiService.get<any>("/user/profile");
+          const userPreferences = profileResponse?.data?.preferences;
+
+          if (userPreferences) {
+            // Ưu tiên settings từ server (ghi đè settings tạm thời)
+            dispatch(setTheme(userPreferences.theme));
+            dispatch(setLanguage(userPreferences.language));
+            // Sync i18n
+            i18n.changeLanguage(userPreferences.language);
+          }
+
+          // Lưu user data
+          dispatch(setToken(token));
+        } catch (profileError) {
+          console.warn("Failed to fetch profile, using local settings:", profileError);
+        }
+
         showSuccess(t("AUTH.MSG_WELCOME_BACK"), t("AUTH.MSG_LOGIN_SUCCESS"));
 
         setTimeout(() => {
@@ -111,6 +131,7 @@ export default function SignInScreen() {
   };
 
   const handleRegister = () => {
+    dispatch(setIsFirstLaunch(false)); // Đánh dấu không còn lần đầu
     router.push("/(auth)/sign-up");
   };
 

@@ -14,12 +14,16 @@ import { apiService, ApiError } from "@/services/api.service";
 import { getDeviceLanguage } from "@/utils/getDeviceLanguage";
 import { ENUM_STATUS_CODE_ERROR } from "@repo/shared";
 import AuthHeader from "@/components/auth/header";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { setIsFirstLaunch } from "@/store/slices/appSlice";
 
 export default function SignUpScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { showError, showSuccess } = useToast();
+  const dispatch = useAppDispatch();
   const language = getDeviceLanguage();
+  const { theme } = useAppSelector((state) => state.app);
   // State
   const [formData, setFormData] = useState<RegisterFormData>({
     firstName: "",
@@ -69,13 +73,14 @@ export default function SignUpScreen() {
     setErrors({});
 
     try {
-      // Payload: Đã bỏ gender
+      // Payload: Gửi theme từ Redux store
       const payload = {
         email: formData.email,
         password: formData.password,
         firstName: formData.firstName,
         lastName: formData.lastName,
         language,
+        theme,
       };
 
       // Gọi API
@@ -85,6 +90,9 @@ export default function SignUpScreen() {
         t("AUTH.TITLE_ACCOUNT_CREATED"),
         t("AUTH.MSG_SIGNUP_SUCCESS", { firstName: formData.firstName })
       );
+
+      // Đánh dấu không còn lần đầu nữa
+      dispatch(setIsFirstLaunch(false));
 
       setTimeout(() => {
         router.replace("/(auth)/sign-in");
@@ -227,7 +235,10 @@ export default function SignUpScreen() {
         <AppText className="text-neutrals600 dark:text-neutrals400 text-sm font-sans-regular">
           {t("AUTH.HINT_HAS_ACCOUNT")}
         </AppText>
-        <Pressable onPress={() => router.push("/(auth)/sign-in")}>
+        <Pressable onPress={() => {
+          dispatch(setIsFirstLaunch(false)); // Đánh dấu đã không còn lần đầu
+          router.push("/(auth)/sign-in");
+        }}>
           <AppText
             className="text-sm font-sans-bold"
             style={{ color: "#2563eb" }}

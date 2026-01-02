@@ -28,7 +28,6 @@ export default function PreferencesScreen() {
   const { theme, language } = useAppSelector((state) => state.app);
   const colors = useColors();
   const { showError } = useToast();
-  const systemScheme = useColorScheme();
 
   const [loading, setLoading] = useState(true);
 

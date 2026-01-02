@@ -30,8 +30,8 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { VerificationService } from '@modules/verification/services/verification.service';
 import { DatabaseService } from '@common/database/services/database.service';
 import { MessageService } from '@common/message/services/message.service';
-import { 
-  ENUM_STATUS_CODE_ERROR, 
+import {
+  ENUM_STATUS_CODE_ERROR,
   ENUM_PASSWORD_HISTORY_TYPE,
   ENUM_USER_SIGN_UP_FROM,
   ENUM_USER_STATUS
@@ -166,6 +166,7 @@ export class AuthPublicController {
       firstName,
       lastName,
       language,
+      theme,
     }: AuthSignUpRequestDto,
   ): Promise<void> {
     const promises: Promise<any>[] = [
@@ -195,6 +196,7 @@ export class AuthPublicController {
           firstName,
         },
         language,
+        theme,
         ENUM_USER_SIGN_UP_FROM.PUBLIC,
         { session }
       );

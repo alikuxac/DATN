@@ -52,6 +52,8 @@ export interface ILoginPayload {
 export interface ISignUpPayload extends ILoginPayload {
   firstName: string;
   lastName: string;
+  language: string;
+  theme?: string;
 }
 
 // Response
@@ -62,7 +64,7 @@ export interface IAuthLoginResponse {
   tokenType: string;
 }
 
-export interface IAuthRefreshReponse extends IAuthLoginResponse {}
+export interface IAuthRefreshReponse extends IAuthLoginResponse { }
 
 export interface IAuthChangePasswordRequest {
   oldPassword: string;

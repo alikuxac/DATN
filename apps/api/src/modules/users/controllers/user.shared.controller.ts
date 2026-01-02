@@ -27,6 +27,7 @@ import { UserDocument } from '@modules/users/repository/entities/user.entity';
 import { UsersService } from '@modules/users/services/users.service';
 import { UserUpdatePreferencesRequestDto } from '../dto/request/user.update-preferences.request.dto';
 import { UserUpdateSettingsDto } from '../dto/request/user.update-settings.request.dto';
+import { NotificationGateway } from '@modules/notifications/notification.gateway';
 
 @Controller({
     version: '1',
@@ -37,7 +38,8 @@ export class UserSharedController {
         private readonly databaseService: DatabaseService,
         private readonly userService: UsersService,
         private readonly activityService: ActivityService,
-        private readonly messageService: MessageService
+        private readonly messageService: MessageService,
+        private readonly notificationGateway: NotificationGateway
     ) { }
 
     @Response('user.profile')
@@ -140,6 +142,16 @@ export class UserSharedController {
             );
 
             await this.databaseService.commitTransaction(session);
+
+            // ✅ Emit WebSocket event để sync preferences real-time giữa các thiết bị
+            this.notificationGateway.sendToUser(
+                user._id.toString(),
+                'preferences_updated',
+                {
+                    theme: user.preferences.theme,
+                    language: user.preferences.language
+                }
+            );
         } catch (err: unknown) {
             await this.databaseService.abortTransaction(session);
 

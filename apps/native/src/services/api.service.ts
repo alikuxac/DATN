@@ -1,10 +1,10 @@
 import { store } from "@/store";
-import { setToken } from "@/store/slices/appSlice";
+import { logout } from "@/store/slices/appSlice";
 
 // 1. Cập nhật ApiError để chứa "code" (App Status Code)
 export class ApiError extends Error {
   status: number; // HTTP Status (400, 401, 500)
-  code: number;   // App Status Code (5310, 5000...) << QUAN TRỌNG
+  code: number;   // App Status Code (5310, 5000...) <<QUAN TRỌNG
   data: any;      // Body response
 
   constructor(status: number, code: number, message: string, data?: any) {
@@ -17,11 +17,10 @@ export class ApiError extends Error {
 }
 
 class ApiService {
-  private baseUrl = `${process.env.EXPO_PUBLIC_API_URL}/api`;
+  private baseUrl = `https://${process.env.EXPO_PUBLIC_API_URL}/api`;
   private accessToken: string | null = null;
 
-  constructor(){
-    console.log('API Base URL:', process.env.EXPO_PUBLIC_API_URL);
+  constructor() {
   }
 
   setAuthToken(token: string) {
@@ -53,10 +52,11 @@ class ApiService {
     try {
       const response = await fetch(url, config);
 
-      // Xử lý 401
+      // Xử lý 401 - Session expired
       if (response.status === 401) {
-        store.dispatch(setToken(null));
-        // Với 401, thường App Code cũng là 51xx, ta có thể hardcode hoặc parse body nếu có
+        // Dispatch logout action để clear toàn bộ auth state
+        store.dispatch(logout());
+        // AuthGuard sẽ tự động redirect về login khi token = null
         throw new ApiError(401, 5100, 'Session expired');
       }
 

@@ -4,11 +4,10 @@ import { useAppSelector } from '@/store/hooks';
 import { useToast } from '@/components/ui/ToastProvider';
 import { Vibration, Platform } from 'react-native';
 
-// 💡 Mẹo: Nên đưa vào biến môi trường (.env)
-const SOCKET_URL = 'https://laptop-api.alikuxac.xyz/notifications';
+const SOCKET_URL = `https://${process.env.EXPO_PUBLIC_API_URL}/notifications`;
 
 export const useSocketNotification = () => {
-  const { token, user } = useAppSelector((state) => state.app);
+  const { token } = useAppSelector((state) => state.app);
   const { showInfo, showSuccess, showError } = useToast(); // Thêm các loại toast khác nếu cần
   const [socket, setSocket] = useState<Socket | null>(null);
   const [alertData, setAlertData] = useState<any>(null); // State cho Modal Cảnh báo/SOS
@@ -30,8 +29,7 @@ export const useSocketNotification = () => {
     // 2. Khởi tạo Socket với Auth Token (Bảo mật hơn)
     const newSocket = io(SOCKET_URL, {
       transports: ['websocket'],
-      auth: { token }, // 👈 QUAN TRỌNG: Gửi token qua auth header
-      // query: { userId: user._id }, // Không cần gửi userId nữa, Server tự decode token
+      auth: { token },
       reconnection: true,
       reconnectionAttempts: 5,
     });
@@ -75,6 +73,31 @@ export const useSocketNotification = () => {
     newSocket.on('sos_locked', (data: any) => {
       // Logic: Nếu tin SOS mình đang xem đã có người nhận -> Thông báo nhẹ
       showInfo('Thông tin', 'Yêu cầu cứu trợ đã có đơn vị tiếp nhận.');
+    });
+
+    // D. 🔄 SYNC PREFERENCES - Real-time sync giữa các thiết bị
+    newSocket.on('preferences_updated', (data: { theme: string; language: string }) => {
+      console.log('🔄 Preferences updated from another device:', data);
+
+      // Import động để tránh circular dependency
+      import('@/store').then(({ store }) => {
+        import('@/store/slices/appSlice').then(({ setTheme, setLanguage }) => {
+          const currentState = store.getState().app;
+
+          // Chỉ update nếu khác với state hiện tại (tránh loop)
+          if (data.theme && data.theme !== currentState.theme) {
+            store.dispatch(setTheme(data.theme as any));
+          }
+
+          if (data.language && data.language !== currentState.language) {
+            store.dispatch(setLanguage(data.language as any));
+            // Sync i18n
+            import('@/config/i18n').then((i18nModule) => {
+              i18nModule.default.changeLanguage(data.language);
+            });
+          }
+        });
+      });
     });
 
     socketRef.current = newSocket;

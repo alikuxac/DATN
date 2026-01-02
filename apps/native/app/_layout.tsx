@@ -26,6 +26,7 @@ import { useColors } from "@/hooks/useColors";
 import { useSocketNotification } from "@/hooks/useSocketNotification";
 import { useLocationTracking } from "@/hooks/useUserLocation";
 import { useExpoPushToken } from "@/hooks/useExpoPushToken";
+import { usePreferencesSync } from "@/hooks/usePreferencesSync";
 import InsetsHelper from "@/components/helpers/InsetsHelper";
 import { LanguageHelper } from "@/components/helpers/LanguageHelper";
 import { DialogProvider } from "@/components/ui/DialogProvider";
@@ -43,12 +44,13 @@ function RootNavigator() {
   const navigationState = useRootNavigationState();
   const colors = useColors();
 
-  // B. Logic App (Socket, Location, Push Token)
+  // B. Logic App (Socket, Location, Push Token, Preferences Sync)
   // Chỉ chạy các hook này khi Navigation đã sẵn sàng để tránh lỗi "No Navigation Context"
   const isNavigationReady = navigationState?.key;
 
   // Gọi hooks nhưng có điều kiện hoặc để hook tự handle null
   useExpoPushToken();
+  usePreferencesSync(); // ← Sync preferences từ server khi app khởi động
 
   // Quan trọng: useSocketNotification có thể dùng navigation bên trong
   // Chúng ta truyền router hoặc check điều kiện bên trong hook

@@ -1,7 +1,7 @@
-import {createSlice, PayloadAction} from '@reduxjs/toolkit';
-import {colorScheme} from "nativewind";
-import {LanguageCode} from '@/config/i18n';
-import {getDeviceLanguage} from "@/utils/getDeviceLanguage.ts";
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { colorScheme } from "nativewind";
+import { LanguageCode } from '@/config/i18n';
+import { getDeviceLanguage } from "@/utils/getDeviceLanguage.ts";
 import { IUserGetResponse } from '@repo/shared';
 
 export type Theme = 'light' | 'dark';
@@ -70,21 +70,21 @@ const appSlice = createSlice({
     setToken: (state, action: PayloadAction<string | null>) => {
       state.token = action.payload;
     },
+    logout: (state) => {
+      state.token = null;
+      state.user = null;
+      state.theme = 'light';
+      state.language = getDeviceLanguage();
+      state.regionId = 'unknown';
+    },
     setUser: (state, action: PayloadAction<IUserGetResponse | null>) => {
       state.user = action.payload;
     },
     setRegionId: (state, action: PayloadAction<string>) => {
       state.regionId = action.payload;
     },
-    logout: (state) => {
-      state.theme = 'light';
-      state.language = getDeviceLanguage();
-      state.token = null;
-      state.user = null;
-      state.regionId = 'unknown';
-    }
   },
 });
 
-export const {setTheme, toggleTheme, setLanguage, setInsets, setIsFirstLaunch, setIsLoading, setToken, setUser, setRegionId, logout} = appSlice.actions;
+export const { setTheme, toggleTheme, setLanguage, setInsets, setIsFirstLaunch, setIsLoading, setToken, setUser, setRegionId, logout } = appSlice.actions;
 export default appSlice.reducer;

@@ -319,6 +319,7 @@ export class UsersService {
     data: IAuthPassword,
     { email, firstName, lastName }: { email: string, lastName: string, firstName: string },
     language: ENUM_MESSAGE_LANGUAGE,
+    theme: ENUM_USER_THEME | undefined,
     signUpFrom: ENUM_USER_SIGN_UP_FROM,
     options?: IDatabaseCreateOptions) {
     const user = new UserEntity();
@@ -341,7 +342,7 @@ export class UsersService {
 
     user.preferences = {
       language: language,
-      theme: ENUM_USER_THEME.LIGHT
+      theme: theme ?? ENUM_USER_THEME.LIGHT
     };
 
     user.settings = {
