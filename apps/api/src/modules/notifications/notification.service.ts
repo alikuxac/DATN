@@ -180,4 +180,18 @@ export class NotificationService {
       acceptedBy: payload.rescuerId, // Client dùng cái này để filter
     });
   }
+
+  // 3. Sync preferences real-time giữa các thiết bị
+  @OnEvent('user.preferences.updated')
+  async handlePreferencesUpdated(payload: {
+    userId: string;
+    preferences: { theme: string; language: string }
+  }) {
+    // Emit WebSocket event đến tất cả devices của user
+    this.notificationGateway.sendToUser(
+      payload.userId,
+      'preferences_updated',
+      payload.preferences
+    );
+  }
 }

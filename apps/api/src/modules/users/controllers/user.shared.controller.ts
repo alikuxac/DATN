@@ -27,7 +27,7 @@ import { UserDocument } from '@modules/users/repository/entities/user.entity';
 import { UsersService } from '@modules/users/services/users.service';
 import { UserUpdatePreferencesRequestDto } from '../dto/request/user.update-preferences.request.dto';
 import { UserUpdateSettingsDto } from '../dto/request/user.update-settings.request.dto';
-import { NotificationGateway } from '@modules/notifications/notification.gateway';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Controller({
     version: '1',
@@ -39,7 +39,7 @@ export class UserSharedController {
         private readonly userService: UsersService,
         private readonly activityService: ActivityService,
         private readonly messageService: MessageService,
-        private readonly notificationGateway: NotificationGateway
+        private readonly eventEmitter: EventEmitter2
     ) { }
 
     @Response('user.profile')
@@ -143,15 +143,14 @@ export class UserSharedController {
 
             await this.databaseService.commitTransaction(session);
 
-            // ✅ Emit WebSocket event để sync preferences real-time giữa các thiết bị
-            this.notificationGateway.sendToUser(
-                user._id.toString(),
-                'preferences_updated',
-                {
+            // ✅ Emit event để NotificationService xử lý
+            this.eventEmitter.emit('user.preferences.updated', {
+                userId: user._id.toString(),
+                preferences: {
                     theme: user.preferences.theme,
                     language: user.preferences.language
                 }
-            );
+            });
         } catch (err: unknown) {
             await this.databaseService.abortTransaction(session);
 
