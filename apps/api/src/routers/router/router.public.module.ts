@@ -11,12 +11,14 @@ import { SessionModule } from '@modules/session/session.module';
 import { ActivityModule } from '@modules/activity/activity.module';
 import { VerificationModule } from '@modules/verification/verification.module';
 import { HelloPublicController } from '@modules/hello/controllers/hello.public.controller';
+import { ResetPasswordModule } from '@modules/reset-password/reset-password.module';
 
 @Module({
   imports: [
     UsersModule,
     AuthModule,
     PasswordHistoryModule,
+    ResetPasswordModule,
     SessionModule,
     ActivityModule,
     VerificationModule,
