@@ -1,6 +1,35 @@
 version: '3.8'
 
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: datn-redis
+    restart: unless-stopped
+    
+    ports:
+      - "6379:6379"
+    
+    volumes:
+      - redis-data:/data
+    
+    networks:
+      - datn-network
+    
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    
+    command: redis-server --appendonly yes
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
   api:
     # Pull from GitHub Container Registry
     # Replace <username> and <repo> with your GitHub username and repository name
@@ -23,6 +52,10 @@ services:
     networks:
       - datn-network
     
+    depends_on:
+      redis:
+        condition: service_healthy
+    
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
       interval: 30s
@@ -39,3 +72,7 @@ services:
 networks:
   datn-network:
     driver: bridge
+
+volumes:
+  redis-data:
+    driver: local
