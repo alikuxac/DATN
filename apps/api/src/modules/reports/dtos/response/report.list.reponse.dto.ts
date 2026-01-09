@@ -34,6 +34,9 @@ export class ReportListResponseDto extends DatabaseObjectIdDto {
   severity: ENUM_REPORT_SEVERITY;
 
   @Expose()
+  type: string;
+
+  @Expose()
   status: ENUM_REPORT_STATUS;
 
   @Expose()
