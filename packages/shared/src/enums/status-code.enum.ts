@@ -59,6 +59,8 @@ export enum ENUM_STATUS_CODE_ERROR {
   USER_USERNAME_NOT_ALLOWED = 40021,
   USER_USERNAME_CONTAIN_BAD_WORD = 40022,
   USER_EMAIL_NOT_VERIFIED = 40023,
+  USER_IS_SUPER_ADMIN = 40313,
+  USER_IS_ADMIN = 40314,
 
   // =======================================================
   // 5. VERIFICATION (Gốc là 54xx)

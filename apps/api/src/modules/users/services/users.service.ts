@@ -263,6 +263,16 @@ export class UsersService {
     return this.userRepository.save(repository, options);
   }
 
+  async updateRole(
+    repository: UserDocument,
+    { role }: { role: ENUM_USER_ROLE },
+    options?: IDatabaseSaveOptions
+  ) {
+    repository.role = role;
+
+    return this.userRepository.save(repository, options);
+  }
+
   async updateProfile(
     repository: UserDocument,
     { lastName, firstName, gender }: UserUpdateProfileRequestDto,

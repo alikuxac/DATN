@@ -9,6 +9,7 @@ import {
     Patch,
     Post,
     Put,
+    ForbiddenException,
 } from '@nestjs/common';
 import { PaginationService } from '@common/pagination/services/pagination.service';
 import {
@@ -70,6 +71,8 @@ import { UserProtected } from '@modules/users/decorators/user.decorator';
 import { DatabaseService } from '@common/database/services/database.service';
 import { ENUM_STATUS_CODE_ERROR, ENUM_PASSWORD_HISTORY_TYPE, } from '@repo/shared';
 import { HeaderLang } from '@common/message/decorators/message.decorator';
+import { UserUpdateRoleRequestDto } from '@modules/users/dto/request/user.update-role.request.dto';
+
 @Controller({
     version: '1',
     path: '/user',
@@ -357,6 +360,162 @@ export class UserAdminController {
         }
     }
 
+    @Response('user.resetPassword')
+    @PolicyAbilityProtected({
+        subject: ENUM_POLICY_SUBJECT.USER,
+        action: [ENUM_POLICY_ACTION.READ, ENUM_POLICY_ACTION.UPDATE],
+    })
+    @UserProtected()
+    @AuthJwtAccessProtected()
+    @Patch('/update/:user/reset-password')
+    async resetPassword(
+        @HeaderLang() lang: string,
+        @AuthJwtPayload('user') createBy: string,
+        @AuthJwtPayload<IAuthJwtAccessTokenPayload>('user', UserParsePipe) requestUser: UserDocument,
+        @Param('user', RequestRequiredPipe, UserParsePipe, UserNotSelfPipe)
+        user: UserDocument
+    ): Promise<IResponse<void>> {
+        if (user.role === ENUM_USER_ROLE.SUPER_ADMIN) {
+            throw new ForbiddenException({
+                statusCode: ENUM_STATUS_CODE_ERROR.USER_IS_SUPER_ADMIN,
+                message: 'user.error.isSuperAdmin',
+            });
+        }
+
+        if (user.role === ENUM_USER_ROLE.ADMIN && requestUser.role !== ENUM_USER_ROLE.SUPER_ADMIN) {
+            throw new ForbiddenException({
+                statusCode: ENUM_STATUS_CODE_ERROR.USER_IS_ADMIN,
+                message: 'user.error.isAdmin',
+            });
+        }
+
+        const passwordString = this.authService.createPasswordRandom();
+        const password: IAuthPassword = this.authService.createPassword(
+            passwordString,
+            {
+                temporary: true,
+            }
+        );
+
+        const session: ClientSession =
+            await this.databaseService.createTransaction();
+
+        try {
+            await this.userService.updatePassword(user, password, { session });
+            await this.userService.resetPasswordAttempt(user, { session });
+
+            await this.activityService.createByAdmin(
+                user,
+                {
+                    by: createBy,
+                    description: this.messageService.setMessage(
+                        'activity.user.resetPasswordByAdmin'
+                    ),
+                },
+                { session }
+            );
+
+            const fullName = lang === 'vi' ? `${user.firstName} ${user.lastName}` : `${user.lastName} ${user.firstName}`
+
+            await this.emailQueue.add(
+                ENUM_SEND_EMAIL_PROCESS.CREATE,
+                {
+                    send: { email: user.email, name: fullName, lang },
+                    data: {
+                        passwordExpiredAt: password.passwordExpired,
+                        password: passwordString,
+                    },
+                },
+                {
+                    debounce: {
+                        id: `${ENUM_SEND_EMAIL_PROCESS.CREATE}-${user._id}`,
+                        ttl: 1000,
+                    },
+                }
+            );
+
+            await this.databaseService.commitTransaction(session);
+
+            return {};
+        } catch (err: unknown) {
+            await this.databaseService.abortTransaction(session);
+
+            throw new InternalServerErrorException({
+                statusCode: ENUM_STATUS_CODE_ERROR.APP_UNKNOWN,
+                message: 'http.serverError.internalServerError',
+                _error: err,
+            });
+        }
+    }
+
+    @Response('user.updateRole')
+    @PolicyAbilityProtected({
+        subject: ENUM_POLICY_SUBJECT.USER,
+        action: [ENUM_POLICY_ACTION.READ, ENUM_POLICY_ACTION.UPDATE],
+    })
+    @UserProtected()
+    @AuthJwtAccessProtected()
+    @Patch('/update/:user/role')
+    async updateRole(
+        @AuthJwtPayload<IAuthJwtAccessTokenPayload>('user', UserParsePipe) requestUser: UserDocument,
+        @Param('user', RequestRequiredPipe, UserParsePipe, UserNotSelfPipe)
+        user: UserDocument,
+        @Body() { role }: UserUpdateRoleRequestDto
+    ): Promise<IResponse<void>> {
+        // 1. Cannot change role of SUPER_ADMIN
+        if (user.role === ENUM_USER_ROLE.SUPER_ADMIN) {
+            throw new ForbiddenException({
+                statusCode: ENUM_STATUS_CODE_ERROR.USER_IS_SUPER_ADMIN,
+                message: 'user.error.isSuperAdmin',
+            });
+        }
+
+        // 2. Only SUPER_ADMIN can change role of ADMIN
+        if (user.role === ENUM_USER_ROLE.ADMIN && requestUser.role !== ENUM_USER_ROLE.SUPER_ADMIN) {
+            throw new ForbiddenException({
+                statusCode: ENUM_STATUS_CODE_ERROR.USER_IS_ADMIN,
+                message: 'user.error.isAdmin',
+            });
+        }
+
+        // 3. Only SUPER_ADMIN can promote to ADMIN or SUPER_ADMIN
+        if ([ENUM_USER_ROLE.ADMIN, ENUM_USER_ROLE.SUPER_ADMIN].includes(role) && requestUser.role !== ENUM_USER_ROLE.SUPER_ADMIN) {
+            throw new ForbiddenException({
+                statusCode: ENUM_STATUS_CODE_ERROR.USER_IS_ADMIN, // Reusing error or creating new one? Using generic forbidden for now or standard error
+                message: 'user.error.forbidden',
+            });
+        }
+
+        const session: ClientSession =
+            await this.databaseService.createTransaction();
+
+        try {
+            await this.userService.updateRole(user, { role }, { session });
+
+            await this.activityService.createByUser(
+                user,
+                {
+                    description: this.messageService.setMessage(
+                        'activity.user.updateRoleByAdmin'
+                    ),
+                },
+                { session }
+            );
+
+            await this.databaseService.commitTransaction(session);
+
+            return {};
+        } catch (err: unknown) {
+            await this.databaseService.abortTransaction(session);
+
+            throw new InternalServerErrorException({
+                statusCode: ENUM_STATUS_CODE_ERROR.APP_UNKNOWN,
+                message: 'http.serverError.internalServerError',
+                _error: err,
+            });
+        }
+    }
+
     @Response('user.updateStatus')
     @PolicyAbilityProtected({
         subject: ENUM_POLICY_SUBJECT.USER,
@@ -366,6 +525,7 @@ export class UserAdminController {
     @AuthJwtAccessProtected()
     @Patch('/update/:user/status')
     async updateStatus(
+        @AuthJwtPayload<IAuthJwtAccessTokenPayload>('user', UserParsePipe) requestUser: UserDocument,
         @Param('user', RequestRequiredPipe, UserParsePipe, UserNotSelfPipe)
         user: UserDocument,
         @Body() { status }: UserUpdateStatusRequestDto
@@ -381,6 +541,20 @@ export class UserAdminController {
                         },
                     },
                 },
+            });
+        }
+
+        if (user.role === ENUM_USER_ROLE.SUPER_ADMIN) {
+            throw new ForbiddenException({
+                statusCode: ENUM_STATUS_CODE_ERROR.USER_IS_SUPER_ADMIN,
+                message: 'user.error.isSuperAdmin',
+            });
+        }
+
+        if (user.role === ENUM_USER_ROLE.ADMIN && requestUser.role !== ENUM_USER_ROLE.SUPER_ADMIN) {
+            throw new ForbiddenException({
+                statusCode: ENUM_STATUS_CODE_ERROR.USER_IS_ADMIN,
+                message: 'user.error.isAdmin',
             });
         }
 
@@ -435,3 +609,4 @@ export class UserAdminController {
         }
     }
 }
+
