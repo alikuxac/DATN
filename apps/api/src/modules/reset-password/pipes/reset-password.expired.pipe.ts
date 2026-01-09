@@ -5,16 +5,10 @@ import { ResetPasswordService } from '@modules/reset-password/services/reset-pas
 
 @Injectable()
 export class ResetPasswordExpiredPipe implements PipeTransform {
-    constructor(private readonly resetPasswordService: ResetPasswordService) {}
+    constructor(private readonly resetPasswordService: ResetPasswordService) { }
 
     async transform(value: ResetPasswordDoc): Promise<ResetPasswordDoc> {
-        if (!value.isActive) {
-            throw new BadRequestException({
-                statusCode: ENUM_STATUS_CODE_ERROR.RESET_PASSWORD_EXPIRED,
-                message: 'resetPassword.error.expired',
-            });
-        }
-
+        // Check if token has expired based on expiredDate
         const checkExpired = this.resetPasswordService.checkExpired(
             value.expiredDate
         );
