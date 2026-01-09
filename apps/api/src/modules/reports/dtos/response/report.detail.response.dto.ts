@@ -5,8 +5,7 @@ import { UserShortResponseDto } from '@modules/users/dto/response/user.short.res
 
 @Exclude()
 export class ReportDetailResponseDto extends ReportListResponseDto {
-  @Expose()
-  type: ENUM_REPORT_TYPE;
+
 
   @Expose()
   regionId: string;

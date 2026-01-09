@@ -1,5 +1,5 @@
 import { Exclude, Expose, Type } from 'class-transformer';
-import { ENUM_REPORT_SEVERITY, ENUM_REPORT_STATUS } from '@repo/shared';
+import { ENUM_REPORT_SEVERITY, ENUM_REPORT_STATUS, ENUM_REPORT_TYPE } from '@repo/shared';
 import { DatabaseObjectIdDto } from '@common/database/dtos/database.object-id.dto';
 import { UserShortResponseDto } from '@modules/users/dto/response/user.short.response.dto';
 
@@ -34,7 +34,7 @@ export class ReportListResponseDto extends DatabaseObjectIdDto {
   severity: ENUM_REPORT_SEVERITY;
 
   @Expose()
-  type: string;
+  type: ENUM_REPORT_TYPE;
 
   @Expose()
   status: ENUM_REPORT_STATUS;
