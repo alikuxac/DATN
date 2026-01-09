@@ -16,9 +16,14 @@ export function PaginationFilterInPipe<T>(
             @Inject(REQUEST) protected readonly request: IRequestApp,
             private readonly databaseService: DatabaseService,
             private readonly helperArrayService: HelperArrayService
-        ) {}
+        ) { }
 
         async transform(value: string): Promise<any> {
+            // Guard clause: return undefined if value is not provided
+            if (!value) {
+                return undefined;
+            }
+
             if (options?.raw) {
                 this.addToRequestInstance(value);
                 return {
@@ -38,9 +43,9 @@ export function PaginationFilterInPipe<T>(
                 ...this.request.__pagination,
                 filters: this.request.__pagination?.filters
                     ? {
-                          ...this.request.__pagination?.filters,
-                          [field]: value,
-                      }
+                        ...this.request.__pagination?.filters,
+                        [field]: value,
+                    }
                     : { [field]: value },
             };
         }
