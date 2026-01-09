@@ -51,7 +51,7 @@ export class ResetPasswordPublicController {
         private readonly passwordHistoryService: PasswordHistoryService,
         private readonly authService: AuthService,
         private readonly resetPasswordService: ResetPasswordService
-    ) {}
+    ) { }
 
     @Response('resetPassword.request')
     @HttpCode(HttpStatus.OK)
@@ -96,11 +96,15 @@ export class ResetPasswordPublicController {
                     { session }
                 );
 
+
             await this.emailQueue.add(
                 ENUM_SEND_EMAIL_PROCESS.RESET_PASSWORD,
                 {
                     send: { email, name: user.firstName, lang },
-                    data: resetPassword.created,
+                    data: {
+                        password: resetPassword.resetPassword.otp,
+                        expiredDate: resetPassword.created.expiredDate,
+                    },
                 },
                 {
                     debounce: {
@@ -109,6 +113,7 @@ export class ResetPasswordPublicController {
                     },
                 }
             );
+
 
             await this.databaseService.commitTransaction(session);
 

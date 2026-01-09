@@ -4,7 +4,7 @@ import { IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
 export class ResetPasswordVerifyRequestDto implements IResetPasswordVerifyRequest {
     @IsString()
     @IsNotEmpty()
-    @MaxLength(6)
-    @MinLength(6)
+    @MaxLength(12)
+    @MinLength(12)
     otp: string;
 }

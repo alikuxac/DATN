@@ -25,8 +25,8 @@ export class ResetPasswordEntity extends DatabaseUUIDEntityBase {
     @DatabaseProp({
         required: true,
         trim: true,
-        minlength: 6,
-        maxlength: 6,
+        minlength: 12,
+        maxlength: 12,
     })
     otp: string;
 
