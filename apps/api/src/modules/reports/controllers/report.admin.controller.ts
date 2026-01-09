@@ -22,6 +22,7 @@ import { ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS, ENUM_REPORT_SEVERITY, ENUM_RE
 import { UserDocument } from '@modules/users/repository/entities/user.entity';
 import { UserParsePipe } from '@modules/users/pipes/user.parse.pipe';
 import { IResponsePaging } from '@common/response/interfaces/response.interface';
+import { UsersService } from '@modules/users/services/users.service';
 
 @Controller({
   version: '1',
@@ -31,7 +32,8 @@ export class ReportAdminController {
   constructor(
     private readonly reportService: ReportService,
     private readonly paginationService: PaginationService,
-    private readonly paginationFilterService: PaginationService
+    private readonly paginationFilterService: PaginationService,
+    private readonly userService: UsersService
   ) { }
 
   // 1. API List All Reports
@@ -45,7 +47,7 @@ export class ReportAdminController {
       availableSearch: ['q', 'address', 'notes', 'regionId', 'user.fullName', 'user.mobileNumber'],
       availableOrderBy: ['createdAt', 'status', 'peopleCount', 'updatedAt'],
     })
-    { _search, _limit, _offset, _order }: PaginationListDto,
+    { _search, _limit, _offset, _order, search }: PaginationListDto,
 
     // 2. Enum Filters
     @PaginationQueryFilterInEnum('severity', ENUM_REPORT_SEVERITY.MEDIUM, ENUM_REPORT_SEVERITY)
@@ -61,10 +63,21 @@ export class ReportAdminController {
     @Query('dateField') rawDateField: string,
     @PaginationQueryFilterDateTimeRange('timeRange') timeRange: Date,
     @PaginationQueryFilterDate('fromDate', ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS.GREATER_THAN_EQUAL) fromDate: Date,
-        @PaginationQueryFilterDate('toDate', ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS.LESS_THAN_EQUAL) toDate: Date,
-        @PaginationQueryFilterDate('exactDate', ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS.EQUAL) exactDate: Date,
+    @PaginationQueryFilterDate('toDate', ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS.LESS_THAN_EQUAL) toDate: Date,
+    @PaginationQueryFilterDate('exactDate', ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS.EQUAL) exactDate: Date,
   ): Promise<IResponsePaging<ReportListResponseDto>> {
-    const find: Record<string, any> = { ..._search };
+    let find: Record<string, any> = { ..._search };
+
+    if (search) {
+      const userIds = await this.userService.findAllIdsByName(search);
+      find = {
+        ...find,
+        $or: [
+          ...(_search?.$or || []),
+          { user: { $in: userIds } },
+        ]
+      }
+    }
 
     if (severity?.length) find.severity = { $in: severity };
     if (status?.length) find.status = { $in: status };

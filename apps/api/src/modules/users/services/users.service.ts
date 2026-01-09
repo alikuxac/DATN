@@ -79,6 +79,37 @@ export class UsersService {
     return this.userRepository.findAll<UserDocument>(find, options);
   }
 
+  async findAllIdsByName(search: string): Promise<string[]> {
+    const users = await this.userRepository.findAll<UserDocument>({
+      $or: [
+        {
+          $expr: {
+            $regexMatch: {
+              input: {
+                $concat: ['$lastName', ' ', '$firstName'],
+              },
+              regex: search,
+              options: 'i',
+            },
+          },
+        },
+        {
+          $expr: {
+            $regexMatch: {
+              input: {
+                $concat: ['$firstName', ' ', '$lastName'],
+              },
+              regex: search,
+              options: 'i',
+            },
+          },
+        },
+      ],
+    });
+
+    return users.map((user) => user._id.toString());
+  }
+
   async findOneById(id: string, options?: IDatabaseFindOneOptions) {
     return this.userRepository.findOneById<UserDocument>(id, options);
   }

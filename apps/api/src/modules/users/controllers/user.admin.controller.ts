@@ -100,7 +100,7 @@ export class UserAdminController {
         @PaginationQuery({
             availableSearch: USER_DEFAULT_AVAILABLE_SEARCH,
         })
-        { _search, _limit, _offset, _order }: PaginationListDto,
+        { _search, _limit, _offset, _order, search }: PaginationListDto,
         @PaginationQueryFilterInEnum(
             'status',
             USER_DEFAULT_STATUS,
@@ -110,11 +110,42 @@ export class UserAdminController {
         @PaginationQueryFilterIn('role')
         role: Record<string, any>,
     ): Promise<IResponsePaging<UserListResponseDto>> {
-        const find: Record<string, any> = {
+        let find: Record<string, any> = {
             ..._search,
             ...status,
             ...role,
         };
+
+        if (search) {
+            find = {
+                ...find,
+                $or: [
+                    ...(_search?.$or || []),
+                    {
+                        $expr: {
+                            $regexMatch: {
+                                input: {
+                                    $concat: ['$lastName', ' ', '$firstName'],
+                                },
+                                regex: search,
+                                options: 'i',
+                            },
+                        },
+                    },
+                    {
+                        $expr: {
+                            $regexMatch: {
+                                input: {
+                                    $concat: ['$firstName', ' ', '$lastName'],
+                                },
+                                regex: search,
+                                options: 'i',
+                            },
+                        },
+                    },
+                ],
+            };
+        }
 
         const users: UserEntity[] =
             await this.userService.findAll(find, {

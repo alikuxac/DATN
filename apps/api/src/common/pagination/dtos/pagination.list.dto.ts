@@ -10,6 +10,10 @@ export class PaginationListDto {
 
   @ApiHideProperty()
   @Allow()
+  search?: string;
+
+  @ApiHideProperty()
+  @Allow()
   _limit: number;
 
   @ApiHideProperty()
