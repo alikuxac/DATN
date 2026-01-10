@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 import { UserDocument, UserEntity } from '@modules/users/repository/entities/user.entity';
 
@@ -168,7 +168,6 @@ export class UsersService {
 
   async remove(id: string, options?: IDatabaseSaveOptions) {
     const user = await this.userRepository.delete({ _id: new Types.ObjectId(id) }, options);
-    console.log('Delete result:', user, 'for ID:', id);
 
     if (!user) {
       throw new NotFoundException('User not found');
