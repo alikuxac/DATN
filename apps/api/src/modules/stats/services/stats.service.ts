@@ -59,7 +59,7 @@ export class StatsService {
     const dataMap = new Map(data.map(item => [item._id, item.count]));
 
     while (currentDate <= end) {
-      const dateStr = this.helperDateService.format(currentDate, { format: 'YYYY-MM-DD' });
+      const dateStr = this.helperDateService.format(currentDate, { format: 'yyyy-MM-dd' });
       result.push({
         date: dateStr,
         count: dataMap.get(dateStr) || 0
