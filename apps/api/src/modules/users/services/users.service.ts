@@ -167,7 +167,7 @@ export class UsersService {
   }
 
   async remove(id: string, options?: IDatabaseSaveOptions) {
-    const user = await this.userRepository.delete({ _id: id }, options);
+    const user = await this.userRepository.delete({ _id: new Types.ObjectId(id) }, options);
     console.log('Delete result:', user, 'for ID:', id);
 
     if (!user) {
