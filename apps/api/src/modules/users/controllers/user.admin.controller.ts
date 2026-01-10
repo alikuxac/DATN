@@ -10,6 +10,7 @@ import {
     Post,
     Put,
     ForbiddenException,
+    Delete,
 } from '@nestjs/common';
 import { PaginationService } from '@common/pagination/services/pagination.service';
 import {
@@ -596,9 +597,6 @@ export class UserAdminController {
         }
     }
 
-    @Response('user.getNearbyVolunteers')
-    @UserProtected()
-    @AuthJwtAccessProtected()
     @Get('/volunteer/nearby')
     async getNearbyVolunteers(
         @AuthJwtPayload<IAuthJwtAccessTokenPayload>('user', UserParsePipe)
@@ -606,6 +604,36 @@ export class UserAdminController {
     ): Promise<void> {
         if ([ENUM_USER_ROLE.SUPER_ADMIN, ENUM_USER_ROLE.ADMIN].includes(user.role)) {
             await this.userService.getNearbyVolunteer(user);
+        }
+    }
+
+    @Response('user.delete')
+    @PolicyAbilityProtected({
+        subject: ENUM_POLICY_SUBJECT.USER,
+        action: [ENUM_POLICY_ACTION.READ, ENUM_POLICY_ACTION.DELETE],
+    })
+    @UserProtected()
+    @AuthJwtAccessProtected()
+    @Delete('/delete/:user')
+    async delete(
+        @Param('user', RequestRequiredPipe, UserParsePipe, UserNotSelfPipe)
+        user: UserDocument
+    ): Promise<void> {
+        const session: ClientSession =
+            await this.databaseService.createTransaction();
+
+        try {
+            await this.userService.remove(user._id.toString(), { session });
+
+            await this.databaseService.commitTransaction(session);
+        } catch (err: unknown) {
+            await this.databaseService.abortTransaction(session);
+
+            throw new InternalServerErrorException({
+                statusCode: ENUM_STATUS_CODE_ERROR.APP_UNKNOWN,
+                message: 'http.serverError.internalServerError',
+                _error: err,
+            });
         }
     }
 }

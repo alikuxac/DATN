@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { Document } from 'mongoose';
 
 import { UserDocument, UserEntity } from '@modules/users/repository/entities/user.entity';
@@ -10,7 +10,7 @@ import { IAuthPassword } from '@modules/auth/interfaces/auth.interface';
 import { IDatabaseCreateOptions, IDatabaseDeleteManyOptions, IDatabaseExistsOptions, IDatabaseFindAllOptions, IDatabaseFindOneOptions, IDatabaseGetTotalOptions, IDatabaseSaveOptions, IDatabaseSoftDeleteOptions } from '@common/database/interfaces/database.interface';
 import { UserRepository } from '@modules/users/repository/repositories/user.repository';
 import { DatabaseHelperQueryContain } from '@common/database/decorators/database.decorator';
-import { ENUM_MESSAGE_LANGUAGE, ENUM_USER_ROLE, ENUM_USER_SIGN_UP_FROM, ENUM_USER_STATUS, ENUM_USER_THEME } from '@repo/shared';
+import { ENUM_MESSAGE_LANGUAGE, ENUM_USER_ROLE, ENUM_USER_SIGN_UP_FROM, ENUM_USER_STATUS, ENUM_USER_THEME, ENUM_STATUS_CODE_ERROR } from '@repo/shared';
 import { HelperDateService } from '@common/helper/services/helper.date.service';
 import { plainToInstance } from 'class-transformer';
 import { HelperStringService } from '@common/helper/services/helper.string.service';
@@ -142,16 +142,32 @@ export class UsersService {
     );
   }
 
-  async update(respository: UserDocument, updateUserDto: UserUpdateRequestDto, options?: IDatabaseSaveOptions) {
-    respository.firstName = updateUserDto.firstName;
-    respository.lastName = updateUserDto.lastName;
-    respository.gender = updateUserDto.gender;
+  async update(repository: UserDocument, updateUserDto: UserUpdateRequestDto, options?: IDatabaseSaveOptions) {
+    if (updateUserDto.email && updateUserDto.email !== repository.email) {
+      const emailExist = await this.userRepository.exists(
+        DatabaseHelperQueryContain('email', updateUserDto.email, { fullWord: true }),
+        { excludeId: repository._id.toString() }
+      );
 
-    return this.userRepository.save(respository, options);
+      if (emailExist) {
+        throw new ConflictException({
+          statusCode: ENUM_STATUS_CODE_ERROR.USER_EMAIL_EXIST,
+          message: 'user.error.emailExist',
+        });
+      }
+      repository.email = updateUserDto.email;
+    }
+
+    repository.firstName = updateUserDto.firstName;
+    repository.lastName = updateUserDto.lastName;
+    repository.gender = updateUserDto.gender;
+    repository.mobileNumber = updateUserDto.mobileNumber;
+
+    return this.userRepository.save(repository, options);
   }
 
-  async remove(id: string) {
-    const user = await this.userRepository.delete({ _id: id });
+  async remove(id: string, options?: IDatabaseSaveOptions) {
+    const user = await this.userRepository.delete({ _id: id }, options);
     if (!user) {
       return new NotFoundException('User not found');
     }

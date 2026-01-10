@@ -11,7 +11,7 @@ export interface IUserCreateRequest {
   mobileNumber: string;
 }
 
-export type IUserUpdateRequest = Omit<IUserCreateRequest, 'email'>
+export type IUserUpdateRequest = Partial<IUserCreateRequest>;
 
 export type IUserUpdateProfileRequest = Pick<IUserCreateRequest, 'lastName' | 'firstName' | 'gender'>
 
@@ -71,7 +71,7 @@ export type IUserListResponse =
     'password' | 'passwordExpiredAt' | 'passwordCreatedAt' | 'signUpDate' | 'signUpFrom' | 'gender' | 'verification'
   >;
 
-export type IUserProfileReponse = Omit<IUserGetResponse,'mobileNumber' | 'password' | 'passwordExpiredAt' | 'passwordCreatedAt'>;
+export type IUserProfileReponse = Omit<IUserGetResponse, 'mobileNumber' | 'password' | 'passwordExpiredAt' | 'passwordCreatedAt'>;
 
 export type IUserShortResponse = Omit<IUserListResponse, 'status' | 'createdAt' | 'updatedAt'> & {
   status: ENUM_USER_STATUS;
