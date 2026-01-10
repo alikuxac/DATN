@@ -456,4 +456,21 @@ export class UsersService {
       {},
       options);
   }
+
+  async getGrowthStats(startDate: Date, endDate: Date) {
+    return this.userRepository.findAllAggregate<{ _id: string; count: number }>([
+      {
+        $match: {
+          createdAt: { $gte: startDate, $lte: endDate },
+        },
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+  }
 }

@@ -439,4 +439,21 @@ export class ReportService {
 
     return false;
   }
+
+  async getGrowthStats(startDate: Date, endDate: Date) {
+    return this.reportRepository.findAllAggregate<{ _id: string; count: number }>([
+      {
+        $match: {
+          createdAt: { $gte: startDate, $lte: endDate },
+        },
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+  }
 }

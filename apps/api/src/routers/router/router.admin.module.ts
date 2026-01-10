@@ -15,6 +15,8 @@ import { VerificationModule } from "@modules/verification/verification.module";
 import { ReportsModule } from "@modules/reports/reports.module";
 import { ReportAdminController } from "@modules/reports/controllers/report.admin.controller";
 import { AuthAdminController } from "@modules/auth/controllers/auth.admin.controller";
+import { StatsModule } from "@modules/stats/stats.module";
+import { StatsAdminController } from "@modules/stats/controllers/stats.admin.controller";
 @Module({
   imports: [
     UsersModule,
@@ -24,6 +26,7 @@ import { AuthAdminController } from "@modules/auth/controllers/auth.admin.contro
     ActivityModule,
     ReportsModule,
     VerificationModule,
+    StatsModule,
     BullModule.registerQueueAsync({
       name: ENUM_WORKER_QUEUES.EMAIL_QUEUE,
     })
@@ -34,7 +37,8 @@ import { AuthAdminController } from "@modules/auth/controllers/auth.admin.contro
     PasswordHistoryAdminController,
     AuthAdminController,
     ActivityAdminController,
-    ReportAdminController
+    ReportAdminController,
+    StatsAdminController
   ],
 })
-export class RouterAdminModule {}
+export class RouterAdminModule { }
