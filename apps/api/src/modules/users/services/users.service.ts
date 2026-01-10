@@ -167,12 +167,13 @@ export class UsersService {
   }
 
   async remove(id: string, options?: IDatabaseSaveOptions) {
-    const user = await this.userRepository.delete({ _id: new Types.ObjectId(id) }, options);
+    const user = await this.userRepository.findOneById<UserDocument>(id);
 
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    return user;
+
+    return this.userRepository.softDelete(user, options);
   }
 
   async softDelete(
@@ -484,6 +485,24 @@ export class UsersService {
       {
         $group: {
           _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+  }
+
+  async getDeletedStats(startDate: Date, endDate: Date, timezone = '+07:00') {
+    return this.userRepository.findAllAggregate<{ _id: string; count: number }>([
+      {
+        $match: {
+          deletedAt: { $gte: startDate, $lte: endDate },
+          deleted: true
+        },
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$deletedAt', timezone } },
           count: { $sum: 1 },
         },
       },

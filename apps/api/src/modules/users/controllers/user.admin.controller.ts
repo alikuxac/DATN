@@ -616,14 +616,41 @@ export class UserAdminController {
     @AuthJwtAccessProtected()
     @Delete('/delete/:user')
     async delete(
+        @AuthJwtPayload<IAuthJwtAccessTokenPayload>('user', UserParsePipe) requestUser: UserDocument,
         @Param('user', RequestRequiredPipe, UserParsePipe, UserNotSelfPipe)
         user: UserDocument
     ): Promise<void> {
-        const session: ClientSession =
-            await this.databaseService.createTransaction();
+        // 1. Cannot delete SUPER_ADMIN
+        if (user.role === ENUM_USER_ROLE.SUPER_ADMIN) {
+            throw new ForbiddenException({
+                statusCode: ENUM_STATUS_CODE_ERROR.USER_IS_SUPER_ADMIN,
+                message: 'user.error.isSuperAdmin',
+            });
+        }
+
+        // 2. Only SUPER_ADMIN can delete ADMIN
+        if (user.role === ENUM_USER_ROLE.ADMIN && requestUser.role !== ENUM_USER_ROLE.SUPER_ADMIN) {
+            throw new ForbiddenException({
+                statusCode: ENUM_STATUS_CODE_ERROR.USER_IS_ADMIN,
+                message: 'user.error.isAdmin',
+            });
+        }
+
+        const session: ClientSession = await this.databaseService.createTransaction();
 
         try {
-            await this.userService.remove(user._id.toString(), { session });
+            await this.userService.softDelete(user, { session });
+
+            await this.activityService.createByAdmin(
+                user,
+                {
+                    by: requestUser._id.toString(),
+                    description: this.messageService.setMessage(
+                        'activity.user.deleteByAdmin'
+                    ),
+                },
+                { session }
+            );
 
             await this.databaseService.commitTransaction(session);
         } catch (err: unknown) {
@@ -637,4 +664,3 @@ export class UserAdminController {
         }
     }
 }
-

@@ -47,14 +47,19 @@ export class StatsService {
 
     // Daily Growth (New items per day)
     const dateNow = this.helperDateService.create();
-    const [userChartData, reportChartData] = await Promise.all([
+    const [
+      userCreated, userDeleted,
+      reportCreated, reportDeleted
+    ] = await Promise.all([
       usersService.getGrowthStats(date30DaysAgo, dateNow, timezone),
-      reportService.getGrowthStats(date30DaysAgo, dateNow, timezone)
+      usersService.getDeletedStats(date30DaysAgo, dateNow, timezone),
+      reportService.getGrowthStats(date30DaysAgo, dateNow, timezone),
+      reportService.getDeletedStats(date30DaysAgo, dateNow, timezone)
     ]);
 
     // Calculate Cumulative
-    const users = this.fillCumulativeDates(userChartData, date30DaysAgo, dateNow, userBaseTotal);
-    const reports = this.fillCumulativeDates(reportChartData, date30DaysAgo, dateNow, reportBaseTotal);
+    const users = this.fillCumulativeDates(userCreated, userDeleted, date30DaysAgo, dateNow, userBaseTotal);
+    const reports = this.fillCumulativeDates(reportCreated, reportDeleted, date30DaysAgo, dateNow, reportBaseTotal);
 
     return {
       users: {
@@ -74,18 +79,28 @@ export class StatsService {
     };
   }
 
-  private fillCumulativeDates(data: { _id: string, count: number }[], startDate: Date, endDate: Date, baseTotal: number) {
+  private fillCumulativeDates(
+    createdData: { _id: string, count: number }[],
+    deletedData: { _id: string, count: number }[],
+    startDate: Date,
+    endDate: Date,
+    baseTotal: number
+  ) {
     const result = [];
     let currentDate = new Date(startDate);
     const end = new Date(endDate);
-    const dataMap = new Map(data.map(item => [item._id, item.count]));
+
+    const createdMap = new Map(createdData.map(item => [item._id, item.count]));
+    const deletedMap = new Map(deletedData.map(item => [item._id, item.count]));
 
     let currentTotal = baseTotal;
 
     while (currentDate <= end) {
       const dateStr = this.helperDateService.format(currentDate, { format: 'yyyy-MM-dd' });
-      const dailyNew = dataMap.get(dateStr) || 0;
-      currentTotal += dailyNew;
+      const dailyCreated = createdMap.get(dateStr) || 0;
+      const dailyDeleted = deletedMap.get(dateStr) || 0;
+
+      currentTotal += (dailyCreated - dailyDeleted);
 
       result.push({
         date: dateStr,

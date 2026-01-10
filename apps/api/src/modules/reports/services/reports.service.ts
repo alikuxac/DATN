@@ -456,4 +456,22 @@ export class ReportService {
       { $sort: { _id: 1 } },
     ]);
   }
+
+  async getDeletedStats(startDate: Date, endDate: Date, timezone = '+07:00') {
+    return this.reportRepository.findAllAggregate<{ _id: string; count: number }>([
+      {
+        $match: {
+          deletedAt: { $gte: startDate, $lte: endDate },
+          deleted: true
+        },
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$deletedAt', timezone } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+  }
 }
