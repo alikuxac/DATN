@@ -4,6 +4,7 @@ import {
     Get,
     HttpCode,
     HttpStatus,
+    Param,
     Post,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
@@ -50,7 +51,7 @@ export class UserSystemController {
     constructor(
         private readonly paginationService: PaginationService,
         private readonly userService: UsersService
-    ) {}
+    ) { }
 
     @ResponsePaging('user.list')
     @Get('/list')
@@ -73,6 +74,12 @@ export class UserSystemController {
             ...status,
         };
 
+        const withDeleted = status.status === 'DELETED';
+        if (withDeleted) {
+            delete find.status;
+            find.deleted = true;
+        }
+
         const users: UserEntity[] =
             await this.userService.findAll(find, {
                 paging: {
@@ -80,10 +87,11 @@ export class UserSystemController {
                     offset: _offset,
                 },
                 order: _order,
+                withDeleted,
             });
 
         const total: number =
-            await this.userService.getTotal(find);
+            await this.userService.getTotal(find, { withDeleted });
         const totalPage: number = this.paginationService.totalPage(
             total,
             _limit
@@ -126,5 +134,14 @@ export class UserSystemController {
         return {
             data: { exist: !!user, user: mapped },
         };
+    }
+
+    @Response('user.restore')
+    @HttpCode(HttpStatus.OK)
+    @Post('/update/:id/restore')
+    async restore(
+        @Param('id') id: string
+    ): Promise<void> {
+        await this.userService.restore(id);
     }
 }

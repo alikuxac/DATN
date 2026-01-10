@@ -183,6 +183,21 @@ export class UsersService {
     return this.userRepository.softDelete(repository, options);
   }
 
+  async restore(
+    id: string,
+    options?: IDatabaseSaveOptions
+  ): Promise<UserDocument> {
+    const user = await this.userRepository.findOneById<UserDocument>(id, {
+      withDeleted: true,
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return this.userRepository.restore(user, options);
+  }
+
   async deleteMany(
     find?: Record<string, any>,
     options?: IDatabaseDeleteManyOptions
