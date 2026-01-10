@@ -1,5 +1,6 @@
 module.exports = {
   reactStrictMode: false,
+  transpilePackages: ['@repo/shared'],
   async rewrites() {
     return [
       {
