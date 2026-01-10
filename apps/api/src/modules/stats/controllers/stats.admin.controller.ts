@@ -9,6 +9,7 @@ import { UserProtected } from '@modules/users/decorators/user.decorator';
 import { Response } from '@common/response/decorators/response.decorator';
 import { UsersService } from '@modules/users/services/users.service';
 import { ReportService } from '@modules/reports/services/reports.service';
+import { IResponse } from '@common/response/interfaces/response.interface';
 
 @ApiTags('modules.admin.stats')
 @Controller({
@@ -30,7 +31,10 @@ export class StatsAdminController {
   @UserProtected()
   @AuthJwtAccessProtected()
   @Get('/dashboard')
-  async getDashboardStats(): Promise<StatsDashboardResponseDto> {
-    return this.statsService.getDashboardStats(this.usersService, this.reportService);
+  async getDashboardStats(): Promise<IResponse<StatsDashboardResponseDto>> {
+    const stats = await this.statsService.getDashboardStats(this.usersService, this.reportService);
+    return {
+      data: stats
+    };
   }
 }
