@@ -325,6 +325,7 @@ export class UserAdminController {
     @AuthJwtAccessProtected()
     @Put('/update/:user')
     async update(
+        @AuthJwtPayload<IAuthJwtAccessTokenPayload>('user', UserParsePipe) requestUser: UserDocument,
         @Param('user', RequestRequiredPipe, UserParsePipe, UserNotSelfPipe)
         user: UserDocument,
         @Body() dto: UserUpdateRequestDto
@@ -339,9 +340,10 @@ export class UserAdminController {
                 { session }
             );
 
-            await this.activityService.createByUser(
+            await this.activityService.createByAdmin(
                 user,
                 {
+                    by: requestUser._id.toString(),
                     description: this.messageService.setMessage(
                         'activity.user.updateByAdmin'
                     ),
@@ -493,9 +495,10 @@ export class UserAdminController {
         try {
             await this.userService.updateRole(user, { role }, { session });
 
-            await this.activityService.createByUser(
+            await this.activityService.createByAdmin(
                 user,
                 {
+                    by: requestUser._id.toString(),
                     description: this.messageService.setMessage(
                         'activity.user.updateRoleByAdmin'
                     ),
@@ -565,9 +568,10 @@ export class UserAdminController {
         try {
             await this.userService.updateStatus(user, { status }, { session });
 
-            await this.activityService.createByUser(
+            await this.activityService.createByAdmin(
                 user,
                 {
+                    by: requestUser._id.toString(),
                     description: this.messageService.setMessage(
                         `activity.user.${status.toLowerCase()}ByAdmin`
                     ),
@@ -639,7 +643,10 @@ export class UserAdminController {
         const session: ClientSession = await this.databaseService.createTransaction();
 
         try {
-            await this.userService.softDelete(user, { session });
+            await this.userService.softDelete(user, {
+                session,
+                actionBy: requestUser._id.toString()
+            });
 
             await this.activityService.createByAdmin(
                 user,

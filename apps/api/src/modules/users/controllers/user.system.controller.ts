@@ -42,6 +42,13 @@ import { ENUM_USER_STATUS } from '@repo/shared';
 import { UserEntity } from '../repository/entities/user.entity';
 import { UsersService } from '@modules/users/services/users.service';
 
+import { ActivityService } from '@modules/activity/services/activity.service';
+import {
+    AuthJwtAccessProtected,
+    AuthJwtPayload,
+} from '@modules/auth/decorators/auth.jwt.decorator';
+import { UserProtected } from '@modules/users/decorators/user.decorator';
+
 @ApiTags('modules.system.user')
 @Controller({
     version: '1',
@@ -50,19 +57,18 @@ import { UsersService } from '@modules/users/services/users.service';
 export class UserSystemController {
     constructor(
         private readonly paginationService: PaginationService,
-        private readonly userService: UsersService
+        private readonly userService: UsersService,
+        private readonly activityService: ActivityService,
     ) { }
 
     @ResponsePaging('user.list')
+    @UserProtected()
+    @AuthJwtAccessProtected()
     @Get('/list')
     async list(
         @PaginationQuery({ availableSearch: USER_DEFAULT_AVAILABLE_SEARCH })
         { _search, _limit, _offset, _order }: PaginationListDto,
-        @PaginationQueryFilterInEnum(
-            'status',
-            USER_DEFAULT_STATUS,
-            ENUM_USER_STATUS
-        )
+        @PaginationQueryFilterIn('status')
         status: Record<string, any>,
         @PaginationQueryFilterIn('role')
         role: Record<string, any>,
@@ -71,13 +77,32 @@ export class UserSystemController {
         const find: Record<string, any> = {
             ..._search,
             ...role,
-            ...status,
         };
 
-        const withDeleted = status.status === 'DELETED';
+        const statusValue = status.status;
+        let withDeleted = false;
+
+        if (statusValue) {
+            const statusArray = Array.isArray(statusValue) ? statusValue : [statusValue];
+
+            const validStatus = statusArray.filter((s: string) => Object.values(ENUM_USER_STATUS).includes(s as ENUM_USER_STATUS));
+            if (validStatus.length > 0) {
+                find.status = { $in: validStatus };
+            }
+
+            if (statusArray.includes('DELETED')) {
+                withDeleted = true;
+            }
+        }
+
         if (withDeleted) {
-            delete find.status;
-            find.deleted = true;
+            const isOnlyDeleted = Array.isArray(statusValue) && statusValue.length === 1 && statusValue[0] === 'DELETED';
+            const isDeletedString = statusValue === 'DELETED';
+
+            if (isOnlyDeleted || isDeletedString) {
+                find.deletedAt = { $ne: null };
+                delete find.status;
+            }
         }
 
         const users: UserEntity[] =
@@ -140,8 +165,17 @@ export class UserSystemController {
     @HttpCode(HttpStatus.OK)
     @Post('/update/:id/restore')
     async restore(
-        @Param('id') id: string
+        @Param('id') id: string,
+        @AuthJwtPayload('user') restoredBy: string,
     ): Promise<void> {
-        await this.userService.restore(id);
+        const user = await this.userService.restore(id, { actionBy: restoredBy });
+
+        await this.activityService.createByAdmin(
+            user,
+            {
+                by: restoredBy,
+                description: 'activity.user.restoreByAdmin',
+            }
+        );
     }
 }
