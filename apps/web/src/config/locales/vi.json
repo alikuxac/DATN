@@ -1,0 +1,256 @@
+{
+  "COMMON": {
+    "HOME": "Trang chủ",
+    "ERROR": "Lỗi",
+    "SUCCESS": "Thành công",
+    "CANCEL": "Hủy bỏ",
+    "SAVE": "Lưu",
+    "EDIT": "Chỉnh sửa",
+    "DELETE": "Xóa",
+    "CONFIRM": "Xác nhận",
+    "LOADING": "Đang tải...",
+    "VERSION": "Phiên bản",
+    "UNKNOWN_ERROR": "Đã xảy ra lỗi không xác định",
+    "BTN_SAVE_CHANGES": "Lưu thay đổi",
+    "ERR_UPDATE_FAILED": "Không thể lưu cài đặt"
+  },
+  "AUTH": {
+    "LOGIN_TITLE": "Đăng nhập",
+    "REGISTER_TITLE": "Đăng ký",
+    "FORGOT_PASSWORD": "Quên mật khẩu?",
+    "LABEL_EMAIL": "Email",
+    "LABEL_PASSWORD": "Mật khẩu",
+    "LABEL_CONFIRM_PASSWORD": "Xác nhận mật khẩu",
+    "LABEL_FIRST_NAME": "Tên",
+    "LABEL_LAST_NAME": "Họ",
+    "BTN_LOGIN": "Đăng nhập",
+    "BTN_REGISTER": "Tạo tài khoản",
+    "BTN_LOGOUT": "Đăng xuất",
+    "HINT_NO_ACCOUNT": "Bạn chưa có tài khoản?",
+    "HINT_HAS_ACCOUNT": "Bạn đã có tài khoản?",
+    "LINK_REGISTER": "Đăng ký ngay",
+    "LINK_LOGIN": "Đăng nhập tại đây",
+    "MSG_WELCOME_BACK": "Chào mừng bạn trở lại!",
+    "MSG_LOGIN_SUCCESS": "Đăng nhập thành công",
+    "MSG_SIGNUP_SUCCESS": "Chào mừng bạn đến với FloodAid, {{firstName}}",
+    "TITLE_ACCOUNT_CREATED": "Tài khoản đã được tạo",
+    "ERR_LOGIN_FAILED": "Đăng nhập thất bại",
+    "ERR_NO_TOKEN": "Không nhận được mã truy cập từ máy chủ.",
+    "ERR_EMAIL_NOT_EXIST": "Địa chỉ email không tồn tại.",
+    "ERR_INCORRECT_PASSWORD": "Mật khẩu không chính xác",
+    "ERR_SOMETHING_WENT_WRONG": "Đã xảy ra lỗi. Vui lòng thử lại sau.",
+
+    "TITLE_FORGOT_PASSWORD": "Quên mật khẩu",
+    "DESC_FORGOT_PASSWORD": "Nhập địa chỉ email của bạn và chúng tôi sẽ gửi mã để đặt lại mật khẩu",
+    "BTN_SEND_CODE": "Gửi mã đặt lại",
+
+    "TITLE_VERIFY_OTP": "Xác thực OTP",
+    "DESC_VERIFY_OTP": "Nhập mã 12 ký tự đã được gửi đến email của bạn",
+    "LABEL_OTP": "Mã OTP",
+    "DESC_OTP_HINT": "Kiểm tra email của bạn để lấy mã xác thực",
+    "BTN_VERIFY": "Xác thực",
+
+    "TITLE_RESET_PASSWORD": "Đặt lại mật khẩu",
+    "DESC_RESET_PASSWORD": "Nhập mật khẩu mới của bạn",
+    "BTN_RESET_PASSWORD": "Đặt lại mật khẩu",
+    "MSG_PASSWORD_RESET_SUCCESS": "Đặt lại mật khẩu thành công!",
+    "MSG_REDIRECTING": "Đang chuyển hướng đến trang đăng nhập..."
+  },
+  "VALIDATION": {
+    "REQUIRED": "{{field}} là bắt buộc",
+    "EMAIL_INVALID": "Địa chỉ email không hợp lệ",
+    "PASSWORD_MIN_LENGTH": "Mật khẩu phải có ít nhất 6 ký tự.",
+    "PASSWORD_MISMATCH": "Mật khẩu không khớp",
+    "PASSWORD_WEAK": "Mật khẩu phải bao gồm chữ hoa, chữ thường và một số.",
+    "GENDER_REQUIRED": "Vui lòng chọn giới tính"
+  },
+  "PROFILE": {
+    "TITLE": "Hồ sơ",
+    "EDIT_PROFILE": "Chỉnh sửa hồ sơ",
+    "PERSONAL_INFO": "Thông tin cá nhân",
+    "CONTACT_INFO": "Thông tin liên hệ",
+    "AVATAR_UPLOAD": "Thay đổi ảnh đại diện",
+    "LABEL_PHONE": "Số điện thoại",
+    "LABEL_GENDER": "Giới tính",
+    "LABEL_SELECT_GENDER": "Chọn giới tính",
+    "VALUE_NO_PHONE": "Chưa thêm số điện thoại",
+    "VALUE_NOT_SPECIFIED": "Không được chỉ định",
+    "GENDER_OPTIONS": {
+      "MALE": "Nam",
+      "FEMALE": "Nữ",
+      "OTHER": "Khác"
+    },
+    "MSG_PROFILE_UPDATED": "Hồ sơ đã được cập nhật thành công.",
+    "VOLUNTEER_MODE": "Chế độ tình nguyện",
+    "VOLUNTEER_DESC": "Bật tính năng này để nhận thông báo cứu hộ gần bạn.",
+    "UPDATE_VOLUNTEER_SUCCESS": "Trạng thái tình nguyện viên đã được cập nhật thành công.",
+    "UPDATE_VOLUNTEER_FAILED": "Không thể cập nhật trạng thái tình nguyện viên."
+  },
+  "SETTINGS": {
+    "TITLE": "Cài đặt",
+    "SECTION_ACCOUNT": "Tài khoản",
+    "SECTION_APP": "Cài đặt ứng dụng",
+    "SECTION_INFO": "Thông tin",
+    "EDIT_PROFILE": "Chỉnh sửa hồ sơ",
+    "PROFILE_DESC": "Họ và tên, email, số điện thoại",
+    "SECURITY": "Bảo mật & Đăng nhập",
+    "SECURITY_DESC": "Mật khẩu, Thiết bị",
+    "PREFERENCES": "Tùy chọn",
+    "PREFERENCES_DESC": "Ngôn ngữ, Ngoại hình",
+    "NOTIFICATIONS": "Thông báo",
+    "ABOUT": "Giới thiệu về ứng dụng",
+    "LOGOUT": "Đăng xuất",
+    "LOGOUT_CONFIRM": "Bạn có chắc chắn muốn đăng xuất không?",
+    "THEME": {
+      "TITLE": "Appearance",
+      "SYSTEM": "Đồng bộ với hệ thống",
+      "LIGHT": "Chế độ sáng",
+      "DARK": "Chế độ tối"
+    },
+    "LANGUAGE": {
+      "TITLE": "Ngôn ngữ",
+      "SYSTEM": "Mặc định hệ thống",
+      "VI": "Tiếng Việt",
+      "EN": "Tiếng Anh"
+    }
+  },
+  "SECURITY": {
+    "TITLE": "Bảo mật",
+    "CHANGE_PASSWORD": "Thay đổi mật khẩu",
+    "ACTIVE_SESSIONS": "Phiên hoạt động",
+    "THIS_DEVICE": "Thiết bị này",
+    "LABEL_CURRENT_PASSWORD": "Mật khẩu hiện tại",
+    "LABEL_NEW_PASSWORD": "Mật khẩu mới",
+    "LABEL_CONFIRM_NEW_PASSWORD": "Xác nhận mật khẩu mới",
+    "LABEL_ACTIVE_SESSIONS": "Phiên hoạt động",
+    "BTN_UPDATE_PASSWORD": "Cập nhật mật khẩu",
+    "MSG_PASSWORD_CHANGED": "Mật khẩu đã được thay đổi thành công.",
+    "MSG_PASSWORD_ERROR": "Không thể thay đổi mật khẩu."
+  },
+  "FEATURE": {
+    "SURVIVAL_MODE": "Chế độ sinh tồn",
+    "SURVIVAL_DESC": "Kích hoạt bản đồ ngoại tuyến và thông tin liên lạc khẩn cấp"
+  },
+
+  "DASHBOARD": {
+    "OVERVIEW": "Tổng quan",
+    "LOADING": "Đang tải tổng quan...",
+    "ERR_LOAD_FAILED": "Không thể tải thống kê bảng điều khiển.",
+    "STATS": {
+      "TOTAL_USERS": "Tổng người dùng",
+      "TOTAL_USERS_DESC": "Tổng số người dùng đã đăng ký",
+      "ACTIVE_USERS": "Người dùng hoạt động",
+      "ACTIVE_USERS_DESC": "Người dùng đang hoạt động",
+      "TOTAL_REPORTS": "Tổng báo cáo",
+      "TOTAL_REPORTS_DESC": "Tất cả báo cáo đã gửi",
+      "RESOLVED_REPORTS": "Báo cáo giải quyết",
+      "RESOLVED_REPORTS_DESC": "Báo cáo đã được đánh dấu là giải quyết"
+    },
+    "CHARTS": {
+      "USER_GROWTH": "Tăng trưởng người dùng (30 ngày)",
+      "REPORT_ACTIVITY": "Hoạt động báo cáo (30 ngày)"
+    }
+  },
+
+  "USERS": {
+    "TITLE": "Quản lý người dùng",
+    "CREATE": "Tạo người dùng",
+    "SEARCH_PLACEHOLDER": "Tìm kiếm người dùng...",
+    "ROLE_PLACEHOLDER": "Vai trò",
+    "ALL_ROLES": "Tất cả vai trò",
+    "STATUS_PLACEHOLDER": "Trạng thái",
+    "ALL_STATUSES": "Tất cả trạng thái",
+    "NO_RESULTS": "Không tìm thấy người dùng nào.",
+    "PAGINATION": {
+      "PREVIOUS": "Trước",
+      "NEXT": "Sau",
+      "PAGE_OF": "Trang {{page}} trên {{total}}"
+    },
+    "DIALOG": {
+      "TITLE": "Chi tiết người dùng",
+      "FIRST_NAME": "Tên",
+      "LAST_NAME": "Họ",
+      "EMAIL": "Email",
+      "ROLE": "Vai trò",
+      "STATUS": "Trạng thái",
+      "RESCUE_MODE": "Chế độ cứu hộ",
+      "PREFERENCES": "Tùy chọn",
+      "SETTINGS": "Cài đặt",
+      "CREATED_AT": "Ngày tạo",
+      "UPDATED_AT": "Ngày cập nhật",
+      "CONFIRM_RESET_PASSWORD": "Bạn có chắc chắn muốn đặt lại mật khẩu cho {{email}} không?",
+      "RESET_PASSWORD": "Đặt lại mật khẩu",
+      "YES": "Có",
+      "NO": "Không",
+      "ON": "Bật",
+      "OFF": "Tắt"
+    }
+  },
+
+  "NOTIFICATIONS": {
+    "TITLE": "Trung tâm thông báo",
+    "SUBTITLE": "Cập nhật các cảnh báo và hoạt động mới nhất.",
+    "MARK_ALL_READ": "Đánh dấu tất cả là đã đọc",
+    "NO_NOTIFICATIONS": "Chưa có thông báo nào",
+    "MARK_READ_SUCCESS": "Đã đánh dấu tất cả là đã đọc"
+  },
+
+  "REPORTS": {
+    "TITLE": "Quản lý báo cáo",
+    "CREATE": "Tạo báo cáo",
+    "SEARCH_PLACEHOLDER": "Tìm kiếm báo cáo...",
+    "STATUS_PLACEHOLDER": "Trạng thái",
+    "DATE_PICKER_PLACEHOLDER": "Chọn khoảng thời gian",
+    "ALL_STATUSES": "Tất cả trạng thái",
+    
+    "STATUS": {
+      "PENDING": "Đang chờ",
+      "IN_PROGRESS": "Đang xử lý",
+      "RESOLVED": "Đã giải quyết",
+      "REJECTED": "Đã từ chối",
+      "VERIFIED": "Đã xác minh"
+    },
+
+    "COL_ID": "ID",
+    "COL_TITLE": "Tiêu đề",
+    "COL_STATUS": "Trạng thái",
+    "COL_CREATED_AT": "Ngày tạo",
+    "COL_ACTIONS": "Hành động",
+
+    "NO_RESULTS": "Không có kết quả.",
+    
+    "DETAILS": "Chi tiết báo cáo",
+    "TYPE": "Loại",
+    "NOTES": "Ghi chú",
+    "LOCATION": "Vị trí",
+    "NO_NOTES": "Không có ghi chú",
+
+    "BTN_REJECT": "Từ chối",
+    "BTN_APPROVE": "Phê duyệt / Đang xử lý",
+    "BTN_RESOLVE": "Giải quyết"
+  },
+
+  "MAP": {
+    "TITLE": "Bản đồ",
+    "SEARCH_PLACEHOLDER": "Tìm kiếm báo cáo...",
+    "FILTERS": "Bộ lọc",
+    "LABEL_TYPE": "Loại",
+    "LABEL_STATUS": "Trạng thái",
+    "RESET_FILTERS": "Đặt lại bộ lọc",
+    "SHOWING_REPORTS": "Hiển thị {{count}} báo cáo",
+    "LEGEND_TITLE": "Chú thích trạng thái",
+    "SHOW_LEGEND": "Hiện chú thích",
+    "CLOSE": "Đóng"
+  },
+
+  "SIDEBAR": {
+    "TITLE": "Trang quản trị",
+    "HOME": "Trang chủ",
+    "REPORTS": "Báo cáo",
+    "LIVE_MAP": "Bản đồ",
+    "NOTIFICATIONS": "Thông báo",
+    "USERS": "Người dùng",
+    "LOGOUT": "Đăng xuất",
+    "LOGOUT_CONFIRM": "Bạn có chắc chắn muốn đăng xuất không?"
+  }
+}

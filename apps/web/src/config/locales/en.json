@@ -1,0 +1,285 @@
+{
+  "COMMON": {
+    "HOME": "Home",
+    "ERROR": "Error",
+    "SUCCESS": "Success",
+    "CANCEL": "Cancel",
+    "SAVE": "Save",
+    "EDIT": "Edit",
+    "DELETE": "Delete",
+    "CONFIRM": "Confirm",
+    "LOADING": "Loading...",
+    "VERSION": "Version",
+    "UNKNOWN_ERROR": "An unknown error occurred",
+
+    "BTN_SAVE_CHANGES": "Save Changes",
+
+    "ERR_UPDATE_FAILED": "Failed to save settings"
+  },
+
+  "AUTH": {
+    "LOGIN_TITLE": "Login",
+    "REGISTER_TITLE": "Register",
+    "FORGOT_PASSWORD": "Forgot Password?",
+
+    "LABEL_EMAIL": "Email",
+    "LABEL_PASSWORD": "Password",
+    "LABEL_CONFIRM_PASSWORD": "Confirm Password",
+    "LABEL_FIRST_NAME": "First Name",
+    "LABEL_LAST_NAME": "Last Name",
+
+    "BTN_LOGIN": "Login",
+    "BTN_REGISTER": "Create Account",
+    "BTN_LOGOUT": "Logout",
+
+    "HINT_NO_ACCOUNT": "Don't have an account?",
+    "HINT_HAS_ACCOUNT": "Already have an account?",
+    "LINK_REGISTER": "Register now",
+    "LINK_LOGIN": "Login here",
+
+    "MSG_WELCOME_BACK": "Welcome back!",
+    "MSG_LOGIN_SUCCESS": "Login successful",
+    "MSG_SIGNUP_SUCCESS": "Welcome to FloodAid, {{firstName}}",
+
+    "TITLE_ACCOUNT_CREATED": "Account Created",
+
+    "ERR_LOGIN_FAILED": "Login Failed",
+    "ERR_NO_TOKEN": "No access token received from server",
+    "ERR_EMAIL_NOT_EXIST": "Email does not exist",
+    "ERR_INCORRECT_PASSWORD": "Incorrect password",
+    "ERR_SOMETHING_WENT_WRONG": "Something went wrong. Please try again later.",
+    
+    "TITLE_FORGOT_PASSWORD": "Forgot Password",
+    "DESC_FORGOT_PASSWORD": "Enter your email address and we'll send you a code to reset your password",
+    "BTN_SEND_CODE": "Send Reset Code",
+    
+    "TITLE_VERIFY_OTP": "Verify OTP",
+    "DESC_VERIFY_OTP": "Enter the 12-character code sent to your email",
+    "LABEL_OTP": "OTP Code",
+    "DESC_OTP_HINT": "Check your email for the verification code",
+    "BTN_VERIFY": "Verify Code",
+    
+    "TITLE_RESET_PASSWORD": "Reset Password",
+    "DESC_RESET_PASSWORD": "Enter your new password",
+    "BTN_RESET_PASSWORD": "Reset Password",
+    "MSG_PASSWORD_RESET_SUCCESS": "Password Reset Successful!",
+    "MSG_REDIRECTING": "Redirecting to login page..."
+  },
+
+  "VALIDATION": {
+    "REQUIRED": "{{field}} is required",
+    "EMAIL_INVALID": "Invalid email address",
+    "PASSWORD_MIN_LENGTH": "Password must be at least 6 characters",
+    "PASSWORD_MISMATCH": "Passwords do not match",
+    "PASSWORD_WEAK": "Password must contain uppercase, lowercase, and a number",
+    "GENDER_REQUIRED": "Please select a gender"
+  },
+
+  "PROFILE": {
+    "TITLE": "Profile",
+    "EDIT_PROFILE": "Edit Profile",
+    "PERSONAL_INFO": "Personal Information",
+    "CONTACT_INFO": "Contact Information",
+    "AVATAR_UPLOAD": "Change Avatar",
+
+    "LABEL_PHONE": "Phone Number",
+    "LABEL_GENDER": "Gender",
+    "LABEL_SELECT_GENDER": "Select Gender",
+    "VALUE_NO_PHONE": "No phone number added",
+    "VALUE_NOT_SPECIFIED": "Not specified",
+
+    "GENDER_OPTIONS": {
+      "MALE": "Male",
+      "FEMALE": "Female",
+      "OTHER": "Other"
+    },
+
+    "MSG_PROFILE_UPDATED": "Profile updated successfully",
+
+    "VOLUNTEER_MODE": "Volunteer Mode",
+    "VOLUNTEER_DESC": "Enable to receive rescue notifications near you.",
+    "UPDATE_VOLUNTEER_SUCCESS": "Volunteer status updated successfully.",
+    "UPDATE_VOLUNTEER_FAILED": "Failed to update volunteer status."
+  },
+
+  "SETTINGS": {
+    "TITLE": "Settings",
+
+    "SECTION_ACCOUNT": "Account",
+    "SECTION_APP": "App Settings",
+    "SECTION_INFO": "Information",
+    
+    "EDIT_PROFILE": "Edit Profile",
+    "PROFILE_DESC": "Name, Email, Phone number",
+
+    "SECURITY": "Security & Login",
+    "SECURITY_DESC": "Password, Devices",
+    
+    "PREFERENCES": "Preferences",
+    "PREFERENCES_DESC": "Language, Appearance",
+    
+    "NOTIFICATIONS": "Notifications",
+    "ABOUT": "About App",
+    
+    "LOGOUT": "Logout",
+    "LOGOUT_CONFIRM": "Are you sure you want to logout?",
+
+    "THEME": {
+      "TITLE": "Appearance",
+      "SYSTEM": "Sync with system",
+      "LIGHT": "Light mode",
+      "DARK": "Dark mode"
+    },
+
+    "LANGUAGE": {
+      "TITLE": "Language",
+      "SYSTEM": "System Default",
+      "VI": "Vietnamese",
+      "EN": "English"
+    }
+  },
+
+  "SECURITY": {
+    "TITLE": "Security",
+    "REVOKE_TITLE": "Revoke Device",
+    "CHANGE_PASSWORD": "Change Password",
+    "ACTIVE_SESSIONS": "Active Sessions",
+    "THIS_DEVICE": "This device",
+
+    "LABEL_CURRENT_PASSWORD": "Current Password",
+    "LABEL_NEW_PASSWORD": "New Password",
+    "LABEL_CONFIRM_NEW_PASSWORD": "Confirm New Password",
+    "LABEL_ACTIVE_SESSIONS": "Active Sessions",
+
+    "BTN_UPDATE_PASSWORD": "Update Password",
+    "MSG_PASSWORD_CHANGED": "Password changed successfully",
+    "MSG_PASSWORD_ERROR": "Failed to change password"
+  },
+
+  "FEATURE": {
+    "SURVIVAL_MODE": "Survival Mode",
+    "SURVIVAL_DESC": "Enable offline maps and emergency contacts"
+  },
+
+  "DASHBOARD": {
+    "OVERVIEW": "Overview",
+    "LOADING": "Loading overview...",
+    "ERR_LOAD_FAILED": "Failed to load dashboard stats.",
+    "STATS": {
+      "TOTAL_USERS": "Total Users",
+      "TOTAL_USERS_DESC": "Total registered users",
+      "ACTIVE_USERS": "Active Users",
+      "ACTIVE_USERS_DESC": "Users currently active",
+      "TOTAL_REPORTS": "Total Reports",
+      "TOTAL_REPORTS_DESC": "All submitted reports",
+      "RESOLVED_REPORTS": "Resolved Reports",
+      "RESOLVED_REPORTS_DESC": "Reports marked as resolved"
+    },
+    "CHARTS": {
+      "USER_GROWTH": "User Growth (30 Days)",
+      "REPORT_ACTIVITY": "Report Activity (30 Days)"
+    }
+  },
+
+  "USERS": {
+    "TITLE": "User Management",
+    "CREATE": "Create User",
+    "SEARCH_PLACEHOLDER": "Search users by email or name...",
+    "ROLE_PLACEHOLDER": "Role",
+    "ALL_ROLES": "All Roles",
+    "STATUS_PLACEHOLDER": "Status",
+    "ALL_STATUSES": "All Statuses",
+    "NO_RESULTS": "No users found.",
+    "PAGINATION": {
+      "PREVIOUS": "Previous",
+      "NEXT": "Next",
+      "PAGE_OF": "Page {{page}} of {{total}}"
+    },
+    "DIALOG": {
+      "TITLE": "User Details",
+      "FIRST_NAME": "First Name",
+      "LAST_NAME": "Last Name",
+      "EMAIL": "Email",
+      "ROLE": "Role",
+      "STATUS": "Status",
+      "RESCUE_MODE": "Rescue Mode",
+      "PREFERENCES": "Preferences",
+      "SETTINGS": "Settings",
+      "CREATED_AT": "Created At",
+      "UPDATED_AT": "Updated At",
+      "CONFIRM_RESET_PASSWORD": "Are you sure you want to reset password for {{email}}?",
+      "RESET_PASSWORD": "Reset Password",
+      "YES": "Yes",
+      "NO": "No",
+      "ON": "On",
+      "OFF": "Off"
+    }
+  },
+
+  "NOTIFICATIONS": {
+    "TITLE": "Notification Center",
+    "SUBTITLE": "Stay updated with the latest alerts and activities.",
+    "MARK_ALL_READ": "Mark all as read",
+    "NO_NOTIFICATIONS": "No notifications yet",
+    "MARK_READ_SUCCESS": "All notifications marked as read"
+  },
+
+  "REPORTS": {
+    "TITLE": "Report Management",
+    "CREATE": "Create Report",
+    "SEARCH_PLACEHOLDER": "Search reports...",
+    "STATUS_PLACEHOLDER": "Status",
+    "DATE_PICKER_PLACEHOLDER": "Pick a date range",
+    "ALL_STATUSES": "All Statuses",
+    
+    "STATUS": {
+      "PENDING": "Pending",
+      "IN_PROGRESS": "In Progress",
+      "RESOLVED": "Resolved",
+      "REJECTED": "Rejected",
+      "VERIFIED": "Verified"
+    },
+
+    "COL_ID": "ID",
+    "COL_TITLE": "Title",
+    "COL_STATUS": "Status",
+    "COL_CREATED_AT": "Created At",
+    "COL_ACTIONS": "Actions",
+
+    "NO_RESULTS": "No results.",
+    
+    "DETAILS": "Report Details",
+    "TYPE": "Type",
+    "NOTES": "Notes",
+    "LOCATION": "Location",
+    "NO_NOTES": "No notes",
+
+    "BTN_REJECT": "Reject",
+    "BTN_APPROVE": "Approve / In Progress",
+    "BTN_RESOLVE": "Resolve"
+  },
+
+  "MAP": {
+    "TITLE": "Live Map",
+    "SEARCH_PLACEHOLDER": "Search reports...",
+    "FILTERS": "Filters",
+    "LABEL_TYPE": "Type",
+    "LABEL_STATUS": "Status",
+    "RESET_FILTERS": "Reset Filters",
+    "SHOWING_REPORTS": "Showing {{count}} reports",
+    "LEGEND_TITLE": "Status Legend",
+    "SHOW_LEGEND": "Show Legend",
+    "CLOSE": "Close"
+  },
+
+  "SIDEBAR": {
+    "TITLE": "Admin Dashboard",
+    "HOME": "Home",
+    "REPORTS": "Reports",
+    "LIVE_MAP": "Live Map",
+    "NOTIFICATIONS": "Notifications",
+    "USERS": "Users",
+    "LOGOUT": "Logout",
+    "LOGOUT_CONFIRM": "Are you sure you want to logout?"
+  }
+}
