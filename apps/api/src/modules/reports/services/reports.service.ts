@@ -440,7 +440,7 @@ export class ReportService {
     return false;
   }
 
-  async getGrowthStats(startDate: Date, endDate: Date) {
+  async getGrowthStats(startDate: Date, endDate: Date, timezone = '+07:00') {
     return this.reportRepository.findAllAggregate<{ _id: string; count: number }>([
       {
         $match: {
@@ -449,7 +449,7 @@ export class ReportService {
       },
       {
         $group: {
-          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone } },
           count: { $sum: 1 },
         },
       },

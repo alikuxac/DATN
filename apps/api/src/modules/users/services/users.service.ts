@@ -474,7 +474,7 @@ export class UsersService {
       options);
   }
 
-  async getGrowthStats(startDate: Date, endDate: Date) {
+  async getGrowthStats(startDate: Date, endDate: Date, timezone = '+07:00') {
     return this.userRepository.findAllAggregate<{ _id: string; count: number }>([
       {
         $match: {
@@ -483,7 +483,7 @@ export class UsersService {
       },
       {
         $group: {
-          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone } },
           count: { $sum: 1 },
         },
       },
