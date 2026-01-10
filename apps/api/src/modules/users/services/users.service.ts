@@ -168,8 +168,10 @@ export class UsersService {
 
   async remove(id: string, options?: IDatabaseSaveOptions) {
     const user = await this.userRepository.delete({ _id: id }, options);
+    console.log('Delete result:', user, 'for ID:', id);
+
     if (!user) {
-      return new NotFoundException('User not found');
+      throw new NotFoundException('User not found');
     }
     return user;
   }
