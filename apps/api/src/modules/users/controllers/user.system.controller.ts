@@ -48,6 +48,13 @@ import {
     AuthJwtPayload,
 } from '@modules/auth/decorators/auth.jwt.decorator';
 import { UserProtected } from '@modules/users/decorators/user.decorator';
+import {
+    PolicyAbilityProtected,
+} from '@modules/policy/decorators/policy.decorator';
+import {
+    ENUM_POLICY_ACTION,
+    ENUM_POLICY_SUBJECT,
+} from '@repo/shared';
 
 @ApiTags('modules.system.user')
 @Controller({
@@ -64,6 +71,10 @@ export class UserSystemController {
     @ResponsePaging('user.list')
     @UserProtected()
     @AuthJwtAccessProtected()
+    @PolicyAbilityProtected({
+        subject: ENUM_POLICY_SUBJECT.USER,
+        action: [ENUM_POLICY_ACTION.READ],
+    })
     @Get('/list')
     async list(
         @PaginationQuery({ availableSearch: USER_DEFAULT_AVAILABLE_SEARCH })
@@ -163,6 +174,10 @@ export class UserSystemController {
 
     @Response('user.restore')
     @HttpCode(HttpStatus.OK)
+    @PolicyAbilityProtected({
+        subject: ENUM_POLICY_SUBJECT.USER,
+        action: [ENUM_POLICY_ACTION.UPDATE],
+    })
     @Post('/update/:id/restore')
     async restore(
         @Param('id') id: string,

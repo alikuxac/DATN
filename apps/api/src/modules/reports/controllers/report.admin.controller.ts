@@ -23,6 +23,9 @@ import { UserDocument } from '@modules/users/repository/entities/user.entity';
 import { UserParsePipe } from '@modules/users/pipes/user.parse.pipe';
 import { IResponsePaging } from '@common/response/interfaces/response.interface';
 import { UsersService } from '@modules/users/services/users.service';
+import { Throttle } from '@nestjs/throttler';
+import { PolicyAbilityProtected } from '@modules/policy/decorators/policy.decorator';
+import { ENUM_POLICY_SUBJECT, ENUM_POLICY_ACTION } from '@repo/shared';
 
 @Controller({
   version: '1',
@@ -37,9 +40,14 @@ export class ReportAdminController {
   ) { }
 
   // 1. API List All Reports
+  @ResponsePaging('report.list')
+  @PolicyAbilityProtected({
+    subject: ENUM_POLICY_SUBJECT.REPORT,
+    action: [ENUM_POLICY_ACTION.READ],
+  })
+  @Throttle({ default: { limit: 100, ttl: 60000 } })
   @Get('/list')
   @AuthJwtAccessProtected()
-  @ResponsePaging('report.list')
   async list(
     @PaginationQuery({
       defaultPerPage: 20,
@@ -110,9 +118,19 @@ export class ReportAdminController {
   }
 
   // 2. API Create By Admin
+  @Response('report.create')
+  @PolicyAbilityProtected({
+    subject: ENUM_POLICY_SUBJECT.REPORT,
+    action: [ENUM_POLICY_ACTION.CREATE],
+  })
+  @Throttle({ default: { limit: 100, ttl: 60000 } })
   @Post('/create')
   @AuthJwtAccessProtected()
   @Response('report.create')
+  @PolicyAbilityProtected({
+    subject: ENUM_POLICY_SUBJECT.REPORT,
+    action: [ENUM_POLICY_ACTION.CREATE],
+  })
   async createByAdmin(
     @AuthJwtPayload('user', UserParsePipe) user: UserDocument,
     @Body() body: ReportCreateByAdminRequestDto

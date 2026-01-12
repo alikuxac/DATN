@@ -73,6 +73,7 @@ import { DatabaseService } from '@common/database/services/database.service';
 import { ENUM_STATUS_CODE_ERROR, ENUM_PASSWORD_HISTORY_TYPE, } from '@repo/shared';
 import { HeaderLang } from '@common/message/decorators/message.decorator';
 import { UserUpdateRoleRequestDto } from '@modules/users/dto/request/user.update-role.request.dto';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller({
     version: '1',
@@ -99,6 +100,7 @@ export class UserAdminController {
     })
     @UserProtected()
     @AuthJwtAccessProtected()
+    @Throttle({ default: { limit: 100, ttl: 60000 } })
     @Get('/list')
     async list(
         @PaginationQuery({
@@ -181,6 +183,7 @@ export class UserAdminController {
     })
     // @UserProtected()
     // @AuthJwtAccessProtected()
+    @Throttle({ default: { limit: 100, ttl: 60000 } })
     @Get('/get/:user')
     async get(
         @Param('user', RequestRequiredPipe, UserParsePipe) user: UserDocument
@@ -198,6 +201,7 @@ export class UserAdminController {
     })
     @UserProtected()
     @AuthJwtAccessProtected()
+    @Throttle({ default: { limit: 100, ttl: 60000 } })
     @Post('/create')
     async create(
         @HeaderLang() lang: string,
@@ -323,6 +327,7 @@ export class UserAdminController {
     })
     @UserProtected()
     @AuthJwtAccessProtected()
+    @Throttle({ default: { limit: 100, ttl: 60000 } })
     @Put('/update/:user')
     async update(
         @AuthJwtPayload<IAuthJwtAccessTokenPayload>('user', UserParsePipe) requestUser: UserDocument,
@@ -370,6 +375,7 @@ export class UserAdminController {
     })
     @UserProtected()
     @AuthJwtAccessProtected()
+    @Throttle({ default: { limit: 100, ttl: 60000 } })
     @Patch('/update/:user/reset-password')
     async resetPassword(
         @HeaderLang() lang: string,
@@ -458,6 +464,7 @@ export class UserAdminController {
     })
     @UserProtected()
     @AuthJwtAccessProtected()
+    @Throttle({ default: { limit: 100, ttl: 60000 } })
     @Patch('/update/:user/role')
     async updateRole(
         @AuthJwtPayload<IAuthJwtAccessTokenPayload>('user', UserParsePipe) requestUser: UserDocument,
@@ -527,6 +534,7 @@ export class UserAdminController {
     })
     @UserProtected()
     @AuthJwtAccessProtected()
+    @Throttle({ default: { limit: 100, ttl: 60000 } })
     @Patch('/update/:user/status')
     async updateStatus(
         @AuthJwtPayload<IAuthJwtAccessTokenPayload>('user', UserParsePipe) requestUser: UserDocument,
@@ -618,6 +626,7 @@ export class UserAdminController {
     })
     @UserProtected()
     @AuthJwtAccessProtected()
+    @Throttle({ default: { limit: 100, ttl: 60000 } })
     @Delete('/delete/:user')
     async delete(
         @AuthJwtPayload<IAuthJwtAccessTokenPayload>('user', UserParsePipe) requestUser: UserDocument,

@@ -35,6 +35,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { ENUM_WORKER_QUEUES } from '@workers/enums/worker.enum';
 import { Queue } from 'bullmq';
 import { ClientSession } from 'mongoose';
+import { Throttle } from '@nestjs/throttler';
 import { ENUM_STATUS_CODE_ERROR } from '@repo/shared';
 import { HeaderLang } from '@common/message/decorators/message.decorator';
 
@@ -52,7 +53,7 @@ export class VerificationUserController {
         private readonly smsQueue: Queue,
         private readonly verificationService: VerificationService,
         private readonly userService: UsersService
-    ) {}
+    ) { }
 
     @Response('verification.getEmail')
     @UserProtected([false])
@@ -60,7 +61,7 @@ export class VerificationUserController {
     @Get('/get/email')
     async getEmail(
         @AuthJwtPayload<IAuthJwtAccessTokenPayload>('user', UserParsePipe)
-        user:UserDocument
+        user: UserDocument
     ): Promise<IResponse<VerificationResponse>> {
         const verification: VerificationDoc =
             await this.verificationService.findOneLatestEmailByUser(user._id.toString());
@@ -85,7 +86,7 @@ export class VerificationUserController {
     @Get('/get/mobile-number')
     async getMobileNumber(
         @AuthJwtPayload<IAuthJwtAccessTokenPayload>('user', UserParsePipe)
-        user:UserDocument
+        user: UserDocument
     ): Promise<IResponse<VerificationResponse>> {
         const verification: VerificationDoc =
             await this.verificationService.findOneLatestMobileNumberByUser(
@@ -109,10 +110,11 @@ export class VerificationUserController {
     @Response('verification.resendEmail')
     @UserProtected([false])
     @AuthJwtAccessProtected()
+    @Throttle({ default: { limit: 3, ttl: 60000 } })
     @Post('/resend/email')
     async resendEmail(
         @AuthJwtPayload<IAuthJwtAccessTokenPayload>('user', UserParsePipe)
-        user:UserDocument
+        user: UserDocument
     ): Promise<IResponse<VerificationResponse>> {
         const latestVerification: VerificationDoc =
             await this.verificationService.findOneLatestEmailByUser(user._id.toString());
@@ -178,6 +180,7 @@ export class VerificationUserController {
     @Response('verification.resendMobileNumber')
     @UserProtected()
     @AuthJwtAccessProtected()
+    @Throttle({ default: { limit: 3, ttl: 60000 } })
     @Post('/resend/mobile-number')
     async resendMobileNumber(
         @AuthJwtPayload<IAuthJwtAccessTokenPayload>('user', UserParsePipe)
@@ -252,6 +255,7 @@ export class VerificationUserController {
     @UserProtected([false])
     @AuthJwtAccessProtected()
     @HttpCode(HttpStatus.OK)
+    @Throttle({ default: { limit: 10, ttl: 60000 } })
     @Post('/verify/email')
     async verifyEmail(
         @HeaderLang() lang: string,
@@ -260,7 +264,7 @@ export class VerificationUserController {
             UserParsePipe,
             VerificationUserEmailNotVerifiedYetPipe
         )
-        user:UserDocument,
+        user: UserDocument,
         @Body() { otp }: VerificationVerifyRequestDto
     ): Promise<void> {
         const verification: VerificationDoc =
@@ -325,13 +329,14 @@ export class VerificationUserController {
             });
         }
     }
- 
+
     @Response('verification.verifyMobileNumber')
-    
+
     @UserProtected()
     @AuthJwtAccessProtected()
-    
+
     @HttpCode(HttpStatus.OK)
+    @Throttle({ default: { limit: 10, ttl: 60000 } })
     @Post('/verify/mobile-number')
     async verifyMobileNumber(
         @AuthJwtPayload<IAuthJwtAccessTokenPayload>(
@@ -339,7 +344,7 @@ export class VerificationUserController {
             UserParsePipe,
             VerificationUserMobileNumberNotVerifiedYetPipe
         )
-        user:UserDocument,
+        user: UserDocument,
         @Body() { otp }: VerificationVerifyRequestDto
     ): Promise<void> {
         const verification: VerificationDoc =

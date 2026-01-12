@@ -11,6 +11,7 @@ import {
   Post,
   Req,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from '@modules/auth/services/auth.service';
 import { Response } from '@common/response/decorators/response.decorator';
 import { IResponse } from '@common/response/interfaces/response.interface';
@@ -59,6 +60,7 @@ export class AuthPublicController {
 
   @Response('auth.loginWithCredential')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('/login/credential')
   async loginWithCredential(
     @Body() { email, password }: AuthLoginRequestDto,
@@ -157,6 +159,7 @@ export class AuthPublicController {
   }
 
   @Response('auth.signUp')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('/sign-up')
   async signUp(
     @Body()

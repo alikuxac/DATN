@@ -26,14 +26,16 @@ export class PolicyAbilityFactory {
 
         const defineUserPermissions = () => {
             can(ENUM_POLICY_ACTION.CREATE, ENUM_POLICY_SUBJECT.REPORT);
-            can(ENUM_POLICY_ACTION.READ, ENUM_POLICY_SUBJECT.REPORT, { user: user._id });
+            // can(ENUM_POLICY_ACTION.READ, ENUM_POLICY_SUBJECT.REPORT, { user: user._id }); // OLD: restrict to own reports
+            can(ENUM_POLICY_ACTION.READ, ENUM_POLICY_SUBJECT.REPORT); // NEW: Allow read all (for Map)
+
             // User chỉ sửa/xóa khi Pending
             can(ENUM_POLICY_ACTION.UPDATE, ENUM_POLICY_SUBJECT.REPORT, { by: user._id, status: ENUM_REPORT_STATUS.PENDING });
             can(ENUM_POLICY_ACTION.DELETE, ENUM_POLICY_SUBJECT.REPORT, { by: user._id, status: ENUM_REPORT_STATUS.PENDING });
 
             can(ENUM_POLICY_ACTION.READ, ENUM_POLICY_SUBJECT.USER, { _id: user._id });
             can(ENUM_POLICY_ACTION.UPDATE, ENUM_POLICY_SUBJECT.USER, { _id: user._id });
-        
+
             can(ENUM_POLICY_ACTION.READ, ENUM_POLICY_SUBJECT.SESSION, { user: user._id })
             can(ENUM_POLICY_ACTION.UPDATE, ENUM_POLICY_SUBJECT.SESSION, { user: user._id })
         };
@@ -45,7 +47,10 @@ export class PolicyAbilityFactory {
             case ENUM_USER_ROLE.ADMIN:
                 can(ENUM_POLICY_ACTION.MANAGE, ENUM_POLICY_SUBJECT.USER);
                 cannot(ENUM_POLICY_ACTION.MANAGE, ENUM_POLICY_SUBJECT.USER, { role: ENUM_USER_ROLE.SUPER_ADMIN });
+
                 can(ENUM_POLICY_ACTION.MANAGE, ENUM_POLICY_SUBJECT.REPORT);
+                can(ENUM_POLICY_ACTION.READ, ENUM_POLICY_SUBJECT.REPORT);
+
                 can(ENUM_POLICY_ACTION.READ, ENUM_POLICY_SUBJECT.ACTIVITY);
                 can(ENUM_POLICY_ACTION.READ, ENUM_POLICY_SUBJECT.SESSION);
                 break;

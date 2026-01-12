@@ -1,4 +1,5 @@
 import { BadRequestException, Body, Controller, Delete, Get, InternalServerErrorException, Param, Post, Query } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ReportService } from '../services/reports.service';
 import { ReportCreateRequestDto } from '../dtos/request/report.create.request.dto';
 import { AuthJwtAccessProtected, AuthJwtPayload } from '@modules/auth/decorators/auth.jwt.decorator'; // Hoặc decorator tương ứng của bạn
@@ -13,6 +14,8 @@ import { ClientSession } from 'mongoose';
 import { PaginationListDto } from '@common/pagination/dtos/pagination.list.dto';
 import { PaginationQuery, PaginationQueryFilterDate, PaginationQueryFilterDateTimeRange, PaginationQueryFilterInEnum } from '@common/pagination/decorators/pagination.decorator';
 import { PaginationService } from '@common/pagination/services/pagination.service';
+import { PolicyAbilityProtected } from '@modules/policy/decorators/policy.decorator';
+import { ENUM_POLICY_SUBJECT, ENUM_POLICY_ACTION } from '@repo/shared';
 @Controller({
   version: '1',
   path: '/report',
@@ -27,6 +30,10 @@ export class ReportUserController {
   @Get('/')
   @AuthJwtAccessProtected()
   @ResponsePaging('report.list')
+  @PolicyAbilityProtected({
+    subject: ENUM_POLICY_SUBJECT.REPORT,
+    action: [ENUM_POLICY_ACTION.READ],
+  })
   async list(
     @PaginationQuery({
       defaultPerPage: 20,
@@ -80,6 +87,11 @@ export class ReportUserController {
   @Post('/')
   @AuthJwtAccessProtected()
   @Response('report.create')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @PolicyAbilityProtected({
+    subject: ENUM_POLICY_SUBJECT.REPORT,
+    action: [ENUM_POLICY_ACTION.CREATE],
+  })
   async create(
     @AuthJwtPayload('user', UserParsePipe) user: UserDocument,
     @Body() body: ReportCreateRequestDto
@@ -115,6 +127,11 @@ export class ReportUserController {
   @Post(':id')
   @AuthJwtAccessProtected()
   @Response('report.update')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @PolicyAbilityProtected({
+    subject: ENUM_POLICY_SUBJECT.REPORT,
+    action: [ENUM_POLICY_ACTION.UPDATE],
+  })
   async update(
     @AuthJwtPayload('user', UserParsePipe) user: UserDocument,
     @Param('id') id: string,
@@ -159,6 +176,10 @@ export class ReportUserController {
   @Get(':id')
   @AuthJwtAccessProtected()
   @Response('report.detail')
+  @PolicyAbilityProtected({
+    subject: ENUM_POLICY_SUBJECT.REPORT,
+    action: [ENUM_POLICY_ACTION.READ],
+  })
   async get(@AuthJwtPayload('user', UserParsePipe) user: UserDocument, @Param('id') id: string) {
     const report = await this.reportService.findOneByIdJoined(id);
     if (!report) {
@@ -173,6 +194,10 @@ export class ReportUserController {
   @Delete(':id')
   @AuthJwtAccessProtected()
   @Response('report.delete')
+  @PolicyAbilityProtected({
+    subject: ENUM_POLICY_SUBJECT.REPORT,
+    action: [ENUM_POLICY_ACTION.DELETE],
+  })
   async delete(@AuthJwtPayload('user', UserParsePipe) user: UserDocument, @Param('id') id: string) {
     if (user.role !== ENUM_USER_ROLE.USER) {
       return this.reportService.delete(id);
@@ -193,6 +218,10 @@ export class ReportUserController {
   @Post(':id/accept')
   @AuthJwtAccessProtected()
   @Response('report.accept')
+  @PolicyAbilityProtected({
+    subject: ENUM_POLICY_SUBJECT.REPORT,
+    action: [ENUM_POLICY_ACTION.UPDATE],
+  })
   async accept(@AuthJwtPayload('user', UserParsePipe) user: UserDocument, @Param('id') id: string) {
     const session: ClientSession = await this.databaseService.createTransaction();
 
@@ -220,6 +249,10 @@ export class ReportUserController {
   @Post(':id/reject')
   @AuthJwtAccessProtected()
   @Response('report.reject')
+  @PolicyAbilityProtected({
+    subject: ENUM_POLICY_SUBJECT.REPORT,
+    action: [ENUM_POLICY_ACTION.UPDATE],
+  })
   async reject(@AuthJwtPayload('user', UserParsePipe) user: UserDocument, @Param('id') id: string) {
     const session: ClientSession = await this.databaseService.createTransaction();
 
@@ -248,6 +281,10 @@ export class ReportUserController {
   @Post(':id/complete')
   @AuthJwtAccessProtected()
   @Response('report.complete')
+  @PolicyAbilityProtected({
+    subject: ENUM_POLICY_SUBJECT.REPORT,
+    action: [ENUM_POLICY_ACTION.UPDATE],
+  })
   async complete(@AuthJwtPayload('user', UserParsePipe) user: UserDocument, @Param('id') id: string) {
     const session: ClientSession = await this.databaseService.createTransaction();
 
@@ -274,6 +311,10 @@ export class ReportUserController {
   @Post(':id/cancel')
   @AuthJwtAccessProtected()
   @Response('report.cancel')
+  @PolicyAbilityProtected({
+    subject: ENUM_POLICY_SUBJECT.REPORT,
+    action: [ENUM_POLICY_ACTION.UPDATE],
+  })
   async cancel(@AuthJwtPayload('user', UserParsePipe) user: UserDocument, @Param('id') id: string) {
     const session: ClientSession = await this.databaseService.createTransaction();
 
@@ -300,6 +341,10 @@ export class ReportUserController {
   @Get('/bounds')
   @AuthJwtAccessProtected()
   @Response('report.bounds')
+  @PolicyAbilityProtected({
+    subject: ENUM_POLICY_SUBJECT.REPORT,
+    action: [ENUM_POLICY_ACTION.READ],
+  })
   async bounds(
     @Query('minLat') minLat: number,
     @Query('maxLat') maxLat: number,

@@ -1,3 +1,4 @@
+
 import {
     Controller,
     Delete,
@@ -6,6 +7,7 @@ import {
     Param,
     Query,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { PaginationListDto } from '@common/pagination/dtos/pagination.list.dto';
 import { PaginationService } from '@common/pagination/services/pagination.service';
 import {
@@ -57,6 +59,7 @@ export class SessionAdminController {
     })
     @UserProtected()
     @AuthJwtAccessProtected()
+    @Throttle({ default: { limit: 100, ttl: 60000 } })
     @Get('/list')
     async list(
         @Param('user', RequestRequiredPipe, UserParsePipe) user: UserDocument,
@@ -121,6 +124,11 @@ export class SessionAdminController {
     @Response('session.revoke')
     @UserProtected()
     @AuthJwtAccessProtected()
+    @PolicyAbilityProtected({
+        subject: ENUM_POLICY_SUBJECT.SESSION,
+        action: [ENUM_POLICY_ACTION.UPDATE],
+    })
+    @Throttle({ default: { limit: 100, ttl: 60000 } })
     @Delete('/revoke/:session')
     async revoke(
         @Param('user', RequestRequiredPipe, UserParsePipe, UserNotSelfPipe)
