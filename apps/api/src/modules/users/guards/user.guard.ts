@@ -12,7 +12,7 @@ import { Reflector } from '@nestjs/core';
 import { USER_GUARD_EMAIL_VERIFIED_META_KEY } from '@modules/users/constants/user.constant';
 
 @Injectable()
-export class UserGuard implements CanActivate {
+export class UserSystemGuard implements CanActivate {
     constructor(
         private readonly reflector: Reflector,
         private readonly userService: UsersService
