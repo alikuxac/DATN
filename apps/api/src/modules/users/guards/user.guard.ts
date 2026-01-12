@@ -5,7 +5,6 @@ import {
     Injectable,
 } from '@nestjs/common';
 import { IRequestApp } from '@common/request/interfaces/request.interface';
-import { AuthService } from '@modules/auth/services/auth.service';
 import { UsersService } from '@modules/users/services/users.service';
 import { UserDocument, UserEntity } from '../repository/entities/user.entity';
 import { ENUM_USER_STATUS, ENUM_STATUS_CODE_ERROR } from '@repo/shared';
@@ -16,9 +15,8 @@ import { USER_GUARD_EMAIL_VERIFIED_META_KEY } from '@modules/users/constants/use
 export class UserGuard implements CanActivate {
     constructor(
         private readonly reflector: Reflector,
-        private readonly userService: UsersService,
-        private readonly authService: AuthService
-    ) {}
+        private readonly userService: UsersService
+    ) { }
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const emailVerified =
