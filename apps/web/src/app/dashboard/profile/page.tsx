@@ -140,9 +140,13 @@ export default function ProfilePage() {
                  <div className="space-y-2">
                     <Label htmlFor="email" className="flex items-center gap-2">
                         {t("AUTH.LABEL_EMAIL")}
-                        {user?.data.verification?.email && (
+                        {user?.data.verification?.email ? (
                             <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-100 border-0 flex gap-1 items-center px-2 py-0.5 h-6">
                                 <CheckCircle2 className="h-3 w-3" /> Verified
+                            </Badge>
+                        ) : (
+                            <Badge variant="destructive" className="bg-red-100 text-red-800 hover:bg-red-100 border-0 flex gap-1 items-center px-2 py-0.5 h-6">
+                                <AlertCircle className="h-3 w-3" /> Unverified
                             </Badge>
                         )}
                     </Label>
@@ -159,16 +163,15 @@ export default function ProfilePage() {
                     <FormItem>
                       <div className="flex items-center justify-between mb-2">
                           <FormLabel>{t("PROFILE.LABEL_PHONE")}</FormLabel>
-                          {isVerified && field.value === userData?.mobileNumber && (
+                          {isVerified && field.value === userData?.mobileNumber ? (
                               <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-100 border-0 flex gap-1 items-center px-2 py-0.5 h-6">
                                   <CheckCircle2 className="h-3 w-3" /> Verified
                               </Badge>
-                          )}
-                          {!isVerified && field.value && (
-                              <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100 border-0 flex gap-1 items-center px-2 py-0.5 h-6 cursor-pointer" onClick={handleVerifyClick}>
+                          ) : field.value ? (
+                              <Badge variant="destructive" className="bg-red-100 text-red-800 hover:bg-red-100 border-0 flex gap-1 items-center px-2 py-0.5 h-6 cursor-pointer" onClick={handleVerifyClick}>
                                   <AlertCircle className="h-3 w-3" /> Verify Now
                               </Badge>
-                          )}
+                          ) : null}
                       </div>
                       <div className="flex gap-2 items-start">
                         <FormControl>

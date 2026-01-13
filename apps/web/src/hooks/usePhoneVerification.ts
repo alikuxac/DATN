@@ -13,7 +13,7 @@ interface VerifyOtpRequest {
 export function usePhoneVerification() {
   const sendOtpMutation = useMutation({
     mutationFn: async (data: SendOtpRequest) => {
-      await api.post('/users/phone/send-otp', data);
+      await api.post('/user/user/phone/send-otp', data);
     },
     onSuccess: () => {
       toast.success("OTP sent via Telegram");
@@ -25,7 +25,7 @@ export function usePhoneVerification() {
 
   const verifyOtpMutation = useMutation({
     mutationFn: async (data: VerifyOtpRequest) => {
-      await api.post('/users/phone/verify-otp', data);
+      await api.post('/user/user/phone/verify-otp', data);
     },
     onSuccess: () => {
       toast.success("Phone number verified successfully");

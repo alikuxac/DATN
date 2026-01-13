@@ -29,7 +29,7 @@ export const PhoneSettingsCard = ({ userData, colors, t, onUpdateSuccess }: Phon
     if (!mobileNumber) return;
     setLoading(true);
     try {
-      await apiService.post("/users/phone/send-otp", { mobileNumber });
+      await apiService.post("/user/user/phone/send-otp", { mobileNumber });
       showSuccess(t("COMMON.SUCCESS"), "OTP sent via Telegram");
       setIsModalVisible(true);
     } catch (error: any) {
@@ -41,7 +41,7 @@ export const PhoneSettingsCard = ({ userData, colors, t, onUpdateSuccess }: Phon
 
   const handleVerifyOtp = async (otp: string) => {
     try {
-      await apiService.post("/users/phone/verify-otp", { code: otp });
+      await apiService.post("/user/user/phone/verify-otp", { code: otp });
       showSuccess(t("COMMON.SUCCESS"), "Phone number verified!");
       onUpdateSuccess();
     } catch (error: any) {
@@ -79,11 +79,18 @@ export const PhoneSettingsCard = ({ userData, colors, t, onUpdateSuccess }: Phon
         </TouchableOpacity>
       </View>
       
-      {isVerified && (
+      {isVerified ? (
           <View style={[styles.verifiedBadge, { backgroundColor: "#dcfce7" }]}>
               <Icon name="Check" size={12} color="#16a34a" />
               <AppText style={[styles.verifiedText, { color: "#16a34a", marginTop: 0, marginLeft: 4 }]}>
                   Verified
+              </AppText>
+          </View>
+      ) : (
+          <View style={[styles.verifiedBadge, { backgroundColor: "#fee2e2" }]}>
+              <Icon name="TriangleAlert" size={12} color="#dc2626" />
+              <AppText style={[styles.verifiedText, { color: "#dc2626", marginTop: 0, marginLeft: 4 }]}>
+                  Unverified
               </AppText>
           </View>
       )}

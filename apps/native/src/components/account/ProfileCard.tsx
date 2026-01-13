@@ -47,7 +47,7 @@ export const ProfileCard = ({ userData, theme, colors, t }: ProfileCardProps) =>
             </View>
 
             {/* Email Verification Badge */}
-            {userData?.verification?.email && (
+            {userData?.verification?.email ? (
               <View
                 style={[
                   styles.badge,
@@ -60,11 +60,31 @@ export const ProfileCard = ({ userData, theme, colors, t }: ProfileCardProps) =>
                   color="#16a34a"
                   style={{ marginRight: 4 }}
                 />
+                <AppText style={[styles.badgeText, { color: "#16a34a" }]}>
+                  VERIFIED
+                </AppText>
+              </View>
+            ) : (
+              <View
+                style={[
+                  styles.badge,
+                  { backgroundColor: "#fee2e2", marginLeft: 8 },
+                ]}
+              >
+                <Icon
+                  name="Mail"
+                  size={12}
+                  color="#dc2626"
+                  style={{ marginRight: 4 }}
+                />
+                <AppText style={[styles.badgeText, { color: "#dc2626" }]}>
+                  UNVERIFIED
+                </AppText>
               </View>
             )}
             
              {/* Mobile Verification Badge */}
-            {userData?.verification?.mobileNumber && (
+            {userData?.verification?.mobileNumber ? (
               <View
                 style={[
                   styles.badge,
@@ -77,6 +97,26 @@ export const ProfileCard = ({ userData, theme, colors, t }: ProfileCardProps) =>
                   color="#16a34a"
                   style={{ marginRight: 4 }}
                 />
+                 <AppText style={[styles.badgeText, { color: "#16a34a" }]}>
+                  VERIFIED
+                </AppText>
+              </View>
+            ) : (
+              <View
+                style={[
+                  styles.badge,
+                  { backgroundColor: "#fee2e2", marginLeft: 4 },
+                ]}
+              >
+                <Icon
+                  name="Phone"
+                  size={12}
+                  color="#dc2626"
+                  style={{ marginRight: 4 }}
+                />
+                <AppText style={[styles.badgeText, { color: "#dc2626" }]}>
+                  UNVERIFIED
+                </AppText>
               </View>
             )}
           </View>

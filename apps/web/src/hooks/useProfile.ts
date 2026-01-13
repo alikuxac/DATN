@@ -27,7 +27,7 @@ export function useProfile() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: UpdateProfileRequest) => {
-      const { data: res } = await api.put<{ data: UserProfileResponse }>('/user/profile/update', data);
+      const { data: res } = await api.put<{ data: UserProfileResponse }>('/shared/user/profile/update', data);
       return res;
     },
     onSuccess: (response) => {
