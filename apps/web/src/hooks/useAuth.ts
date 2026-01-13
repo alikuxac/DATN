@@ -15,8 +15,22 @@ export function useAuth() {
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginCredentials) => {
+
+      // Get or create deviceId
+      let deviceId = localStorage.getItem('deviceId');
+      if (!deviceId) {
+        deviceId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        localStorage.setItem('deviceId', deviceId);
+      }
+
       // Step 1: Login to get tokens
-      const { data: loginData } = await api.post<{ data: LoginResponse }>('/public/auth/login/credential', credentials);
+      const { data: loginData } = await api.post<{ data: LoginResponse }>('/public/auth/login/credential', credentials, {
+        headers: {
+          'x-platform': 'WEB',
+          'x-device-id': deviceId,
+          'x-device-name': navigator.userAgent,
+        }
+      });
 
       console.log('Login response:', {
         data: loginData

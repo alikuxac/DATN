@@ -1,5 +1,5 @@
 import { IDatabaseDocument } from '@common/database/interfaces/database.interface';
-import { ENUM_SESSION_STATUS } from '@repo/shared';
+import { ENUM_SESSION_STATUS, ENUM_SESSION_PLATFORM } from '@repo/shared';
 import { UserEntity } from '@modules/users/repository/entities/user.entity';
 import { DatabaseUUIDEntityBase } from '@common/database/bases/database.uuid.entity';
 import { DatabaseEntity, DatabaseProp, DatabaseSchema } from '@common/database/decorators/database.decorator';
@@ -7,7 +7,7 @@ import { DatabaseEntity, DatabaseProp, DatabaseSchema } from '@common/database/d
 export const SessionTableName = 'Sessions';
 
 @DatabaseEntity({ collection: SessionTableName, timestamps: true, _id: true, versionKey: false })
-export class SessionEntity extends DatabaseUUIDEntityBase{
+export class SessionEntity extends DatabaseUUIDEntityBase {
     @DatabaseProp({
         required: true,
         index: true,
@@ -97,6 +97,27 @@ export class SessionEntity extends DatabaseUUIDEntityBase{
 
     @DatabaseProp({
         required: true,
+        index: true,
+        type: String,
+        enum: ENUM_SESSION_PLATFORM,
+        default: ENUM_SESSION_PLATFORM.WEB,
+    })
+    platform: ENUM_SESSION_PLATFORM;
+
+    @DatabaseProp({
+        required: false,
+        type: String,
+    })
+    deviceId?: string;
+
+    @DatabaseProp({
+        required: false,
+        type: String,
+    })
+    deviceName?: string;
+
+    @DatabaseProp({
+        required: true,
         type: Date,
     })
     expiredAt: Date;
@@ -104,3 +125,6 @@ export class SessionEntity extends DatabaseUUIDEntityBase{
 
 export const SessionSchema = DatabaseSchema(SessionEntity);
 export type SessionDoc = IDatabaseDocument<SessionEntity>;
+
+// Index for optimizing single session lookup (find one & delete old)
+SessionSchema.index({ user: 1, platform: 1 });

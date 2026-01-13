@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import { View, Pressable, TouchableOpacity } from "react-native";
+import { View, Pressable, TouchableOpacity, Platform } from "react-native";
+import * as Application from 'expo-application';
+import * as Device from 'expo-device';
 import { useRouter } from "expo-router"; // Giả sử dùng Expo Router
 import { useTranslation } from "react-i18next"; // Dựa trên file i18n config
 import { cn } from "@/utils";
@@ -59,11 +61,30 @@ export default function SignInScreen() {
     setErrors({});
 
     try {
+      
+      // Get Device Info
+      let deviceId = 'unknown-device-id';
+      const deviceName = Device.modelName || Device.designName || `${Platform.OS.toUpperCase()} Device`;
+
+      if (Platform.OS === 'android') {
+        deviceId = Application.getAndroidId() || deviceId;
+      } else if (Platform.OS === 'ios') {
+        const iosId = await Application.getIosIdForVendorAsync();
+        deviceId = iosId || deviceId;
+      }
+
       const response = await apiService.post<any>(
         "/public/auth/login/credential",
         {
           email: email,
           password: password,
+        },
+        {
+          headers: {
+            'x-platform': 'MOBILE',
+            'x-device-id': deviceId,
+            'x-device-name': deviceName,
+          }
         }
       );
 

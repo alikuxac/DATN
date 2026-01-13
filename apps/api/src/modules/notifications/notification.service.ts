@@ -194,4 +194,12 @@ export class NotificationService {
       payload.preferences
     );
   }
+
+  @OnEvent('session.force_logout')
+  async handleForceLogout(payload: { userId: string; excludeSessionId: string; reason: string }) {
+    this.notificationGateway.sendToUser(payload.userId, 'force_logout', {
+      excludeSessionId: payload.excludeSessionId,
+      reason: payload.reason,
+    });
+  }
 }

@@ -19,13 +19,14 @@ import {
 import { HelperDateService } from '@common/helper/services/helper.date.service';
 import { SessionCreateRequestDto } from '@modules/session/dtos/request/session.create.request.dto';
 import { SessionListResponseDto } from '@modules/session/dtos/response/session.list.response.dto';
-import { ENUM_SESSION_STATUS } from '@repo/shared';
+import { ENUM_SESSION_STATUS, ENUM_SESSION_PLATFORM } from '@repo/shared';
 import {
     SessionDoc,
     SessionEntity,
 } from '@modules/session/repository/entities/session.entity';
 import { SessionRepository } from '@modules/session/repository/repositories/session.repository';
 import { UserDocument } from '@modules/users/repository/entities/user.entity';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class SessionService {
@@ -40,6 +41,7 @@ export class SessionService {
         private readonly helperDateService: HelperDateService,
         private readonly sessionRepository: SessionRepository,
         private readonly databaseService: DatabaseService,
+        private readonly eventEmitter: EventEmitter2,
     ) {
         this.refreshTokenExpiration = this.configService.get<number>(
             'auth.jwt.refreshToken.expirationTime'
@@ -129,7 +131,7 @@ export class SessionService {
 
     async create(
         request: Request,
-        { user }: SessionCreateRequestDto,
+        { user, platform, deviceId, deviceName }: SessionCreateRequestDto,
         options?: IDatabaseCreateOptions
     ): Promise<SessionDoc> {
         const today = this.helperDateService.create();
@@ -140,8 +142,21 @@ export class SessionService {
             })
         );
 
+        if (platform === ENUM_SESSION_PLATFORM.MOBILE) {
+            await this.sessionRepository.deleteMany({
+                user,
+                platform: ENUM_SESSION_PLATFORM.MOBILE,
+            }, options);
+        }
+
         const create = new SessionEntity();
         create.user = user;
+        create.platform = platform;
+        create.deviceId = deviceId;
+        create.deviceName = deviceName;
+
+
+
         create.hostname = request.hostname;
         create.ip = request.ip ?? '0.0.0.0';
         create.protocol = request.protocol;
@@ -156,7 +171,17 @@ export class SessionService {
         create.status = ENUM_SESSION_STATUS.ACTIVE;
         create.expiredAt = expiredAt;
 
-        return this.sessionRepository.create<SessionEntity>(create, options);
+        const session = await this.sessionRepository.create<SessionEntity>(create, options);
+
+        if (platform === ENUM_SESSION_PLATFORM.MOBILE) {
+            this.eventEmitter.emit('session.force_logout', {
+                userId: user,
+                excludeSessionId: session._id.toString(),
+                reason: 'auth.error.forceLogout',
+            });
+        }
+
+        return session;
     }
 
     mapList(

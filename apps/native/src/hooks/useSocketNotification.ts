@@ -38,6 +38,31 @@ export const useSocketNotification = () => {
       console.log('✅ Notification Socket connected:', newSocket.id);
     });
 
+    // --- FORCE LOGOUT ---
+    newSocket.on('force_logout', (data: any) => {
+      console.log('🚪 FORCE LOGOUT:', data);
+      // data.reason is a translation key, e.g., 'auth.error.forceLogout'
+
+      // Import i18n safely if needed, or use a hardcoded message for now if t() isn't available here.
+      // But we usually have i18n initialized globally. 
+      // Let's try to get translation if possible, or just show a generic message + reason key if checking debug.
+      // Actually, we can use the `showInfo` or `showError`.
+      // Better: Alert and Logout.
+
+      // We need to import store dispatch/logout outside hook if we want to be sure, 
+      // OR rely on the hook's context. 
+      // The hook uses `useAppSelector` but not dispatch. Let's get dispatch.
+      // Wait, `useSocketNotification` doesn't return dispatch.
+      // We should import store directly to dispatch logout, like in api.service.
+
+      import('@/store').then(({ store }) => {
+        import('@/store/slices/appSlice').then(({ logout }) => {
+          store.dispatch(logout());
+          showError('Đăng xuất', 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác.');
+        });
+      });
+    });
+
     // --- CÁC SỰ KIỆN LẮNG NGHE ---
 
     // A. Tin nhắn thường (Marketing, System info...)

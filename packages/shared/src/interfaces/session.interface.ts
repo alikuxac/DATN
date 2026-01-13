@@ -1,8 +1,11 @@
-import { ENUM_SESSION_STATUS } from "../enums";
+import { ENUM_SESSION_STATUS, ENUM_SESSION_PLATFORM } from "../enums";
 import { IDatabaseDto } from "./database.interface";
 
 export interface ISessionCreateRequest {
   user: string;
+  platform: ENUM_SESSION_PLATFORM;
+  deviceId?: string;
+  deviceName?: string;
 }
 
 export interface ISessionListResponse extends IDatabaseDto {

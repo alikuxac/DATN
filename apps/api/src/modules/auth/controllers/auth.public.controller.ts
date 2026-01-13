@@ -35,7 +35,8 @@ import {
   ENUM_STATUS_CODE_ERROR,
   ENUM_PASSWORD_HISTORY_TYPE,
   ENUM_USER_SIGN_UP_FROM,
-  ENUM_USER_STATUS
+  ENUM_USER_STATUS,
+  ENUM_SESSION_PLATFORM
 } from '@repo/shared';
 // import {
 //   IAuthSocialGooglePayload,
@@ -127,10 +128,17 @@ export class AuthPublicController {
       await this.databaseService.createTransaction();
 
     try {
+      const platform: ENUM_SESSION_PLATFORM = request.headers['x-platform'] as ENUM_SESSION_PLATFORM || ENUM_SESSION_PLATFORM.WEB;
+      const deviceId: string = request.headers['x-device-id'] as string;
+      const deviceName: string = request.headers['x-device-name'] as string;
+
       const session = await this.sessionService.create(
         request,
         {
           user: user._id.toString(),
+          platform,
+          deviceId,
+          deviceName,
         },
         { session: databaseSession }
       );
