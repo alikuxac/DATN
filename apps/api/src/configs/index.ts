@@ -12,10 +12,12 @@ import sessionConfig from "./session.config";
 import settingConfig from "./setting.config";
 import verificationConfig from "./verification.config";
 
+import telegramConfig from "./telegram.config";
+
 const configs = [
   appConfig,
   authConfig,
-  databaseConfig, 
+  databaseConfig,
   debugConfig,
   emailConfig,
   helperConfig,
@@ -25,6 +27,7 @@ const configs = [
   resetPasswordConfig,
   sessionConfig,
   settingConfig,
+  telegramConfig,
   verificationConfig
 ];
 

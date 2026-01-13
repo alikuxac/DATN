@@ -1,7 +1,7 @@
 import { Global, Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { MongooseModule } from '@nestjs/mongoose';
-import { EventEmitterModule} from '@nestjs/event-emitter';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { MailerModule } from '@nestjs-modules/mailer';
 import configs from "../configs";
 
@@ -20,6 +20,7 @@ import { CacheModule, CacheOptions } from "@nestjs/cache-manager";
 import KeyvRedis from "@keyv/redis";
 import path from "path";
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
+import { TelegramModule } from "./telegram/telegram.module";
 
 @Global()
 @Module({
@@ -44,7 +45,7 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
       inject: [DatabaseOptionService],
       imports: [DatabaseOptionModule],
       connectionName: DATABASE_CONNECTION_NAME,
-      useFactory: (databaseService: DatabaseOptionService) => 
+      useFactory: (databaseService: DatabaseOptionService) =>
         databaseService.createOptions(),
     }),
     BullModule.forRootAsync({
@@ -87,23 +88,23 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
                 'redis.cached.password'
               )
             }),
-        //   createKeyv({
-        //     url: configService.get<string>('redis.cached.url'),
-        //     socket: {
-        //       host: configService.get<string>(
-        //         'redis.cached.host'
-        //       ),
-        //       port: configService.get<number>(
-        //         'redis.cached.port'
-        //       ),
-        //     },
-        //     username: configService.get<string>(
-        //       'redis.cached.username'
-        //     ),
-        //     password: configService.get<string>(
-        //       'redis.cached.password'
-        //     ),
-        //   } as RedisClientOptions),
+          //   createKeyv({
+          //     url: configService.get<string>('redis.cached.url'),
+          //     socket: {
+          //       host: configService.get<string>(
+          //         'redis.cached.host'
+          //       ),
+          //       port: configService.get<number>(
+          //         'redis.cached.port'
+          //       ),
+          //     },
+          //     username: configService.get<string>(
+          //       'redis.cached.username'
+          //     ),
+          //     password: configService.get<string>(
+          //       'redis.cached.password'
+          //     ),
+          //   } as RedisClientOptions),
         ],
       }),
       inject: [ConfigService],
@@ -142,6 +143,7 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
     RequestModule,
     PolicyModule.forRoot(),
     AuthModule.forRoot(),
+    TelegramModule,
     DatabaseModule.forRoot(),
     PaginationModule
   ]

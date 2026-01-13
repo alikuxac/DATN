@@ -117,6 +117,26 @@ export const ReportCard = ({
         )}
       </View>
 
+      {/* Phone Numbers (if available and not masked/hidden by backend) */}
+      <View className="mb-4 gap-1">
+         {item.by && typeof item.by === 'object' && (item.by as any).mobileNumber && (
+             <View className="flex-row items-center">
+                 <Icon name="Phone" className="w-3.5 h-3.5 text-neutrals400 mr-2" />
+                 <AppText className="text-xs text-neutrals500">
+                     Reporter: <AppText className="text-foreground font-sans-medium">{(item.by as any).mobileNumber}</AppText>
+                 </AppText>
+             </View>
+         )}
+         {item.user && typeof item.user === 'object' && (item.user as any).mobileNumber && item.user._id !== item.by._id && (
+             <View className="flex-row items-center">
+                 <Icon name="Phone" className="w-3.5 h-3.5 text-neutrals400 mr-2" />
+                  <AppText className="text-xs text-neutrals500">
+                     Victim: <AppText className="text-foreground font-sans-medium">{(item.user as any).mobileNumber}</AppText>
+                 </AppText>
+             </View>
+         )}
+      </View>
+
       {/* Footer Stats */}
       <View className="flex-row justify-between items-center py-3 border-t border-gray-100 dark:border-neutrals800">
         <View className="flex-row items-center gap-4">

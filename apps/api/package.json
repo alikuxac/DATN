@@ -53,6 +53,7 @@
     "joi": "^18.0.1",
     "jwks-rsa": "^3.2.0",
     "keyv": "^4",
+    "libphonenumber-js": "^1.12.34",
     "lodash": "^4.17.21",
     "mongoose": "^8.19.3",
     "ms": "^2.1.3",

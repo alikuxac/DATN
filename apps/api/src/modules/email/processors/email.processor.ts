@@ -2,7 +2,7 @@ import { Processor } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Job } from 'bullmq';
-// import { EmailMobileNumberVerifiedDto } from '@modules/email/dtos/email.mobile-number-verified.dto';
+import { EmailMobileNumberVerifiedDto } from '@modules/email/dtos/email.mobile-number-verified.dto';
 import { EmailResetPasswordDto } from '@modules/email/dtos/email.reset-password.dto';
 import { EmailSendDto } from '@modules/email/dtos/email.send.dto';
 import { EmailTempPasswordDto } from '@modules/email/dtos/email.temp-password.dto';
@@ -11,6 +11,7 @@ import { EmailVerifiedDto } from '@modules/email/dtos/email.verified.dto';
 import { EmailWorkerDto } from '@modules/email/dtos/email.worker.dto';
 import { ENUM_SEND_EMAIL_PROCESS } from '@modules/email/enums/email.enum';
 import { IEmailProcessor } from '@modules/email/interfaces/email.processor.interface';
+import { EmailUpdatePhoneDto } from '@modules/email/dtos/email.update-phone.dto';
 import { EmailService } from '@modules/email/services/email.service';
 import { ENUM_WORKER_QUEUES } from '@workers/enums/worker.enum';
 import { WorkerBase } from '@workers/bases/worker.base';
@@ -76,13 +77,20 @@ export class EmailProcessor extends WorkerBase implements IEmailProcessor {
                     );
 
                     break;
-                // case ENUM_SEND_EMAIL_PROCESS.MOBILE_NUMBER_VERIFIED:
-                //     await this.processMobileNumberVerified(
-                //         job.data.send,
-                //         job.data.data as EmailMobileNumberVerifiedDto
-                //     );
+                case ENUM_SEND_EMAIL_PROCESS.UPDATE_PHONE:
+                    await this.processUpdatePhone(
+                        job.data.send,
+                        job.data.data as EmailUpdatePhoneDto
+                    );
 
-                //     break;
+                    break;
+                case ENUM_SEND_EMAIL_PROCESS.MOBILE_NUMBER_VERIFIED:
+                    await this.processMobileNumberVerified(
+                        job.data.send,
+                        job.data.data as EmailMobileNumberVerifiedDto
+                    );
+
+                    break;
                 default:
                     break;
             }
@@ -138,10 +146,17 @@ export class EmailProcessor extends WorkerBase implements IEmailProcessor {
         return this.emailService.sendEmailVerified(data, resetPassword);
     }
 
-    // async processMobileNumberVerified(
-    //     data: EmailSendDto,
-    //     resetPassword: EmailMobileNumberVerifiedDto
-    // ): Promise<boolean> {
-    //     return this.emailService.sendMobileNumberVerified(data, resetPassword);
-    // }
+    async processUpdatePhone(
+        data: EmailSendDto,
+        updatePhoneDto: EmailUpdatePhoneDto
+    ): Promise<boolean> {
+        return this.emailService.sendUpdatePhone(data, updatePhoneDto);
+    }
+
+    async processMobileNumberVerified(
+        data: EmailSendDto,
+        resetPassword: EmailMobileNumberVerifiedDto
+    ): Promise<boolean> {
+        return this.emailService.sendMobileNumberVerified(data, resetPassword);
+    }
 }

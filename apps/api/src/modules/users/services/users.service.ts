@@ -286,6 +286,19 @@ export class UsersService {
     return this.userRepository.save(repository, options);
   }
 
+  async updateMobileNumber(
+    repository: UserDocument,
+    mobileNumber: string,
+    options?: IDatabaseSaveOptions
+  ): Promise<UserDocument> {
+    repository.mobileNumber = mobileNumber;
+    repository.verification.mobileNumber = false;
+    repository.verification.mobileNumberVerifiedAt = null;
+
+    return this.userRepository.save(repository, options);
+  }
+
+
   async updateStatus(
     repository: UserDocument,
     { status }: UserUpdateStatusRequestDto,

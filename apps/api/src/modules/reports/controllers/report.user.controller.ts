@@ -103,6 +103,13 @@ export class ReportUserController {
         return this.reportService.createByUser(user._id.toString(), body);
       }
 
+      if (!user.verification?.mobileNumber) {
+        throw new BadRequestException({
+          statusCode: ENUM_STATUS_CODE_ERROR.USER_MOBILE_NUMBER_NOT_VERIFIED,
+          message: 'user.error.mobileNumberNotVerified'
+        });
+      }
+
       const checkLastReport = await this.reportService.checkLastReport(user._id.toString(), body.coordinates[1], body.coordinates[0]);
 
       if (checkLastReport) {

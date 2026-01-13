@@ -46,7 +46,7 @@ export const ProfileCard = ({ userData, theme, colors, t }: ProfileCardProps) =>
               </AppText>
             </View>
 
-            {/* Verification Badge */}
+            {/* Email Verification Badge */}
             {userData?.verification?.email && (
               <View
                 style={[
@@ -55,14 +55,28 @@ export const ProfileCard = ({ userData, theme, colors, t }: ProfileCardProps) =>
                 ]}
               >
                 <Icon
-                  name="Check"
+                  name="Mail"
                   size={12}
                   color="#16a34a"
                   style={{ marginRight: 4 }}
                 />
-                <AppText style={[styles.badgeText, { color: "#16a34a" }]}>
-                  VERIFIED
-                </AppText>
+              </View>
+            )}
+            
+             {/* Mobile Verification Badge */}
+            {userData?.verification?.mobileNumber && (
+              <View
+                style={[
+                  styles.badge,
+                  { backgroundColor: "#dcfce7", marginLeft: 4 },
+                ]}
+              >
+                <Icon
+                  name="Phone"
+                  size={12}
+                  color="#16a34a"
+                  style={{ marginRight: 4 }}
+                />
               </View>
             )}
           </View>

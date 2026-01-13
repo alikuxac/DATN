@@ -337,6 +337,9 @@ export default function ReportsPage() {
                       <div className="text-sm">
                         <p className="font-medium">{selectedReport.by.firstName} {selectedReport.by.lastName}</p>
                         <p className="text-muted-foreground">{selectedReport.by.email}</p>
+                        {(selectedReport.by as any).mobileNumber && (
+                             <p className="text-muted-foreground">{(selectedReport.by as any).mobileNumber}</p>
+                        )}
                       </div>
                    ) : (
                       <p className="text-sm text-muted-foreground">N/A</p>
@@ -348,6 +351,9 @@ export default function ReportsPage() {
                       <div className="text-sm">
                         <p className="font-medium">{selectedReport.user.firstName} {selectedReport.user.lastName}</p>
                         <p className="text-muted-foreground">{selectedReport.user.email}</p>
+                        {(selectedReport.user as any).mobileNumber && (
+                             <p className="text-muted-foreground">{(selectedReport.user as any).mobileNumber}</p>
+                        )}
                       </div>
                    ) : (
                       <p className="text-sm text-muted-foreground">N/A</p>

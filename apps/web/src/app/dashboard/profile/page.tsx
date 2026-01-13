@@ -35,6 +35,13 @@ import {
 } from "@/components/ui/form";
 import { UserGender } from "@/types";
 
+import { PhoneInput } from "@/components/ui/phone-input";
+import { OTPVerificationModal } from "@/components/dashboard/otp-verification-modal";
+import { usePhoneVerification } from "@/hooks/usePhoneVerification";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle2, AlertCircle } from "lucide-react";
+import { useState } from "react";
+
 const profileSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
@@ -48,13 +55,18 @@ export default function ProfilePage() {
   const { user } = useAuth();
   const { updateProfile, isUpdating } = useProfile();
   const { t } = useLanguage();
+  const { sendOtp, isSendingOtp } = usePhoneVerification();
+  const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
+
+  const userData = user?.data as any; // Temporaryany cast until types are sync
+  const isVerified = userData?.verification?.mobileNumber;
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       firstName: user?.data.firstName || "",
       lastName: user?.data.lastName || "",
-      mobileNumber: (user?.data as any)?.mobileNumber || "",
+      mobileNumber: userData?.mobileNumber || "",
       gender: user?.data.gender || UserGender.MALE,
     },
   });
@@ -62,6 +74,26 @@ export default function ProfilePage() {
   function onSubmit(data: ProfileFormValues) {
     updateProfile(data);
   }
+
+  const handleVerifyClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    const mobileNumber = form.getValues("mobileNumber");
+    if (!mobileNumber) return;
+    
+    // Save profile first if number changed? 
+    // Ideally we assume number is saved from "Save Changes" 
+    // But to verify, we must ensure backend has the number.
+    // Let's assume user must save first OR we blindly send OTP to the number in the input 
+    // (which calls /send-otp and UPDATES number in backend too as per my controller logic).
+    
+    try {
+        await sendOtp({ mobileNumber });
+        setIsOtpModalOpen(true);
+    } catch (err) {
+        // Error toast handled in hook
+    }
+  };
+
 
   return (
     <div className="container max-w-2xl py-6">
@@ -106,7 +138,14 @@ export default function ProfilePage() {
 
               <div className="grid grid-cols-2 gap-4">
                  <div className="space-y-2">
-                    <Label htmlFor="email">{t("AUTH.LABEL_EMAIL")}</Label>
+                    <Label htmlFor="email" className="flex items-center gap-2">
+                        {t("AUTH.LABEL_EMAIL")}
+                        {user?.data.verification?.email && (
+                            <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-100 border-0 flex gap-1 items-center px-2 py-0.5 h-6">
+                                <CheckCircle2 className="h-3 w-3" /> Verified
+                            </Badge>
+                        )}
+                    </Label>
                     <Input id="email" value={user?.data.email} disabled />
                     <p className="text-[0.8rem] text-muted-foreground">
                       Email address is managed by administrator.
@@ -118,10 +157,25 @@ export default function ProfilePage() {
                   name="mobileNumber"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("PROFILE.LABEL_PHONE")}</FormLabel>
-                      <FormControl>
-                        <Input placeholder="+1..." {...field} />
-                      </FormControl>
+                      <div className="flex items-center justify-between mb-2">
+                          <FormLabel>{t("PROFILE.LABEL_PHONE")}</FormLabel>
+                          {isVerified && field.value === userData?.mobileNumber && (
+                              <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-100 border-0 flex gap-1 items-center px-2 py-0.5 h-6">
+                                  <CheckCircle2 className="h-3 w-3" /> Verified
+                              </Badge>
+                          )}
+                          {!isVerified && field.value && (
+                              <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100 border-0 flex gap-1 items-center px-2 py-0.5 h-6 cursor-pointer" onClick={handleVerifyClick}>
+                                  <AlertCircle className="h-3 w-3" /> Verify Now
+                              </Badge>
+                          )}
+                      </div>
+                      <div className="flex gap-2 items-start">
+                        <FormControl>
+                          <PhoneInput placeholder="+84..." {...field} className="flex-1" />
+                        </FormControl>
+                         {/* Button removed as Badge handles action/status display cleaner */}
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -163,6 +217,12 @@ export default function ProfilePage() {
           </Form>
         </CardContent>
       </Card>
+      
+      <OTPVerificationModal 
+        isOpen={isOtpModalOpen} 
+        onClose={() => setIsOtpModalOpen(false)} 
+        mobileNumber={form.getValues("mobileNumber") || ""}
+      />
     </div>
   );
 }

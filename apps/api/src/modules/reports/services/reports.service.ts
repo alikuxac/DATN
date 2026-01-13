@@ -359,6 +359,30 @@ export class ReportService {
   ): ReportDetailResponseDto {
     const plain = report instanceof Document ? report.toObject() : report;
     (plain as any).images = [];
+
+    // Masking Logic
+    if (plain.user && typeof plain.user === 'object' && 'mobileNumber' in plain.user) {
+      // If reported by current user (this logic needs context, but mapDetail usually doesn't have it explicitly without passing user)
+      // Ideally, we handle masking in controller or pass user to map function.
+      // For now, let's implement basic masking and refine in controller if needed, 
+      // OR better: assume this is public view and mask unless specific condition.
+
+      // HOWEVER, to be safe and simple: Mask always in mapDetail, 
+      // and Controller can OVERRIDE/UNMASK if it knows the viewer is authorized.
+      // BUT, `plain` object is what we return.
+
+      // Let's change the strategy: 
+      // The Controller determines VISIBILITY. 
+      // ReportService.mapDetail should probably just return data.
+      // But the requirement says: "Default: Always hide or mask". "Show only if..."
+
+      // So, default behavior: MASK.
+      const u = plain.user as any;
+      if (u.mobileNumber) {
+        u.mobileNumber = u.mobileNumber.replace(/(\d{3})\d+(\d{3})/, '$1****$2');
+      }
+    }
+
     return plainToInstance(ReportDetailResponseDto, plain);
   }
 

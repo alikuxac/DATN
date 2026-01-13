@@ -108,7 +108,7 @@ export class AuthPublicController {
 
     // if (user.verification.email !== true) {
     //   throw new ForbiddenException({
-    //     statusCode: ENUM_USER_STATUS_CODE_ERROR.EMAIL_NOT_VERIFIED,
+    //     statusCode: ENUM_STATUS_CODE_ERROR.USER_EMAIL_NOT_VERIFIED,
     //     message: 'user.error.emailNotVerified',
     //   });
     // }
@@ -119,7 +119,7 @@ export class AuthPublicController {
     //   this.authService.checkPasswordExpired(user.passwordExpiredAt);
     // if (checkPasswordExpired) {
     //   throw new ForbiddenException({
-    //     statusCode: ENUM_USER_STATUS_CODE_ERROR.PASSWORD_EXPIRED,
+    //     statusCode: ENUM_STATUS_CODE_ERROR.USER_PASSWORD_EXPIRED,
     //     message: 'auth.error.passwordExpired',
     //   });
     // }

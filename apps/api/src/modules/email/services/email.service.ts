@@ -13,6 +13,8 @@ import { EmailVerificationDto } from '../dtos/email.verification.dto';
 import { EmailVerifiedDto } from '../dtos/email.verified.dto';
 import { HelperDateService } from '@common/helper/services/helper.date.service';
 import { EmailResetPasswordDto } from '../dtos/email.reset-password.dto';
+import { EmailUpdatePhoneDto } from '../dtos/email.update-phone.dto';
+import { EmailMobileNumberVerifiedDto } from '../dtos/email.mobile-number-verified.dto';
 
 @Injectable()
 export class EmailService {
@@ -167,6 +169,37 @@ export class EmailService {
             {
                 name: title(name),
                 reference,
+            },
+            lang
+        );
+    }
+    async sendUpdatePhone(
+        { name, email, lang }: EmailSendDto,
+        { mobileNumber }: EmailUpdatePhoneDto
+    ): Promise<boolean> {
+        return this.sendMail(
+            email,
+            'update_phone_subject',
+            'update-phone',
+            {
+                name: title(name),
+                mobileNumber,
+            },
+            lang
+        );
+    }
+
+    async sendMobileNumberVerified(
+        { name, email, lang }: EmailSendDto,
+        { mobileNumber }: EmailMobileNumberVerifiedDto
+    ): Promise<boolean> {
+        return this.sendMail(
+            email,
+            'mobile_number_verified_subject',
+            'mobile-number-verified',
+            {
+                name: title(name),
+                mobileNumber,
             },
             lang
         );

@@ -5,5 +5,7 @@
   "change_password_subject": "Mật khẩu của bạn đã được thay đổi",
   "account_created_subject": "Tài khoản của bạn đã được tạo.",
   "temp_password_subject": "Mật khẩu tạm thời của bạn",
-  "email_verified_subject": "Email của bạn đã được xác minh."
+  "email_verified_subject": "Email của bạn đã được xác minh.",
+  "update_phone_subject": "Số điện thoại của bạn đã được cập nhật",
+  "mobile_number_verified_subject": "Số điện thoại của bạn đã được xác minh"
 }

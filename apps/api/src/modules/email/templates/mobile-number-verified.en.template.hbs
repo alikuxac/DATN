@@ -1,1 +1,25 @@
-<html><body><p>Hi{name},</p></br><p>Mobile Number is verified successfully.</p><p>Mobile Number:{mobileNumber}.</p><p>Reference:{reference}.</p><p>Support Email:{supportEmail}.</p><p>Visit us:{homeUrl}.</p></br><p>By:{homeName}.</p></body></html>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mobile Number Verified</title>
+</head>
+
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+    <h2 style="color: #27ae60;">Mobile Number Verified</h2>
+    <p>Hello {{name}},</p>
+    <p>Your mobile number <strong>{{mobileNumber}}</strong> has been successfully verified.</p>
+    <p>You can now use this mobile number to access all features of our service.</p>
+    <br>
+    <p>Best regards,</p>
+    <p>The Support Team</p>
+    <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+    <p style="font-size: 12px; color: #999;">If you have any questions, please contact us at <a
+        href="mailto:{{supportEmail}}">{{supportEmail}}</a>.</p>
+  </div>
+</body>
+
+</html>
