@@ -37,10 +37,10 @@ import { ENUM_USER_ROLE } from "@repo/shared";
 
 const formSchema = z.object({
   email: z.string().email("Invalid email address"),
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
   gender: z.nativeEnum(UserGender),
-  mobileNumber: z.string().min(10, "Phone number must be at least 10 digits"),
+  mobileNumber: z.string().optional(),
   role: z.nativeEnum(ENUM_USER_ROLE).optional(),
 });
 
@@ -136,6 +136,9 @@ export function UserDialog({ open, onOpenChange, user, currentUserRole }: UserDi
     } else {
       const createData: CreateUserRequest = {
         ...values,
+        firstName: values.firstName || "",
+        lastName: values.lastName || "",
+        mobileNumber: values.mobileNumber || "",
       };
 
       createUser(createData, {

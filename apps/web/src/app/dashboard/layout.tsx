@@ -6,6 +6,9 @@ import Cookies from "js-cookie"; // using js-cookie client side to check availab
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { SocketProvider } from "@/contexts/SocketContext";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function DashboardLayout({
   children,
@@ -15,6 +18,9 @@ export default function DashboardLayout({
   const router = useRouter();
   const [authorized, setAuthorized] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
+
+  const { user } = useAuth();
+  const { t } = useLanguage();
 
   useEffect(() => {
     // Small delay to ensure cookies are set if coming from login
@@ -34,6 +40,24 @@ export default function DashboardLayout({
     const timeoutId = setTimeout(checkAuth, 100);
     return () => clearTimeout(timeoutId);
   }, [router]);
+
+  useEffect(() => {
+    if (authorized && user?.data) {
+        const { email, mobileNumber } = user.data.verification || {};
+        // Check if either is missing/false. 
+        // Note: user.data.verification might be undefined if not populated, handling that safely.
+        if (!email || !mobileNumber) {
+             toast.warning(t("COMMON.UNVERIFIED_ACCOUNT_WARNING") || "Your account is not fully verified.", {
+                description: t("COMMON.UNVERIFIED_ACCOUNT_DESC") || "Please verify your email and phone number in Profile settings.",
+                action: {
+                    label: t("PROFILE.TITLE") || "Profile",
+                    onClick: () => router.push("/dashboard/profile")
+                },
+                duration: 8000, // Show for a bit longer
+             });
+        }
+    }
+  }, [authorized, user?.data, router, t]);
 
   if (isChecking || !authorized) {
     return (

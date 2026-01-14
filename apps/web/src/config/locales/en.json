@@ -14,7 +14,9 @@
 
     "BTN_SAVE_CHANGES": "Save Changes",
 
-    "ERR_UPDATE_FAILED": "Failed to save settings"
+    "ERR_UPDATE_FAILED": "Failed to save settings",
+    "UNVERIFIED_ACCOUNT_WARNING": "Account Unverified",
+    "UNVERIFIED_ACCOUNT_DESC": "Please verify your email and phone number to access all features."
   },
 
   "AUTH": {
@@ -58,6 +60,8 @@
     "LABEL_OTP": "OTP Code",
     "DESC_OTP_HINT": "Check your email for the verification code",
     "BTN_VERIFY": "Verify Code",
+    "RESEND_OTP": "Resend Code",
+    "RESEND_OTP_IN": "Resend in {{seconds}}s",
     
     "TITLE_RESET_PASSWORD": "Reset Password",
     "DESC_RESET_PASSWORD": "Enter your new password",
@@ -99,7 +103,10 @@
     "VOLUNTEER_MODE": "Volunteer Mode",
     "VOLUNTEER_DESC": "Enable to receive rescue notifications near you.",
     "UPDATE_VOLUNTEER_SUCCESS": "Volunteer status updated successfully.",
-    "UPDATE_VOLUNTEER_FAILED": "Failed to update volunteer status."
+    "UPDATE_VOLUNTEER_FAILED": "Failed to update volunteer status.",
+    "VERIFIED_STATUS": "Verified",
+    "UNVERIFIED_STATUS": "Unverified",
+    "VERIFY_NOW": "Verify Now"
   },
 
   "SETTINGS": {

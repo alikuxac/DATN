@@ -36,3 +36,11 @@ export {
   ENUM_REPORT_TYPE as ReportType,
 } from '@repo/shared';
 
+export type {
+  ISessionListResponse as SessionListResponse,
+} from '@repo/shared';
+
+export {
+  ENUM_SESSION_STATUS as SessionStatus,
+} from '@repo/shared';
+

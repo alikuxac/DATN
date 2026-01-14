@@ -71,6 +71,8 @@ export function OTPVerificationModal({
             </InputOTPGroup>
           </InputOTP>
           
+          <ResendButton mobileNumber={mobileNumber} />
+
           <div className="flex w-full justify-end gap-2">
                <Button variant="ghost" onClick={onClose} disabled={isVerifyingOtp}>
                   {t("COMMON.BTN_CANCEL") || "Cancel"}
@@ -85,3 +87,38 @@ export function OTPVerificationModal({
     </Dialog>
   );
 }
+
+function ResendButton({ mobileNumber }: { mobileNumber: string }) {
+    const [timeLeft, setTimeLeft] = React.useState(60);
+    const { sendOtp } = usePhoneVerification();
+    const { t } = useLanguage();
+    
+    React.useEffect(() => {
+        if (timeLeft <= 0) return;
+        const intervalId = setInterval(() => {
+            setTimeLeft((prev) => prev - 1);
+        }, 1000);
+        return () => clearInterval(intervalId);
+    }, [timeLeft]);
+
+    const handleResend = async () => {
+        try {
+            await sendOtp({ mobileNumber });
+            setTimeLeft(60);
+        } catch (error) {
+            // Toast handled in hook
+        }
+    };
+
+    return (
+        <div className="text-center text-sm">
+            {timeLeft > 0 ? (
+                 <span className="text-muted-foreground">{t("AUTH.RESEND_OTP_IN", { seconds: timeLeft.toString() })}</span>
+            ) : (
+                <Button variant="link" className="p-0 h-auto font-normal" onClick={handleResend}>
+                    {t("AUTH.RESEND_OTP")}
+                </Button>
+            )}
+        </div>
+    );
+    }

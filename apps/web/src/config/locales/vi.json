@@ -12,7 +12,10 @@
     "VERSION": "Phiên bản",
     "UNKNOWN_ERROR": "Đã xảy ra lỗi không xác định",
     "BTN_SAVE_CHANGES": "Lưu thay đổi",
-    "ERR_UPDATE_FAILED": "Không thể lưu cài đặt"
+
+    "ERR_UPDATE_FAILED": "Không thể lưu cài đặt",
+    "UNVERIFIED_ACCOUNT_WARNING": "Tài khoản chưa xác thực",
+    "UNVERIFIED_ACCOUNT_DESC": "Vui lòng xác thực email và số điện thoại để sử dụng đầy đủ tính năng."
   },
   "AUTH": {
     "LOGIN_TITLE": "Đăng nhập",
@@ -49,6 +52,8 @@
     "LABEL_OTP": "Mã OTP",
     "DESC_OTP_HINT": "Kiểm tra email của bạn để lấy mã xác thực",
     "BTN_VERIFY": "Xác thực",
+    "RESEND_OTP": "Gửi lại mã",
+    "RESEND_OTP_IN": "Gửi lại trong {{seconds}}s",
 
     "TITLE_RESET_PASSWORD": "Đặt lại mật khẩu",
     "DESC_RESET_PASSWORD": "Nhập mật khẩu mới của bạn",
@@ -84,7 +89,10 @@
     "VOLUNTEER_MODE": "Chế độ tình nguyện",
     "VOLUNTEER_DESC": "Bật tính năng này để nhận thông báo cứu hộ gần bạn.",
     "UPDATE_VOLUNTEER_SUCCESS": "Trạng thái tình nguyện viên đã được cập nhật thành công.",
-    "UPDATE_VOLUNTEER_FAILED": "Không thể cập nhật trạng thái tình nguyện viên."
+    "UPDATE_VOLUNTEER_FAILED": "Không thể cập nhật trạng thái tình nguyện viên.",
+    "VERIFIED_STATUS": "Đã xác thực",
+    "UNVERIFIED_STATUS": "Chưa xác thực",
+    "VERIFY_NOW": "Xác thực ngay"
   },
   "SETTINGS": {
     "TITLE": "Cài đặt",
