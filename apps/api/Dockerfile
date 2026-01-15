@@ -22,7 +22,6 @@ ENV YARN_CACHE_FOLDER=/root/.yarn/berry/cache
 
 # Copy root config
 COPY package.json yarn.lock .yarnrc.yml ./
-COPY .yarn ./.yarn
 
 # Copy workspace headers
 COPY apps/api/package.json ./apps/api/
@@ -56,7 +55,6 @@ RUN corepack enable && corepack prepare yarn@4.12.0 --activate
 ENV YARN_CACHE_FOLDER=/root/.yarn/berry/cache
 
 COPY package.json yarn.lock .yarnrc.yml ./
-COPY .yarn ./.yarn
 COPY apps/api/package.json ./apps/api/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
