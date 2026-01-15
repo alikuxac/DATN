@@ -6397,6 +6397,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@repo/shared@workspace:packages/shared"
   dependencies:
+    "@repo/typescript-config": "npm:*"
     "@types/node": "npm:^25.0.8"
     barrelsby: "npm:^2.8.1"
     typescript: "npm:latest"

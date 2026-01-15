@@ -30,6 +30,7 @@
     "generate:index": "barrelsby --delete --directory ./src --location replace --include \".ts$\" --exclude \".spec.ts$\""
   },
   "devDependencies": {
+    "@repo/typescript-config": "*",
     "@types/node": "^25.0.8",
     "barrelsby": "^2.8.1",
     "typescript": "latest"
