@@ -41,8 +41,8 @@ COPY packages ./packages
 
 # Build shared packages and API
 # Assuming 'turbo' is configured to handle deps, or manual ordering:
-RUN yarn workspace @alikuxac/shared build
-RUN yarn workspace @alikuxac/api build
+RUN yarn workspace @repo/shared build
+RUN yarn workspace api build
 
 # ============================================
 # Stage 2: Production Dependencies (Focused)
@@ -63,7 +63,7 @@ COPY packages/typescript-config/package.json ./packages/typescript-config/
 
 # Install ONLY production dependencies for the API
 RUN --mount=type=cache,target=/root/.yarn/berry/cache \
-    yarn workspaces focus --production @alikuxac/api
+    yarn workspaces focus --production api
 
 # ============================================
 # Stage 3: Runner
