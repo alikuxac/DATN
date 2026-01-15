@@ -361,6 +361,90 @@ export default function ReportsPage() {
                 </div>
               </div>
 
+              {/* Images Gallery */}
+              {selectedReport.images && selectedReport.images.length > 0 && (
+                <div className="grid gap-4 border-t pt-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-medium text-sm text-muted-foreground">
+                        Images ({selectedReport.images.length})
+                      </h4>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          selectedReport.images?.forEach((url: string, index: number) => {
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.download = `report-${selectedReport._id}-image-${index + 1}`;
+                            link.target = '_blank';
+                            link.click();
+                          });
+                        }}
+                      >
+                        Download All
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {selectedReport.images.map((imageUrl, index) => (
+                        <div
+                          key={index}
+                          className="relative group aspect-square rounded-md overflow-hidden border"
+                        >
+                          <img
+                            src={imageUrl}
+                            alt={`Report image ${index + 1}`}
+                            className="object-cover w-full h-full cursor-pointer hover:opacity-90 transition-opacity"
+                            loading="lazy"
+                            onClick={() => window.open(imageUrl, '_blank')}
+                          />
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                            <Button
+                              variant="secondary"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => window.open(imageUrl, '_blank')}
+                              title="View Full Size"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="secondary"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = imageUrl;
+                                link.download = `report-${selectedReport._id}-image-${index + 1}`;
+                                link.target = '_blank';
+                                link.click();
+                              }}
+                              title="Download Image"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
+                              </svg>
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Location & Notes */}
               <div className="grid gap-4 border-t pt-4">
                 <div>

@@ -37,7 +37,10 @@ export class UserGetResponseDto extends DatabaseObjectIdDto implements IUserGetR
   location?: { type: string; coordinates: number[] };
   lastLocationAt?: Date;
 
+  avatar?: string;
+
   verification: UserVerificationResponseDto;
   preferences: UserPreferencesResponseDto;
   settings: UserSettingsResponseDto;
 }
+

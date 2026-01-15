@@ -132,6 +132,69 @@ class ApiService {
   async delete<T>(endpoint: string, options?: RequestInit): Promise<T> {
     return this.request<T>(endpoint, { ...options, method: 'DELETE' });
   }
+
+  // Upload method for multipart/form-data
+  async uploadFormData<T>(
+    endpoint: string,
+    formData: FormData,
+    options?: Omit<RequestInit, 'body' | 'method'>
+  ): Promise<T> {
+    const url = `${this.baseUrl}${endpoint}`;
+    const state = store.getState();
+    const language = state.app.language;
+
+    const headers: Record<string, string> = {
+      'x-custom-lang': language,
+    };
+
+    if (this.accessToken) {
+      headers['Authorization'] = `Bearer ${this.accessToken}`;
+    }
+
+    const config: RequestInit = {
+      ...options,
+      method: 'POST',
+      headers: { ...headers, ...options?.headers },
+      body: formData,
+    };
+
+    try {
+      const response = await fetch(url, config);
+
+      if (response.status === 401) {
+        store.dispatch(logout());
+        throw new ApiError(401, 5100, 'Session expired');
+      }
+
+      if (response.status === 204) {
+        return {} as any;
+      }
+
+      const responseText = await response.text();
+      let responseBody: any;
+      try {
+        responseBody = responseText ? JSON.parse(responseText) : {};
+      } catch (e) {
+        responseBody = { message: responseText };
+      }
+
+      if (!response.ok) {
+        const appCode = responseBody.statusCode || response.status;
+        const errorMessage =
+          Array.isArray(responseBody.message)
+            ? responseBody.message[0]
+            : responseBody.message || `HTTP Error ${response.status}`;
+
+        throw new ApiError(response.status, appCode, errorMessage, responseBody);
+      }
+
+      return responseBody as T;
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      console.error('[Upload Error]:', error);
+      throw new ApiError(0, 5000, 'Network Error', error);
+    }
+  }
 }
 
 export const apiService = new ApiService();

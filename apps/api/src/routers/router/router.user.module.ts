@@ -4,19 +4,25 @@ import { ActivityModule } from '@modules/activity/activity.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { SessionModule } from '@modules/session/session.module';
 import { UserUserController } from '@modules/users/controllers/user.user.controller';
+import { UserUploadController } from '@modules/users/controllers/user.upload.controller';
 import { UsersModule } from '@modules/users/users.module';
 import { VerificationUserController } from '@modules/verification/controllers/verification.user.controller';
 import { VerificationModule } from '@modules/verification/verification.module';
 import { ENUM_WORKER_QUEUES } from '@workers/enums/worker.enum';
 import { ReportsModule } from '@modules/reports/reports.module';
 import { ReportUserController } from '@modules/reports/controllers/report.user.controller';
+import { ReportUploadController } from '@modules/reports/controllers/report.upload.controller';
 
 @Module({
     controllers: [
         UserUserController,
+        UserUploadController,
         ReportUserController,
+        ReportUploadController,
         VerificationUserController,
     ],
+
+
     providers: [],
     exports: [],
     imports: [
@@ -34,4 +40,4 @@ import { ReportUserController } from '@modules/reports/controllers/report.user.c
         }),
     ],
 })
-export class RouterUserModule {}
+export class RouterUserModule { }

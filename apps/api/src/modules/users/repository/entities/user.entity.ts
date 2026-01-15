@@ -1,12 +1,12 @@
-import { 
-  ENUM_USER_ROLE, 
-  ENUM_USER_SIGN_UP_FROM, 
-  ENUM_USER_STATUS, 
+import {
+  ENUM_USER_ROLE,
+  ENUM_USER_SIGN_UP_FROM,
+  ENUM_USER_STATUS,
   ENUM_USER_GENDER
 } from '@repo/shared';
 
 import { UserVerificationEntity, UserVerificationSchema } from './user.verification.entity';
-import { DatabaseProp, DatabaseEntity, DatabaseSchema,  } from '@common/database/decorators/database.decorator';
+import { DatabaseProp, DatabaseEntity, DatabaseSchema, } from '@common/database/decorators/database.decorator';
 import { IDatabaseDocument } from '@common/database/interfaces/database.interface';
 import { DatabaseObjectIdEntityBase } from '@common/database/bases/database.object-id.entity';
 import { UserPreferencesEntity, UserPreferencesSchema } from './user.preferences.entity';
@@ -84,6 +84,10 @@ export class UserEntity extends DatabaseObjectIdEntityBase {
 
   @DatabaseProp({ type: Date })
   lastLocationAt?: Date;
+
+  @DatabaseProp({ type: String, trim: true })
+  avatar?: string;
+
 
   @DatabaseProp({ required: true, schema: UserVerificationSchema })
   verification: UserVerificationEntity;

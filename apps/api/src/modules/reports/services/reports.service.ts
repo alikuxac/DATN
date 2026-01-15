@@ -14,6 +14,7 @@ import { HelperDateService } from '@common/helper/services/helper.date.service';
 import { HelperGeoService } from '@common/helper/services/helper.geo.service';
 import { ReportUpdateRequestDto } from '../dtos/request/report.update.request.dto';
 import { ReportDetailResponseDto } from '../dtos/response/report.detail.response.dto';
+import { S3Service } from '@common/s3/s3.service';
 
 @Injectable()
 export class ReportService {
@@ -22,6 +23,7 @@ export class ReportService {
     private readonly eventEmitter: EventEmitter2,
     private readonly helperdateService: HelperDateService,
     private readonly helperGeoService: HelperGeoService,
+    private readonly s3Service: S3Service,
   ) { }
 
   private buildLogicFilter(
@@ -315,9 +317,23 @@ export class ReportService {
   }
 
   async delete(_id: string, options?: IDatabaseDeleteOptions) {
+    // Get report to retrieve image URLs before deletion
+    const report = await this.reportRepository.findOneById(_id);
+
+    if (report && report.images && report.images.length > 0) {
+      // Delete all images from S3
+      const deletePromises = report.images.map((imageUrl) =>
+        this.s3Service.deleteFileByUrl(imageUrl).catch((error: any) => {
+          console.warn(`Failed to delete image ${imageUrl}:`, error?.message);
+        })
+      );
+
+      await Promise.all(deletePromises);
+    }
+
     return this.reportRepository.delete({
       _id
-    }, options)
+    }, options);
   }
 
   // 7. Delete Many

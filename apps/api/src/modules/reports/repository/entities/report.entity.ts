@@ -1,10 +1,10 @@
-import { 
-  DatabaseEntity, 
-  DatabaseProp, 
-  DatabaseSchema 
+import {
+  DatabaseEntity,
+  DatabaseProp,
+  DatabaseSchema
 } from "@common/database/decorators/database.decorator";
 import { DatabaseObjectIdEntityBase } from "@common/database/bases/database.object-id.entity";
-import { 
+import {
   ENUM_REPORT_STATUS,
   ENUM_REPORT_LOCATION_TYPE,
   ENUM_REPORT_SEVERITY,
@@ -34,11 +34,11 @@ export class ReportLocation {
 }
 
 @DatabaseEntity({
-  collection: REPORT_ENTITY_NAME, 
-  timestamps: true, 
+  collection: REPORT_ENTITY_NAME,
+  timestamps: true,
   versionKey: false
 })
-export class ReportEntity extends DatabaseObjectIdEntityBase{
+export class ReportEntity extends DatabaseObjectIdEntityBase {
   @DatabaseProp({
     required: true,
     index: true,
@@ -64,10 +64,10 @@ export class ReportEntity extends DatabaseObjectIdEntityBase{
   location: ReportLocation;
 
   @DatabaseProp({
-    required: false, 
+    required: false,
     trim: true,
     type: String,
-    ref: UserEntity.name, 
+    ref: UserEntity.name,
     index: true,
   })
   rescuer?: string;
@@ -120,6 +120,13 @@ export class ReportEntity extends DatabaseObjectIdEntityBase{
     index: true,
   })
   regionId: string;
+
+  @DatabaseProp({
+    type: [String],
+    default: [],
+  })
+  images: string[];
+
 }
 
 export const ReportSchema = DatabaseSchema(ReportEntity);

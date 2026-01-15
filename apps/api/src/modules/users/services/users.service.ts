@@ -402,6 +402,15 @@ export class UsersService {
     return this.userRepository.save(repository, options);
   }
 
+  async updateAvatar(
+    repository: UserDocument,
+    avatarUrl: string | null,
+    options?: IDatabaseSaveOptions
+  ): Promise<UserDocument> {
+    repository.avatar = avatarUrl;
+    return this.userRepository.save(repository, options);
+  }
+
   async signUp(
     data: IAuthPassword,
     { email, firstName, lastName }: { email: string, lastName: string, firstName: string },

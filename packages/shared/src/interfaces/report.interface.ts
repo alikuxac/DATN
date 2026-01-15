@@ -9,7 +9,9 @@ export interface IReportCreateRequest {
   peopleCount?: number;
   isPublic?: boolean;
   type: ENUM_REPORT_TYPE;
+  images?: string[];
 }
+
 
 export interface IReportCreateByAdminRequest extends IReportCreateRequest {
   userId: string;
@@ -31,4 +33,5 @@ export interface IReportListResponse extends IDatabaseDto {
   peopleCount: number;
   isPublic: boolean;
   rescuer?: string | IUserShortResponse;
+  images: string[];
 }

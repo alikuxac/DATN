@@ -44,4 +44,7 @@ export class ReportListResponseDto extends DatabaseObjectIdDto {
 
   @Expose()
   isPublic: boolean;
+
+  @Expose()
+  images: string[];
 }

@@ -35,4 +35,10 @@ export class ReportCreateRequestDto implements IReportCreateRequest {
   @IsString()
   @IsNotEmpty()
   regionId: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  @ArrayMaxSize(5)
+  @IsOptional()
+  images?: string[];
 }

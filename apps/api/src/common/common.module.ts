@@ -21,6 +21,8 @@ import KeyvRedis from "@keyv/redis";
 import path from "path";
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { TelegramModule } from "./telegram/telegram.module";
+import { S3Module } from "./s3/s3.module";
+
 
 @Global()
 @Module({
@@ -144,6 +146,7 @@ import { TelegramModule } from "./telegram/telegram.module";
     PolicyModule.forRoot(),
     AuthModule.forRoot(),
     TelegramModule,
+    S3Module,
     DatabaseModule.forRoot(),
     PaginationModule
   ]

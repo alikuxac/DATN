@@ -1,26 +1,9 @@
 import React, { useState } from "react";
 import { View, Text, Image, ImageSourcePropType } from "react-native";
-import { cn } from "@/utils"; // Đảm bảo đường dẫn đúng file utils của bạn
+import { cn } from "@/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 import { useColors } from "@/hooks/useColors";
-
-// --- 1. Helper tạo URL DiceBear (Thay thế cho việc import package nặng) ---
-const getDiceBearUrl = (seed: string) => {
-  const encodedSeed = encodeURIComponent(seed.trim());
-  // Bạn có thể đổi 'personas' thành 'adventurer', 'micah', 'avataaars' tùy thích
-  // 'personas' là style bạn đang import trong code cũ
-  return `https://api.dicebear.com/9.x/personas/png?seed=${encodedSeed}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
-};
-
-// --- 2. Helper lấy chữ cái đầu (Fallback) ---
-const getInitials = (text: string): string => {
-  return text
-    .split(" ")
-    .map((word) => word.charAt(0))
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-};
+import { getDiceBearUrl, getInitials } from "@/utils/avatar";
 
 // --- 3. Định nghĩa Variants (Giữ nguyên logic của bạn) ---
 const avatarVariants = cva(

@@ -13,7 +13,13 @@ export interface IUserCreateRequest {
 
 export type IUserUpdateRequest = Partial<IUserCreateRequest>;
 
-export type IUserUpdateProfileRequest = Pick<IUserCreateRequest, 'lastName' | 'firstName' | 'gender'>
+export interface IUserUpdateProfileRequest {
+  lastName?: string;
+  firstName?: string;
+  gender?: ENUM_USER_GENDER;
+  avatar?: string;
+}
+
 
 export interface IUserUpdatePasswordAttemptRequest {
   passwordAttempts: number;
@@ -63,7 +69,10 @@ export interface IUserGetResponse extends IDatabaseDto {
   verification: IUserVerificationResponse;
   preferences: IUserPreferencesResponse;
   settings: IUserSettingsResponse;
+
+  avatar?: string;
 }
+
 
 export type IUserListResponse =
   Omit<
