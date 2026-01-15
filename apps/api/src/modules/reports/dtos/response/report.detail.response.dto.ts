@@ -6,12 +6,8 @@ import { UserShortResponseDto } from '@modules/users/dto/response/user.short.res
 @Exclude()
 export class ReportDetailResponseDto extends ReportListResponseDto {
 
-
   @Expose()
   regionId: string;
-
-  @Expose()
-  images: string[];
 
   @Expose()
   get description(): string {
