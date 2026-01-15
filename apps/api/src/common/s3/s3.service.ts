@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import { nanoid } from 'nanoid';
+import { v4 as uuidv4 } from 'uuid';
 import { S3_FOLDERS } from './s3.constant';
 
 @Injectable()
@@ -57,7 +57,7 @@ export class S3Service {
    */
   generateKey(prefix: string, filename: string): string {
     const timestamp = Date.now();
-    const randomId = nanoid(8);
+    const randomId = uuidv4().substring(0, 8);
     const ext = filename.split('.').pop();
     return `${prefix}/${timestamp}_${randomId}.${ext}`;
   }
@@ -84,7 +84,7 @@ export class S3Service {
       this.logger.log(`File uploaded successfully: ${fileUrl}`);
 
       return fileUrl;
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Failed to upload file: ${error.message}`, error.stack);
       throw new Error(`Failed to upload file to S3: ${error.message}`);
     }
@@ -102,7 +102,7 @@ export class S3Service {
 
       await this.s3Client.send(command);
       this.logger.log(`File deleted successfully: ${key}`);
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Failed to delete file: ${error.message}`, error.stack);
       throw new Error(`Failed to delete file from S3: ${error.message}`);
     }
@@ -116,7 +116,7 @@ export class S3Service {
       const urlObj = new URL(url);
       const pathname = urlObj.pathname;
       return pathname.startsWith('/') ? pathname.substring(1) : pathname;
-    } catch (error) {
+    } catch (error: any) {
       this.logger.warn(`Invalid URL format: ${url}`);
       return null;
     }

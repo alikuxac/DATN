@@ -7,8 +7,8 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",     
-      "default": "./dist/index.js"       
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
     "./enums": {
       "types": "./dist/enums/index.d.ts",
@@ -19,7 +19,9 @@
       "default": "./dist/interfaces/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "prebuild": "yarn generate:index",
     "build": "tsc",
@@ -28,6 +30,7 @@
     "generate:index": "barrelsby --delete --directory ./src --location replace --include \".ts$\" --exclude \".spec.ts$\""
   },
   "devDependencies": {
+    "@types/node": "^25.0.8",
     "barrelsby": "^2.8.1",
     "typescript": "latest"
   }

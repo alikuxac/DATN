@@ -1,125 +1,103 @@
 # ============================================
-# Stage 1: Dependencies
+# Stage 1: Pruner (Prepare minimal scope)
 # ============================================
-FROM node:20-alpine AS deps
-
-# Install dependencies only when needed
-RUN apk add --no-cache libc6-compat
-
-WORKDIR /apps
-
-# Copy root package.json and lockfile (monorepo)
-COPY package.json yarn.lock* ./
-
-# Copy workspace package.json files
-COPY apps/api/package.json ./apps/api/
-COPY packages/shared/package.json ./packages/shared/
-COPY packages/eslint-config/package.json ./packages/eslint-config/
-COPY packages/jest-config/package.json ./packages/jest-config/
-COPY packages/typescript-config/package.json ./packages/typescript-config/
-
-# Install all dependencies (monorepo workspaces)
-RUN yarn install --frozen-lockfile
+# Note: Since we are manual copying, we skip 'turbo prune' for now to match current repo structure validity,
+# but we optimize the install layer.
 
 # ============================================
-# Stage 2: Builder
+# Stage 1: Dependencies & Builder
 # ============================================
 FROM node:20-alpine AS builder
 
-WORKDIR /apps
-
-# Copy dependencies from deps stage
-COPY --from=deps /apps/node_modules ./node_modules
-COPY --from=deps /apps/package.json ./package.json
-
-# Copy workspace packages (shared dependencies)
-COPY packages ./packages
-
-# Build shared package first (required by API)
-WORKDIR /apps/packages/shared
-RUN yarn build
-
-# Copy API source code
-WORKDIR /apps
-COPY apps/api ./apps/api
-
-# Build the API application
-WORKDIR /apps/apps/api
-RUN yarn build
-
-# ============================================
-# Stage 3: Production Dependencies
-# ============================================
-FROM node:20-alpine AS production-deps
-
+# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
 RUN apk add --no-cache libc6-compat
 
 WORKDIR /apps
 
-# Copy package files (all workspaces for yarn to resolve)
-COPY package.json yarn.lock* ./
+# Enable corepack for Yarn Berry
+RUN corepack enable && corepack prepare yarn@4.12.0 --activate
+
+# Set Yarn cache folder
+ENV YARN_CACHE_FOLDER=/root/.yarn/berry/cache
+
+# Copy root config
+COPY package.json yarn.lock .yarnrc.yml ./
+COPY .yarn ./.yarn
+
+# Copy workspace headers
 COPY apps/api/package.json ./apps/api/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
 COPY packages/jest-config/package.json ./packages/jest-config/
 COPY packages/typescript-config/package.json ./packages/typescript-config/
 
-# Install ALL dependencies (--production in monorepo can skip packages)
-RUN yarn install --frozen-lockfile
+# Install dependencies (utilizing cache mount)
+# --mount=type=cache persists /root/.yarn/berry/cache between builds
+RUN --mount=type=cache,target=/root/.yarn/berry/cache \
+    yarn install --immutable
 
-# Remove dev dependencies manually (safer than --production flag)
-RUN rm -rf node_modules/typescript \
-           node_modules/@types \
-           node_modules/eslint* \
-           node_modules/prettier \
-           node_modules/jest* \
-           node_modules/@swc \
-           node_modules/@typescript-eslint \
-           2>/dev/null || true
+# Copy full source code
+COPY apps/api ./apps/api
+COPY packages ./packages
 
-# Cleanup unnecessary files
-RUN find . -name "*.md" -type f -delete && \
-    find . -name "*.map" -type f -delete && \
-    find ./node_modules -name "test" -type d -exec rm -rf {} + 2>/dev/null || true && \
-    find ./node_modules -name "tests" -type d -exec rm -rf {} + 2>/dev/null || true && \
-    find ./node_modules -name "*.spec.js" -type f -delete && \
-    find ./node_modules -name "*.test.js" -type f -delete && \
-    yarn cache clean
+# Build shared packages and API
+# Assuming 'turbo' is configured to handle deps, or manual ordering:
+RUN yarn workspace @alikuxac/shared build
+RUN yarn workspace @alikuxac/api build
 
 # ============================================
-# Stage 4: Runner (Production)
+# Stage 2: Production Dependencies (Focused)
 # ============================================
-FROM node:20-alpine AS runner
-
+FROM node:20-alpine AS production-deps
+RUN apk add --no-cache libc6-compat
 WORKDIR /apps
 
-# Create non-root user for security
+RUN corepack enable && corepack prepare yarn@4.12.0 --activate
+ENV YARN_CACHE_FOLDER=/root/.yarn/berry/cache
+
+COPY package.json yarn.lock .yarnrc.yml ./
+COPY .yarn ./.yarn
+COPY apps/api/package.json ./apps/api/
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/eslint-config/package.json ./packages/eslint-config/
+COPY packages/jest-config/package.json ./packages/jest-config/
+COPY packages/typescript-config/package.json ./packages/typescript-config/
+
+# Install ONLY production dependencies for the API
+RUN --mount=type=cache,target=/root/.yarn/berry/cache \
+    yarn workspaces focus --production @alikuxac/api
+
+# ============================================
+# Stage 3: Runner
+# ============================================
+FROM node:20-alpine AS runner
+WORKDIR /apps
+
+ENV NODE_ENV=production
+
+# Don't run production as root
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nestjs
 
-# Copy necessary files from builder
+# Copy dist from builder
 COPY --from=builder --chown=nestjs:nodejs /apps/apps/api/dist ./dist
-
-# Copy ONLY production node_modules
-COPY --from=production-deps --chown=nestjs:nodejs /apps/node_modules ./node_modules
-COPY --from=production-deps --chown=nestjs:nodejs /apps/apps/api/node_modules ./apps/api/node_modules
-
-# Copy package.json
-COPY --from=builder --chown=nestjs:nodejs /apps/apps/api/package.json ./package.json
-
-# Copy shared package if needed at runtime (built dist from builder)
 COPY --from=builder --chown=nestjs:nodejs /apps/packages/shared/dist ./packages/shared/dist
-COPY --from=builder --chown=nestjs:nodejs /apps/packages/shared/package.json ./packages/shared/package.json
 
-# Switch to non-root user
+# Copy production node_modules
+COPY --from=production-deps --chown=nestjs:nodejs /apps/node_modules ./node_modules
+# Optional: Copy shared package node_modules if they exist (handling potential absence with wildcard or just skipping if satisfied by root)
+# The safest way is to trust root node_modules for hoisted deps.
+# COPY --from=production-deps --chown=nestjs:nodejs /apps/packages/shared/node_modules ./packages/shared/node_modules
+
+# Ensure permissions
+COPY --chown=nestjs:nodejs apps/api/package.json ./package.json
+COPY --chown=nestjs:nodejs packages/shared/package.json ./packages/shared/package.json
+
 USER nestjs
 
-# Expose port (default NestJS port)
 EXPOSE 3000
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-# Start the application
 CMD ["node", "dist/main.js"]
