@@ -25,6 +25,8 @@ COPY package.json yarn.lock .yarnrc.yml ./
 
 # Copy workspace headers
 COPY apps/api/package.json ./apps/api/
+COPY apps/native/package.json ./apps/native/
+COPY apps/web/package.json ./apps/web/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
 COPY packages/jest-config/package.json ./packages/jest-config/
@@ -56,6 +58,8 @@ ENV YARN_CACHE_FOLDER=/root/.yarn/berry/cache
 
 COPY package.json yarn.lock .yarnrc.yml ./
 COPY apps/api/package.json ./apps/api/
+COPY apps/native/package.json ./apps/native/
+COPY apps/web/package.json ./apps/web/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
 COPY packages/jest-config/package.json ./packages/jest-config/
