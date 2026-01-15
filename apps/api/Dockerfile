@@ -81,19 +81,19 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nestjs
 
-# Copy dist from builder
-COPY --from=builder --chown=nestjs:nodejs /apps/apps/api/dist ./dist
-COPY --from=builder --chown=nestjs:nodejs /apps/packages/shared/dist ./packages/shared/dist
-
-# Copy production node_modules
+# Copy production node_modules from production-deps stage
 COPY --from=production-deps --chown=nestjs:nodejs /apps/node_modules ./node_modules
-# Optional: Copy shared package node_modules if they exist (handling potential absence with wildcard or just skipping if satisfied by root)
-# The safest way is to trust root node_modules for hoisted deps.
-# COPY --from=production-deps --chown=nestjs:nodejs /apps/packages/shared/node_modules ./packages/shared/node_modules
 
-# Ensure permissions
-COPY --chown=nestjs:nodejs apps/api/package.json ./package.json
-COPY --chown=nestjs:nodejs packages/shared/package.json ./packages/shared/package.json
+# Copy built application from builder
+COPY --from=builder --chown=nestjs:nodejs /apps/apps/api/dist ./dist
+
+# Copy built shared package
+COPY --from=builder --chown=nestjs:nodejs /apps/packages/shared/dist ./packages/shared/dist
+COPY --from=builder --chown=nestjs:nodejs /apps/packages/shared/package.json ./packages/shared/package.json
+
+# Copy package.json for proper module resolution
+COPY --from=builder --chown=nestjs:nodejs /apps/package.json ./package.json
+COPY --from=builder --chown=nestjs:nodejs /apps/apps/api/package.json ./apps/api/package.json
 
 USER nestjs
 
