@@ -142,6 +142,19 @@ export default function MapPage() {
     markersRef.current.forEach(marker => marker.remove());
     markersRef.current = [];
 
+    // List of Volunteer IDs who are currently busy (assigned to an IN_PROGRESS report)
+    // Note: This relies on loaded reports. Ideally, backend should provide status.
+    const busyVolunteerIds = new Set<string>();
+    if (reportsData) {
+        reportsData.forEach(r => {
+            if (r.status === ReportStatus.IN_PROGRESS && r.rescuer) {
+                // Safely get volunteer ID - handles string or populated object
+                const volId = typeof r.rescuer === 'string' ? r.rescuer : (r.rescuer as any)?._id || (r.rescuer as any)?.id;
+                if (volId) busyVolunteerIds.add(volId);
+            }
+        });
+    }
+
     displayData.forEach((item) => {
       const el = document.createElement('div');
       el.className = 'w-6 h-6 rounded-full border-2 border-white shadow-lg cursor-pointer flex items-center justify-center text-[10px] font-bold text-white';
@@ -165,13 +178,23 @@ export default function MapPage() {
             </div>
           `;
       } else if (item.type === 'volunteer') {
-          color = '#8b5cf6'; // Purple
           const user = item.data as MapUser;
+          // Support both _id and id
+          const userId = (user as any)._id || (user as any).id;
+          const isBusy = userId ? busyVolunteerIds.has(userId) : false;
+          
+          color = isBusy ? '#f97316' : '#8b5cf6'; // Orange (Busy) vs Purple (Idle)
+          const statusText = isBusy ? 'ON DUTY' : 'IDLE';
+          const statusColor = isBusy ? 'text-orange-600' : 'text-purple-600';
+
           el.innerHTML = 'V';
           popupContent = `
              <div class="p-2">
                 <h3 class="font-bold text-sm">${user.firstName} ${user.lastName}</h3>
-                <p class="text-xs text-purple-600 font-medium">Volunteer</p>
+                <div class="flex items-center gap-2 mt-1">
+                    <p class="text-xs font-bold ${statusColor}">${statusText}</p>
+                    <span class="text-[10px] text-gray-400">Volunteer</span>
+                </div>
                 <div class="text-xs mt-1 text-gray-500">
                     Active: ${user.lastLocationAt ? formatDistanceToNow(new Date(user.lastLocationAt)) + ' ago' : 'Unknown'}
                 </div>
@@ -295,10 +318,16 @@ export default function MapPage() {
                     {(mapMode === "users" || mapMode === "all" || mapMode === "volunteers") && (
                         <>
                              {(mapMode !== "users") && (
-                                <div className="flex items-center gap-2">
-                                    <div className="w-4 h-4 rounded-full bg-purple-500 text-[8px] text-white flex items-center justify-center font-bold">V</div>
-                                    <span>Volunteer</span>
-                                </div>
+                                 <>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-4 h-4 rounded-full bg-purple-500 text-[8px] text-white flex items-center justify-center font-bold">V</div>
+                                        <span>Vol (Idle)</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-4 h-4 rounded-full bg-orange-500 text-[8px] text-white flex items-center justify-center font-bold">V</div>
+                                        <span>Vol (Busy)</span>
+                                    </div>
+                                 </>
                              )}
                              {(mapMode !== "volunteers") && (
                                  <div className="flex items-center gap-2">

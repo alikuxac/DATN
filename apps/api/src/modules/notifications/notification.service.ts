@@ -107,12 +107,16 @@ export class NotificationService {
     // 5. Gửi Push Notification (Background)
     if (user.expoPushToken && Expo.isExpoPushToken(user.expoPushToken)) {
       const messages: ExpoPushMessage[] = [];
+      const isSos = type === ENUM_NOTIFICATION_TYPE.SOS;
+
       messages.push({
         to: user.expoPushToken,
-        sound: 'default',
+        sound: 'default', // Or specific sound name if configured in app
         title: title,
         body: body,
         data: payload,
+        priority: isSos ? 'high' : 'default',
+        channelId: isSos ? 'sos' : 'default',
       });
 
       try {

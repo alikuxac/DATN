@@ -502,7 +502,8 @@ export class UsersService {
         }
       },
       'settings.pushEnabled': true,
-      'settings.sosAlerts': true
+      'settings.sosAlerts': true,
+      'isRescueMode': true,
     }, options);
   }
 

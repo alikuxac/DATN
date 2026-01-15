@@ -2,6 +2,7 @@ import React from "react";
 import { View } from "react-native";
 import { AppText, AppButton, Avatar } from "@/components/ui";
 import { Phone } from "lucide-react-native";
+import { formatTimeAgo, isUserOnline } from "@/utils/date";
 
 interface RescuerDetailSheetProps {
   selectedRescuer: any;
@@ -25,9 +26,22 @@ export const RescuerDetailSheet = ({
         <AppText variant="heading3" className="font-bold">
           {selectedRescuer.firstName} {selectedRescuer.lastName}
         </AppText>
-        <View className="bg-blue-100 px-3 py-1 rounded-full mt-2 mb-4">
+        <View className="bg-blue-100 px-3 py-1 rounded-full mt-2 mb-2">
           <AppText className="text-blue-700 font-bold text-xs uppercase">
             Đội cứu hộ tình nguyện
+          </AppText>
+        </View>
+
+        <View className="flex-row items-center gap-1.5 mb-4">
+          <View 
+            className={`w-2 h-2 rounded-full ${
+              isUserOnline(selectedRescuer.lastLocationAt) ? 'bg-green-500' : 'bg-gray-400'
+            }`} 
+          />
+          <AppText className="text-xs text-gray-500">
+            {isUserOnline(selectedRescuer.lastLocationAt) 
+              ? 'Đang hoạt động' 
+              : `Hoạt động ${formatTimeAgo(selectedRescuer.lastLocationAt)}`}
           </AppText>
         </View>
 

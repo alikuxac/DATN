@@ -23,6 +23,7 @@ import { useToast } from "@/components/ui/ToastProvider";
 import { apiService } from "@/services/api.service";
 import { ENUM_REPORT_SEVERITY, ENUM_REPORT_TYPE } from "@repo/shared";
 import { getRegionFromGeoJSON } from "@/utils/geo";
+import { offlineService } from "@/services/OfflineService";
 
 interface Props {
   visible: boolean;
@@ -98,6 +99,8 @@ export const CreateReportModal = ({
   const [loading, setLoading] = useState(false);
   const { showToast } = useToast();
 
+
+
   const handleSubmit = async () => {
     if (!location) return;
     if (!description.trim()) {
@@ -107,25 +110,44 @@ export const CreateReportModal = ({
 
     const regionId = getRegionFromGeoJSON(location.lat, location.long);
     console.log('Region Id before create report:',regionId)
-
-    try {
-      setLoading(true);
-      await apiService.post('/user/report', {
-        coordinates: [location.long, location.lat], // [longitude, latitude
+    
+    const payload = {
+        coordinates: [location.long, location.lat], // [longitude, latitude]
         type,
         notes: description.trim(),
         regionId,
         severity,
-      });
+    };
+
+    try {
+      setLoading(true);
+
+      // Sử dụng OfflineService để handle mất mạng
+      await offlineService.attemptAction(
+          () => apiService.post('/user/report', payload),
+          {
+              method: 'POST',
+              endpoint: '/user/report',
+              data: payload
+          }
+      );
 
       showToast({ title: "Gửi yêu cầu thành công!", message: "Yêu cầu của bạn đã được gửi đi", type: "success" });
       setDescription("");
       setType(ENUM_REPORT_TYPE.FOOD);
       onSuccess?.();
       onClose();
-    } catch (error) {
-      console.log("Create report error:", error);
-      showToast({ title: "Gửi thất bại", message: "Đã có lỗi xảy ra, vui lòng thử lại", type: "error" });
+    } catch (error: any) {
+      if (error.message === 'OFFLINE_SAVED') {
+          showToast({ title: "Đã lưu Offline", message: "Hệ thống sẽ tự động gửi khi có mạng", type: "info" });
+          setDescription("");
+          setType(ENUM_REPORT_TYPE.FOOD);
+          onSuccess?.();
+          onClose();
+      } else {
+          console.log("Create report error:", error);
+          showToast({ title: "Gửi thất bại", message: "Đã có lỗi xảy ra, vui lòng thử lại", type: "error" });
+      }
     } finally {
       setLoading(false);
     }

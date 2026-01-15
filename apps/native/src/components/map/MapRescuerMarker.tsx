@@ -2,6 +2,7 @@ import React from "react";
 import { View } from "react-native";
 import { PointAnnotation } from "@vietmap/vietmap-gl-react-native";
 import { AppText, Icon } from "@/components/ui";
+import { isUserOnline } from "@/utils/date";
 
 interface MapRescuerMarkerProps {
   rescuer: any;
@@ -21,7 +22,12 @@ export const MapRescuerMarker = ({ rescuer, onSelected }: MapRescuerMarkerProps)
         <View className="bg-white p-1 rounded-full border-2 border-blue-500 shadow-sm mb-1">
           <Icon name="Ambulance" size={20} color="#3b82f6" />
         </View>
-        <View className="bg-white/90 px-2 py-0.5 rounded shadow-sm">
+        <View className="bg-white/90 px-2 py-0.5 rounded shadow-sm flex-row items-center gap-1">
+          <View 
+            className={`w-2 h-2 rounded-full ${
+              isUserOnline(rescuer.lastLocationAt) ? 'bg-green-500' : 'bg-gray-400'
+            }`} 
+          />
           <AppText className="text-[10px] font-bold text-blue-700">
             {rescuer.firstName}
           </AppText>

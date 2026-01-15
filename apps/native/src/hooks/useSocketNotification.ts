@@ -139,7 +139,10 @@ export const useSocketNotification = () => {
     if (data.level === 'CRITICAL' || data.type === 'SOS') {
       // Rung mạnh: 0ms delay, rung 500ms, nghỉ 200ms, rung 500ms...
       if (Platform.OS !== 'web') {
-        Vibration.vibrate([0, 500, 200, 500, 200, 1000]);
+        const { FeedbackUtils } = require('../utils/feedback');
+        // Vibration.vibrate([0, 500, 200, 500, 200, 1000]); // Cũ
+        FeedbackUtils.vibrateEmergency();
+        FeedbackUtils.playSiren();
       }
       setAlertData(data); // Hiện Modal đè lên tất cả
     } else {

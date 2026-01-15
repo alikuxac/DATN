@@ -20,7 +20,16 @@ export const useExpoPushToken = () => {
 async function registerForPushNotificationsAsync() {
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {
-      name: 'default', importance: Notifications.AndroidImportance.MAX,
+      name: 'Default',
+      importance: Notifications.AndroidImportance.DEFAULT,
+    });
+    // Kênh SOS - Rung mạnh + Max Importance
+    await Notifications.setNotificationChannelAsync('sos', {
+      name: 'SOS Alert',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 500, 200, 500],
+      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+      bypassDnd: true, // Thử bypass Do Not Disturb (Yêu cầu quyền)
     });
   }
   const { status } = await Notifications.requestPermissionsAsync();

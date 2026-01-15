@@ -84,7 +84,11 @@ function RootNavigator() {
         <SystemAlertModal
           visible={!!alertData}
           data={alertData}
-          onClose={() => setAlertData(null)}
+          onClose={() => {
+            const { FeedbackUtils } = require('@/utils/feedback');
+            FeedbackUtils.stopSiren();
+            setAlertData(null);
+          }}
         />
       )}
 

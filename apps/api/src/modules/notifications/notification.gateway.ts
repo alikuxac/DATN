@@ -44,17 +44,37 @@ export class NotificationGateway implements OnGatewayConnection {
   @SubscribeMessage('update_location')
   async handleUpdateLocation(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { lat: number; lng: number }
+    @MessageBody() payload: { lat: number; lng: number, reportId?: string }
   ) {
     const userId = client.data.userId;
     if (!userId || !payload.lat || !payload.lng) return;
 
     try {
-      await this.usersService.updateLocation(userId, payload.lat, payload.lng);
+      // 1. Update In DB (Fire & Forget)
+      this.usersService.updateLocation(userId, payload.lat, payload.lng);
+
+      // 2. Realtime Tracking (Like Grab)
+      if (payload.reportId) {
+        client.to(`report_${payload.reportId}`).emit('rescuer_moved', {
+          rescuerId: userId,
+          lat: payload.lat,
+          lng: payload.lng
+        });
+      }
     } catch (error) {
       this.logger.error(`Error updating location for user ${userId}`, error);
     }
   }
+
+  @SubscribeMessage('join_report_room')
+  async handleJoinReportRoom(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { reportId: string }
+  ) {
+    if (!payload.reportId) return;
+    await client.join(`report_${payload.reportId}`);
+  }
+
 
   @SubscribeMessage('mark_read')
   async handleMarkRead(

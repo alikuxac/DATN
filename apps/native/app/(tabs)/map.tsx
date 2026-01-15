@@ -3,6 +3,7 @@ import React, {
   useCallback,
   useRef,
   useMemo,
+  useEffect,
 } from "react";
 import {
   View,
@@ -57,7 +58,13 @@ interface ReportData {
   description?: string;
   peopleCount: number;
   severity: string;
-  user?: { _id: string; firstName: string; lastName: string; phone?: string };
+  user?: { 
+    _id: string; 
+    firstName: string; 
+    lastName: string; 
+    phone?: string;
+    lastLocationAt?: string; // Thêm trường này
+  };
   volunteer?: string; // ID của rescuer
   createdAt: string;
 }
@@ -70,12 +77,13 @@ interface RescuerData {
   location: { lat: number; lng: number }; // Vị trí hiện tại của Rescuer
   coordinates?: [number, number];
   isOnline: boolean;
+  lastLocationAt?: string; // Thêm trường này để tính online
 }
 
 export default function MapScreen() {
   const { t } = useTranslation();
   const { theme, user, token } = useAppSelector((state) => state.app);
-  const { userLocation, currentRegion } = useLocationTracking(token);
+  const { userLocation, currentRegion, socket } = useLocationTracking(token);
   const { showSuccess, showError } = useToast();
   const colors = useColors();
   const cameraRef = useRef<React.ComponentRef<typeof Camera>>(null);
@@ -132,6 +140,7 @@ export default function MapScreen() {
             lastName: "A",
             location: { lat: 10.85, lng: 106.65 },
             isOnline: true,
+            lastLocationAt: new Date().toISOString(), // Vừa mới cập nhật
             phone: "0909090909",
           },
           {
@@ -140,6 +149,7 @@ export default function MapScreen() {
             lastName: "B",
             location: { lat: 10.8, lng: 106.7 },
             isOnline: true,
+            lastLocationAt: new Date(Date.now() - 1000 * 60 * 10).toISOString(), // 10 phút trước
           },
         ]);
       }
@@ -153,6 +163,43 @@ export default function MapScreen() {
       fetchData();
     }, [])
   );
+
+  // --- SOCKET TRACKING ---
+  useEffect(() => {
+    if (!socket) return;
+    
+    // Listen for rescuer movement
+    const handleRescuerMoved = (data: { rescuerId: string; lat: number; lng: number }) => {
+      setRescuers((prev) => 
+        prev.map((r) => 
+          r._id === data.rescuerId 
+            ? { 
+                ...r, 
+                location: { lat: data.lat, lng: data.lng }, 
+                coordinates: [data.lng, data.lat],
+                lastLocationAt: new Date().toISOString() // Cập nhật thời gian online
+              } 
+            : r
+        )
+      );
+    };
+
+    socket.on('rescuer_moved', handleRescuerMoved);
+    
+    // Auto join room if I have active report (User Mode)
+    // Only join if I am a USER (Victim)
+    if (user && user.role === ENUM_USER_ROLE.USER) {
+       const myActiveReport = reports.find(r => r.user?._id === user._id && r.status === ENUM_REPORT_STATUS.IN_PROGRESS);
+       if (myActiveReport) {
+           console.log('Joining report room:', myActiveReport._id);
+           socket.emit('join_report_room', { reportId: myActiveReport._id });
+       }
+    }
+
+    return () => {
+      socket.off('rescuer_moved', handleRescuerMoved);
+    };
+  }, [socket, reports, user]);
 
   const isVolunteerMode = useMemo(() => {
     return user?.role === ENUM_USER_ROLE.VOLUNTEER || user?.isRescueMode;

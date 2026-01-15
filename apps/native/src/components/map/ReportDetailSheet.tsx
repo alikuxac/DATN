@@ -4,6 +4,7 @@ import { AppText, AppButton, Icon, Avatar } from "@/components/ui";
 import { cn } from "@/utils";
 import { ENUM_REPORT_STATUS, ENUM_USER_ROLE } from "@repo/shared";
 import { Navigation, Phone } from "lucide-react-native";
+import { formatTimeAgo, isUserOnline } from "@/utils/date";
 
 interface ReportDetailSheetProps {
   selectedReport: any;
@@ -105,6 +106,17 @@ export const ReportDetailSheet = ({
                 <AppText className="font-bold">
                   {selectedReport.user.firstName} {selectedReport.user.lastName}
                 </AppText>
+                {/* Online Status của Victim */}
+                <View className="flex-row items-center gap-1 mt-0.5">
+                   <View 
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      isUserOnline(selectedReport.user?.lastLocationAt) ? 'bg-green-500' : 'bg-gray-400'
+                    }`} 
+                  />
+                  <AppText className="text-[10px] text-gray-400">
+                    {formatTimeAgo(selectedReport.user?.lastLocationAt)}
+                  </AppText>
+                </View>
               </View>
             </View>
             {/* Chỉ hiện nút gọi nếu là Volunteer/Admin */}
