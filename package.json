@@ -20,5 +20,10 @@
   "engines": {
     "node": ">=18"
   },
-  "name": "@alikuxac/datn"
+  "name": "@alikuxac/datn",
+  "resolutions": {
+    "html-minifier": "4.0.0",
+    "semver": "^7.6.3",
+    "glob": "^11.0.0"
+  }
 }
