@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+</head>
+
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0;">
+  <div
+    style="max-width: 600px; margin: 20px auto; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; background-color: #ffffff;">
+    <div style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); padding: 40px 20px; text-align: center;">
+      <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Chào mừng, {{firstName}}!</h1>
+    </div>
+    <div style="padding: 35px;">
+      <p style="font-size: 18px; color: #1f2937;">Xin chào <strong>{{firstName}} {{lastName}}</strong>,</p>
+      <p>Chúng tôi rất vui mừng khi bạn tham gia cùng chúng tôi! Tài khoản của bạn đã được tạo thành công với email:
+        <strong>{{email}}</strong>.
+      </p>
+      <p>Nền tảng của chúng tôi được thiết kế để hỗ trợ điều phối cứu hộ và giúp đỡ cộng đồng trong các tình huống khẩn
+        cấp.</p>
+      <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #f1f5f9; text-align: center;">
+        <p style="font-size: 13px; color: #94a3b8; margin-bottom: 5px;">Cần hỗ trợ?</p>
+        <p style="margin: 0;"><a href="mailto:{{supportEmail}}"
+            style="color: #6366f1; text-decoration: none; font-weight: bold;">{{supportEmail}}</a></p>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

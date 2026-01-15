@@ -58,7 +58,7 @@ export class UsersService {
     }
 
     newUser.preferences = {
-      language: ENUM_MESSAGE_LANGUAGE.EN,
+      language: ENUM_MESSAGE_LANGUAGE.VI,
       theme: ENUM_USER_THEME.LIGHT
     };
 

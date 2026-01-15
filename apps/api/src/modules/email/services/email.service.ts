@@ -37,11 +37,11 @@ export class EmailService {
         subjectKey: string,
         templateName: string,
         context: Record<string, any>,
-        lang?: string
+        lang: string = 'vi'
     ): Promise<boolean> {
         try {
-            const subject = await this.i18n.t(`mail.${subjectKey}`, { lang: 'en' });
-            const templateFile = `${templateName}.en.template.hbs`;
+            const subject = await this.i18n.t(`mail.${subjectKey}`, { lang });
+            const templateFile = `${templateName}.${lang}.template.hbs`;
 
             await this.mailerService.sendMail({
                 to: to,
