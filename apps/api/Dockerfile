@@ -1,111 +1,63 @@
-# ============================================
-# Stage 1: Pruner (Prepare minimal scope)
-# ============================================
-# Note: Since we are manual copying, we skip 'turbo prune' for now to match current repo structure validity,
-# but we optimize the install layer.
+# ==========================================
+# Stage 1: Prune (Lọc source code cần thiết)
+# ==========================================
+FROM node:20-alpine AS pruner
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+# Cài turbo global để dùng lệnh prune
+RUN npm install turbo --global
+COPY . .
+# Lệnh này sẽ tạo ra folder 'out' chỉ chứa những gì 'api' cần
+RUN turbo prune --scope=api --docker
 
-# ============================================
-# Stage 1: Dependencies & Builder
-# ============================================
+# ==========================================
+# Stage 2: Builder (Cài đặt & Build)
+# ==========================================
 FROM node:20-alpine AS builder
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
 
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-# Install build dependencies for native modules
-RUN apk add --no-cache libc6-compat python3 make g++
+# 1. Copy file cấu hình package (package.json, lockfile) từ bước Prune
+COPY --from=pruner /app/out/json/ .
+COPY --from=pruner /app/out/yarn.lock ./yarn.lock
 
-WORKDIR /apps
-
-# Enable corepack for Yarn Berry
+# 2. Cài đặt dependencies (Lúc này yarn chỉ cài những gì api cần)
 RUN corepack enable && corepack prepare yarn@4.12.0 --activate
+# Tạo .yarnrc.yml để ép dùng node-modules (tránh lỗi PnP trong Docker)
+RUN echo 'nodeLinker: node-modules' > .yarnrc.yml
+RUN yarn install --frozen-lockfile
 
-# Set Yarn cache folder
-ENV YARN_CACHE_FOLDER=/root/.yarn/berry/cache
+# 3. Copy source code đầy đủ từ bước Prune
+COPY --from=pruner /app/out/full/ .
+COPY turbo.json turbo.json
 
-# Copy root config (without .yarnrc.yml at first)
-COPY package.json yarn.lock ./
+# 4. Build dự án
+RUN yarn turbo run build --filter=api...
 
-# Create Docker-optimized .yarnrc.yml (no hardlinks, classic mode)
-RUN echo 'nodeLinker: node-modules' > .yarnrc.yml && \
-    echo 'nmMode: classic' >> .yarnrc.yml && \
-    echo 'enableGlobalCache: false' >> .yarnrc.yml && \
-    echo 'compressionLevel: 0' >> .yarnrc.yml && \
-    echo 'nmHoistingLimits: workspaces' >> .yarnrc.yml && \
-    echo "=== Docker .yarnrc.yml ===" && \
-    cat .yarnrc.yml
-
-# Copy workspace headers
-COPY apps/api/package.json ./apps/api/
-COPY apps/native/package.json ./apps/native/
-COPY apps/web/package.json ./apps/web/
-COPY packages/shared/package.json ./packages/shared/
-COPY packages/eslint-config/package.json ./packages/eslint-config/
-COPY packages/jest-config/package.json ./packages/jest-config/
-COPY packages/typescript-config/package.json ./packages/typescript-config/
-
-# Install dependencies (utilizing cache mount)
-# Install dependencies (NO CACHE MOUNT)
-RUN yarn install --immutable
-
-# Copy full source code
-COPY apps/api ./apps/api
-COPY packages ./packages
-
-# Re-run install to ensure all workspace dependencies are installed
-# (NO CACHE MOUNT)
-RUN yarn install --immutable
-
-# Debug: Check if node_modules has content in BUILDER (after second install)
-RUN echo "=== BUILDER: Checking node_modules AFTER source copy ===" && \
-    ls -la node_modules/ | head -20 && \
-    echo "=== BUILDER: Checking @nestjs ===" && \
-    ls -la node_modules/@nestjs/ | head -10 || echo "No @nestjs in builder!"
-
-# Build shared packages and API
-RUN yarn workspace @repo/shared build
-RUN yarn workspace api build
-
-# Debug: Verify @nestjs/core is installed after build
-RUN ls -la node_modules/@nestjs/ || echo "No @nestjs in root node_modules" && \
-    ls -la apps/api/node_modules/@nestjs/ 2>/dev/null || echo "No @nestjs in api node_modules"
-
-# ============================================
-# Stage 2: Runner
-# ============================================
+# ==========================================
+# Stage 3: Runner (Chạy ứng dụng)
+# ==========================================
 FROM node:20-alpine AS runner
-WORKDIR /apps
+WORKDIR /app
 
-ENV NODE_ENV=production
-
-# Don't run production as root
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nestjs
-
-# Copy production node_modules from builder stage
-COPY --from=builder --chown=nestjs:nodejs /apps/node_modules ./node_modules
-COPY --from=builder --chown=nestjs:nodejs /apps/apps/api/node_modules ./apps/api/node_modules
-
-# Copy built application from builder
-COPY --from=builder --chown=nestjs:nodejs /apps/apps/api/dist ./dist
-
-# Copy built shared package
-COPY --from=builder --chown=nestjs:nodejs /apps/packages/shared/dist ./packages/shared/dist
-COPY --from=builder --chown=nestjs:nodejs /apps/packages/shared/package.json ./packages/shared/package.json
-
-# Copy package.json for proper module resolution
-COPY --from=builder --chown=nestjs:nodejs /apps/package.json ./package.json
-COPY --from=builder --chown=nestjs:nodejs /apps/apps/api/package.json ./apps/api/package.json
-
+# Tạo user non-root bảo mật
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nestjs
 USER nestjs
+
+# Copy dependencies và code đã build
+# Lưu ý: Copy cả node_modules từ builder đảm bảo đủ package
+COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nestjs:nodejs /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=builder --chown=nestjs:nodejs /app/apps/api/dist ./apps/api/dist
+COPY --from=builder --chown=nestjs:nodejs /app/apps/api/package.json ./apps/api/package.json
+
+# (Quan trọng) Copy shared package đã build (nếu có) để đảm bảo symlink hoạt động
+COPY --from=builder --chown=nestjs:nodejs /app/packages ./packages
 
 EXPOSE 3000
 
-# Debug: List structure before running
-RUN ls -la /apps/ && \
-    ls -la /apps/node_modules/@nestjs/ | head -20 && \
-    echo "--- Checking if @nestjs/core exists ---" && \
-    ls -la /apps/node_modules/@nestjs/core/
+ENV PORT=3000
+ENV NODE_ENV=production
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
-
-CMD ["node", "dist/main.js"]
+CMD ["node", "apps/api/dist/main.js"]
