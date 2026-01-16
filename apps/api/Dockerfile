@@ -82,6 +82,7 @@ RUN addgroup --system --gid 1001 nodejs && \
 
 # Copy production node_modules from builder stage
 COPY --from=builder --chown=nestjs:nodejs /apps/node_modules ./node_modules
+COPY --from=builder --chown=nestjs:nodejs /apps/apps/api/node_modules ./apps/api/node_modules
 
 # Copy built application from builder
 COPY --from=builder --chown=nestjs:nodejs /apps/apps/api/dist ./dist
