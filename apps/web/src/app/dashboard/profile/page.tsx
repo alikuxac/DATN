@@ -86,7 +86,7 @@ export default function ProfilePage() {
             gender: user.data.gender,
         });
     }
-  }, [user?.data, form]);
+  }, [user?.data?.firstName, user?.data?.lastName, userData?.mobileNumber, user?.data?.gender, form]);
 
   function onSubmit(data: ProfileFormValues) {
     updateProfile(data);

@@ -13,6 +13,7 @@
     "UNKNOWN_ERROR": "An unknown error occurred",
 
     "BTN_SAVE_CHANGES": "Save Changes",
+    "BTN_VERIFY": "Verify",
 
     "ERR_UPDATE_FAILED": "Failed to save settings",
     "UNVERIFIED_ACCOUNT_WARNING": "Account Unverified",
@@ -57,6 +58,7 @@
     
     "TITLE_VERIFY_OTP": "Verify OTP",
     "DESC_VERIFY_OTP": "Enter the 12-character code sent to your email",
+    "OTP_SENT_DESC": "Enter the 6-digit code sent to {{phone}} via Telegram.",
     "LABEL_OTP": "OTP Code",
     "DESC_OTP_HINT": "Check your email for the verification code",
     "BTN_VERIFY": "Verify Code",
@@ -288,5 +290,11 @@
     "USERS": "Users",
     "LOGOUT": "Logout",
     "LOGOUT_CONFIRM": "Are you sure you want to logout?"
+  },
+  "SESSION": {
+    "TITLE": "Active Sessions",
+    "DESC": "Manage your active sessions and logged-in devices.",
+    "REVOKE_SUCCESS": "Session revoked successfully",
+    "REVOKE_FAILED": "Failed to revoke session"
   }
 }
