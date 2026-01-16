@@ -25,7 +25,10 @@ ENV YARN_CACHE_FOLDER=/root/.yarn/berry/cache
 COPY package.json yarn.lock .yarnrc.yml ./
 
 # Override nmMode in .yarnrc.yml to use classic instead of hardlinks-local
-RUN sed -i 's/nmMode: hardlinks-local/nmMode: classic/' .yarnrc.yml && \
+# Alpine uses BusyBox sed, need to use temp file
+RUN sed 's/nmMode: hardlinks-local/nmMode: classic/' .yarnrc.yml > /tmp/.yarnrc.yml && \
+    mv /tmp/.yarnrc.yml .yarnrc.yml && \
+    echo "=== Modified .yarnrc.yml ===" && \
     cat .yarnrc.yml
 
 # Copy workspace headers
