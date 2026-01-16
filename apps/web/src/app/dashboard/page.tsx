@@ -3,6 +3,7 @@
 import { useDashboardStats } from "@/hooks/useStats";
 import { StatsCards } from "@/components/dashboard/overview/StatsCards";
 import { StatsCharts } from "@/components/dashboard/overview/StatsCharts";
+import { ReportPerformance } from "@/components/dashboard/overview/ReportPerformance";
 import { Loader2 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -36,6 +37,8 @@ export default function DashboardPage() {
         userGrowth={stats.charts.users} 
         reportActivity={stats.charts.reports} 
       />
+      
+      <ReportPerformance />
     </div>
   );
 }

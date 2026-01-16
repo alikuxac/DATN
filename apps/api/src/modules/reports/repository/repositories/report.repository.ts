@@ -37,4 +37,32 @@ export class ReportRepository extends DatabaseObjectIdRepositoryBase<
       }
     ]);
   }
+
+  async getStatistics() {
+    return this.reportModel.aggregate([
+      {
+        $match: {
+          status: 'RESOLVED',
+          acceptedAt: { $exists: true },
+          resolvedAt: { $exists: true }
+        }
+      },
+      {
+        $project: {
+          responseTime: { $subtract: ["$acceptedAt", "$createdAt"] },
+          rescueTime: { $subtract: ["$resolvedAt", "$acceptedAt"] },
+          totalTime: { $subtract: ["$resolvedAt", "$createdAt"] }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          avgResponseTime: { $avg: "$responseTime" },
+          avgRescueTime: { $avg: "$rescueTime" },
+          avgTotalTime: { $avg: "$totalTime" },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+  }
 }

@@ -250,7 +250,7 @@ export default function MapScreen() {
   }, [rescuers, reports, user]);
 
   // --- ACTIONS (Xử lý trực tiếp, ko navigate) ---
-  const handleReportAction = async (action: "accept" | "reject" | "cancel") => {
+  const handleReportAction = async (action: "accept" | "reject" | "cancel" | "complete") => {
     if (!selectedReport) return;
     setIsActionLoading(true);
     try {
@@ -260,6 +260,9 @@ export default function MapScreen() {
       } else if (action === "reject") {
         await apiService.post(`/report/${selectedReport._id}/reject`, {});
         showSuccess("Đã hủy tiếp nhận!");
+      } else if (action === "complete") {
+        await apiService.post(`/report/${selectedReport._id}/complete`, {});
+        showSuccess("Nhiệm vụ hoàn thành! Cảm ơn bạn.");
       }
       // Refresh data & Close modal
       await fetchData();

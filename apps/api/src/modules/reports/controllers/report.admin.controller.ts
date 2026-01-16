@@ -138,4 +138,14 @@ export class ReportAdminController {
     const created = await this.reportService.createByAdmin(body.userId, user._id.toString(), body);
     return created;
   }
+
+  @Get('/stats')
+  @AuthJwtAccessProtected()
+  @PolicyAbilityProtected({
+    subject: ENUM_POLICY_SUBJECT.REPORT,
+    action: [ENUM_POLICY_ACTION.READ],
+  })
+  async getStats() {
+    return this.reportService.getStatistics();
+  }
 }

@@ -39,6 +39,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ReportDialog } from "./report-dialog";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function ReportsPage() {
   const [page, setPage] = useState(1);
@@ -49,6 +50,13 @@ export default function ReportsPage() {
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("all");
+
+  const onTabChange = (val: string) => {
+    setActiveTab(val);
+    if (val === 'all') setStatus("ALL");
+    if (val === 'history') setStatus(ReportStatus.RESOLVED);
+  };
   
   const { t } = useLanguage();
   const { reports, metadata, isLoading, updateStatus, isUpdating } = useReports({
@@ -89,6 +97,16 @@ export default function ReportsPage() {
       </div>
 
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-4 w-full md:w-auto">
+             <Tabs defaultValue="all" className="w-[400px]" onValueChange={onTabChange}>
+              <TabsList>
+                <TabsTrigger value="all">All</TabsTrigger>
+                <TabsTrigger value="active">Active (Live)</TabsTrigger>
+                <TabsTrigger value="history">History (Resolved)</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+
         <div className="flex flex-1 items-center gap-2">
           <Input
             placeholder={t("REPORTS.SEARCH_PLACEHOLDER")}
@@ -96,21 +114,22 @@ export default function ReportsPage() {
             onChange={(e) => setQ(e.target.value)}
             className="w-[250px]"
           />
-          <Select
-            value={status}
-            onValueChange={(val) => setStatus(val as ReportStatus | "ALL")}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder={t("REPORTS.STATUS_PLACEHOLDER")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">{t("REPORTS.ALL_STATUSES")}</SelectItem>
-              <SelectItem value={ReportStatus.PENDING}>{t("REPORTS.STATUS.PENDING")}</SelectItem>
-              <SelectItem value={ReportStatus.IN_PROGRESS}>{t("REPORTS.STATUS.IN_PROGRESS")}</SelectItem>
-              <SelectItem value={ReportStatus.RESOLVED}>{t("REPORTS.STATUS.RESOLVED")}</SelectItem>
-              <SelectItem value={ReportStatus.REJECTED}>{t("REPORTS.STATUS.REJECTED")}</SelectItem>
-            </SelectContent>
-          </Select>
+              {/* Only show specific status selector if needed, or rely on Tabs setting it */}
+              <Select
+                value={status}
+                onValueChange={(val) => setStatus(val as ReportStatus | "ALL")}
+              >
+               <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder={t("REPORTS.STATUS_PLACEHOLDER")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">{t("REPORTS.ALL_STATUSES")}</SelectItem>
+                  <SelectItem value={ReportStatus.PENDING}>{t("REPORTS.STATUS.PENDING")}</SelectItem>
+                  <SelectItem value={ReportStatus.IN_PROGRESS}>{t("REPORTS.STATUS.IN_PROGRESS")}</SelectItem>
+                  <SelectItem value={ReportStatus.RESOLVED}>{t("REPORTS.STATUS.RESOLVED")}</SelectItem>
+                  <SelectItem value={ReportStatus.REJECTED}>{t("REPORTS.STATUS.REJECTED")}</SelectItem>
+                </SelectContent>
+              </Select>
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -471,6 +490,28 @@ export default function ReportsPage() {
                       : "N/A"}
                   </p>
                 </div>
+                {/* Duration / Processing Time */}
+                {selectedReport.status === ReportStatus.RESOLVED && selectedReport.createdAt && selectedReport.updatedAt && (
+                   <div>
+                    <h4 className="font-medium text-sm text-muted-foreground">Processing Time</h4>
+                     <p className="text-foreground text-sm font-bold text-green-600">
+                      {(() => {
+                        const start = new Date(selectedReport.createdAt).getTime();
+                        const end = selectedReport.resolvedAt 
+                          ? new Date(selectedReport.resolvedAt).getTime() 
+                          : new Date(selectedReport.updatedAt).getTime();
+                        const diffMs = end - start;
+                        
+                        // Convert to minutes/hours
+                        const diffMins = Math.floor(diffMs / 60000);
+                        if (diffMins < 60) return `${diffMins} minutes`;
+                        const diffHours = Math.floor(diffMins / 60);
+                        const remainingMins = diffMins % 60;
+                        return `${diffHours}h ${remainingMins}m`;
+                      })()}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           )}

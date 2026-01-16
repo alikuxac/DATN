@@ -8,3 +8,15 @@ export const getDashboardStats = async (): Promise<DashboardStats> => {
   }
   return data;
 };
+
+export interface ReportPerformanceStats {
+  avgResponseTime: number;
+  avgRescueTime: number;
+  avgTotalTime: number;
+  count: number;
+}
+
+export const getReportPerformanceStats = async (): Promise<ReportPerformanceStats> => {
+  const { data } = await api.get('/report/stats'); // Controller path is /report/stats
+  return data;
+};

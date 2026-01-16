@@ -7,3 +7,12 @@ export const useDashboardStats = () => {
     queryFn: getDashboardStats,
   });
 };
+
+import { getReportPerformanceStats } from '../services/stats.service';
+
+export const useReportPerformanceStats = () => {
+  return useQuery({
+    queryKey: ['report-performance-stats'],
+    queryFn: getReportPerformanceStats,
+  });
+};

@@ -127,6 +127,17 @@ export class ReportEntity extends DatabaseObjectIdEntityBase {
   })
   images: string[];
 
+  @DatabaseProp({
+    required: false,
+    type: Date,
+  })
+  acceptedAt?: Date;
+
+  @DatabaseProp({
+    required: false,
+    type: Date,
+  })
+  resolvedAt?: Date;
 }
 
 export const ReportSchema = DatabaseSchema(ReportEntity);

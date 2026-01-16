@@ -12,7 +12,7 @@ interface ReportDetailSheetProps {
   isVolunteerMode: boolean;
   user: any;
   isActionLoading: boolean;
-  handleReportAction: (action: "accept" | "reject" | "cancel") => void;
+  handleReportAction: (action: "accept" | "reject" | "cancel" | "complete") => void;
   handleCall: (phone?: string) => void;
 }
 
@@ -154,15 +154,24 @@ export const ReportDetailSheet = ({
           {isVolunteerMode &&
             selectedReport.status === ENUM_REPORT_STATUS.IN_PROGRESS &&
             selectedReport.volunteer === user?._id && (
-              <AppButton
-                disabled={isActionLoading}
-                onPress={() => handleReportAction("reject")}
-                className="flex-1 bg-red-100 rounded-xl"
-                textClassname="text-red-600 font-bold"
-              >
-                HỦY TIẾP NHẬN
-              </AppButton>
-              // Có thể thêm nút "HOÀN THÀNH" ở đây nếu có API
+              <View className="flex-1 flex-row gap-2">
+                 <AppButton
+                  disabled={isActionLoading}
+                  onPress={() => handleReportAction("reject")}
+                  className="flex-1 bg-red-100 rounded-xl"
+                  textClassname="text-red-600 font-bold"
+                >
+                  HỦY
+                </AppButton>
+                <AppButton
+                  disabled={isActionLoading}
+                  onPress={() => handleReportAction("complete")}
+                  className="flex-[2] bg-green-600 rounded-xl shadow-md elevation-3"
+                  textClassname="text-white font-bold text-lg"
+                >
+                  {isActionLoading ? <ActivityIndicator color="white" /> : "ĐÃ HOÀN THÀNH"}
+                </AppButton>
+              </View>
             )}
 
           {/* 3. Nút Chỉ Đường (Chung cho tất cả) */}

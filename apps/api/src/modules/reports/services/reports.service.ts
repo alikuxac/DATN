@@ -408,7 +408,7 @@ export class ReportService {
     options?: IDatabaseUpdateOptions
   ) {
 
-    return this.reportRepository.updateRaw(
+    const updated = await this.reportRepository.updateRaw(
       {
         _id: reportId,
         status: ENUM_REPORT_STATUS.PENDING, // Chỉ nhận khi còn Pending
@@ -416,9 +416,21 @@ export class ReportService {
       {
         status: ENUM_REPORT_STATUS.IN_PROGRESS,
         rescuer: rescuerId,
+        acceptedAt: new Date(),
       },
       options // Trả về data mới sau khi update
     );
+
+    if (updated) {
+      this.eventEmitter.emit('report.accepted', {
+        reportId: updated._id.toString(),
+        rescuerId: rescuerId,
+        regionId: updated.regionId,
+        report: updated // Pass full report for context if needed
+      });
+    }
+
+    return updated;
   }
 
   async rejectReport(
@@ -432,7 +444,15 @@ export class ReportService {
 
   async completeReport(report: ReportDocument, options?: IDatabaseUpdateOptions) {
     report.status = ENUM_REPORT_STATUS.RESOLVED;
-    return this.reportRepository.save(report, options);
+    report.resolvedAt = new Date();
+    const saved = await this.reportRepository.save(report, options);
+
+    this.eventEmitter.emit('report.resolved', {
+      reportId: saved._id.toString(),
+      report: saved
+    });
+
+    return saved;
   }
 
   async cancelReport(report: ReportDocument, options?: IDatabaseUpdateOptions) {
@@ -513,5 +533,10 @@ export class ReportService {
       },
       { $sort: { _id: 1 } },
     ]);
+  }
+
+  async getStatistics() {
+    const stats = await this.reportRepository.getStatistics();
+    return stats[0] || { avgResponseTime: 0, avgRescueTime: 0, avgTotalTime: 0, count: 0 };
   }
 }
