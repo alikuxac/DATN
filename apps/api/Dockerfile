@@ -48,31 +48,7 @@ RUN yarn workspace @repo/shared build
 RUN yarn workspace api build
 
 # ============================================
-# Stage 2: Production Dependencies (Focused)
-# ============================================
-FROM node:20-alpine AS production-deps
-# Install build dependencies for native modules
-RUN apk add --no-cache libc6-compat python3 make g++
-WORKDIR /apps
-
-RUN corepack enable && corepack prepare yarn@4.12.0 --activate
-ENV YARN_CACHE_FOLDER=/root/.yarn/berry/cache
-
-COPY package.json yarn.lock .yarnrc.yml ./
-COPY apps/api/package.json ./apps/api/
-COPY apps/native/package.json ./apps/native/
-COPY apps/web/package.json ./apps/web/
-COPY packages/shared/package.json ./packages/shared/
-COPY packages/eslint-config/package.json ./packages/eslint-config/
-COPY packages/jest-config/package.json ./packages/jest-config/
-COPY packages/typescript-config/package.json ./packages/typescript-config/
-
-# Install ONLY production dependencies for the API
-RUN --mount=type=cache,target=/root/.yarn/berry/cache \
-    yarn workspaces focus --production api
-
-# ============================================
-# Stage 3: Runner
+# Stage 2: Runner
 # ============================================
 FROM node:20-alpine AS runner
 WORKDIR /apps
@@ -83,8 +59,8 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nestjs
 
-# Copy production node_modules from production-deps stage
-COPY --from=production-deps --chown=nestjs:nodejs /apps/node_modules ./node_modules
+# Copy production node_modules from builder stage
+COPY --from=builder --chown=nestjs:nodejs /apps/node_modules ./node_modules
 
 # Copy built application from builder
 COPY --from=builder --chown=nestjs:nodejs /apps/apps/api/dist ./dist
