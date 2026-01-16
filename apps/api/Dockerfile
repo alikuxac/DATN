@@ -18,16 +18,15 @@ WORKDIR /apps
 # Enable corepack for Yarn Berry
 RUN corepack enable && corepack prepare yarn@4.12.0 --activate
 
-# Set Yarn cache folder and use classic mode for Docker compatibility (no hardlinks)
+# Set Yarn cache folder
 ENV YARN_CACHE_FOLDER=/root/.yarn/berry/cache
-ENV YARN_NM_MODE=classic
-# Disable global cache in Docker
-ENV YARN_ENABLE_GLOBAL_CACHE=false
-# Set hoisting limits
-ENV YARN_NM_HOISTING_LIMITS=workspaces
 
-# Copy root config (WITHOUT .yarnrc.yml to avoid hardlinks override)
-COPY package.json yarn.lock ./
+# Copy root config
+COPY package.json yarn.lock .yarnrc.yml ./
+
+# Override nmMode in .yarnrc.yml to use classic instead of hardlinks-local
+RUN sed -i 's/nmMode: hardlinks-local/nmMode: classic/' .yarnrc.yml && \
+    cat .yarnrc.yml
 
 # Copy workspace headers
 COPY apps/api/package.json ./apps/api/
