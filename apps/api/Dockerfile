@@ -18,8 +18,9 @@ WORKDIR /apps
 # Enable corepack for Yarn Berry
 RUN corepack enable && corepack prepare yarn@4.12.0 --activate
 
-# Set Yarn cache folder
+# Set Yarn cache folder and use classic mode for Docker compatibility (no hardlinks)
 ENV YARN_CACHE_FOLDER=/root/.yarn/berry/cache
+ENV YARN_NM_MODE=classic
 
 # Copy root config
 COPY package.json yarn.lock .yarnrc.yml ./
