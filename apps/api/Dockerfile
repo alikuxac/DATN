@@ -65,8 +65,6 @@ RUN addgroup --system --gid 1001 nodejs && \
 
 # Copy production node_modules from builder stage
 COPY --from=builder --chown=nestjs:nodejs /apps/node_modules ./node_modules
-# Also copy workspace-specific node_modules (due to nmHoistingLimits: workspaces)
-COPY --from=builder --chown=nestjs:nodejs /apps/apps/api/node_modules ./apps/api/node_modules
 
 # Copy built application from builder
 COPY --from=builder --chown=nestjs:nodejs /apps/apps/api/dist ./dist
@@ -82,6 +80,12 @@ COPY --from=builder --chown=nestjs:nodejs /apps/apps/api/package.json ./apps/api
 USER nestjs
 
 EXPOSE 3000
+
+# Debug: List structure before running
+RUN ls -la /apps/ && \
+    ls -la /apps/node_modules/@nestjs/ | head -20 && \
+    echo "--- Checking if @nestjs/core exists ---" && \
+    ls -la /apps/node_modules/@nestjs/core/
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
