@@ -42,8 +42,13 @@ RUN --mount=type=cache,target=/root/.yarn/berry/cache \
 COPY apps/api ./apps/api
 COPY packages ./packages
 
-# Debug: Check if node_modules has content in BUILDER (after first install)
-RUN echo "=== BUILDER: Checking node_modules ===" && \
+# Re-run install to ensure all workspace dependencies are installed
+# Yarn Berry may defer some installs until source code is present
+RUN --mount=type=cache,target=/root/.yarn/berry/cache \
+    yarn install --immutable
+
+# Debug: Check if node_modules has content in BUILDER (after second install)
+RUN echo "=== BUILDER: Checking node_modules AFTER source copy ===" && \
     ls -la node_modules/ | head -20 && \
     echo "=== BUILDER: Checking @nestjs ===" && \
     ls -la node_modules/@nestjs/ | head -10 || echo "No @nestjs in builder!"
