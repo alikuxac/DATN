@@ -47,6 +47,10 @@ COPY packages ./packages
 RUN yarn workspace @repo/shared build
 RUN yarn workspace api build
 
+# Debug: Verify @nestjs/core is installed
+RUN ls -la node_modules/@nestjs/ || echo "No @nestjs in root node_modules" && \
+    ls -la apps/api/node_modules/@nestjs/ 2>/dev/null || echo "No @nestjs in api node_modules"
+
 # ============================================
 # Stage 2: Runner
 # ============================================
@@ -61,6 +65,8 @@ RUN addgroup --system --gid 1001 nodejs && \
 
 # Copy production node_modules from builder stage
 COPY --from=builder --chown=nestjs:nodejs /apps/node_modules ./node_modules
+# Also copy workspace-specific node_modules (due to nmHoistingLimits: workspaces)
+COPY --from=builder --chown=nestjs:nodejs /apps/apps/api/node_modules ./apps/api/node_modules
 
 # Copy built application from builder
 COPY --from=builder --chown=nestjs:nodejs /apps/apps/api/dist ./dist
