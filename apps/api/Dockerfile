@@ -10,7 +10,8 @@
 FROM node:20-alpine AS builder
 
 # Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-RUN apk add --no-cache libc6-compat
+# Install build dependencies for native modules
+RUN apk add --no-cache libc6-compat python3 make g++
 
 WORKDIR /apps
 
@@ -50,7 +51,8 @@ RUN yarn workspace api build
 # Stage 2: Production Dependencies (Focused)
 # ============================================
 FROM node:20-alpine AS production-deps
-RUN apk add --no-cache libc6-compat
+# Install build dependencies for native modules
+RUN apk add --no-cache libc6-compat python3 make g++
 WORKDIR /apps
 
 RUN corepack enable && corepack prepare yarn@4.12.0 --activate
