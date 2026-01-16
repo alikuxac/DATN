@@ -45,7 +45,7 @@ COPY packages/typescript-config/package.json ./packages/typescript-config/
 # Install dependencies (utilizing cache mount)
 # --mount=type=cache persists /root/.yarn/berry/cache between builds
 RUN --mount=type=cache,target=/root/.yarn/berry/cache \
-    yarn install --immutable --check-files
+    yarn install --immutable
 # Copy full source code
 COPY apps/api ./apps/api
 COPY packages ./packages
@@ -53,7 +53,7 @@ COPY packages ./packages
 # Re-run install to ensure all workspace dependencies are installed
 # Yarn Berry may defer some installs until source code is present
 RUN --mount=type=cache,target=/root/.yarn/berry/cache \
-    yarn install --immutable --check-files
+    yarn install --immutable
 
 # Debug: Check if node_modules has content in BUILDER (after second install)
 RUN echo "=== BUILDER: Checking node_modules AFTER source copy ===" && \
