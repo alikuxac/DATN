@@ -38,17 +38,21 @@ COPY packages/typescript-config/package.json ./packages/typescript-config/
 # --mount=type=cache persists /root/.yarn/berry/cache between builds
 RUN --mount=type=cache,target=/root/.yarn/berry/cache \
     yarn install --immutable
-
 # Copy full source code
 COPY apps/api ./apps/api
 COPY packages ./packages
 
+# Debug: Check if node_modules has content in BUILDER (after first install)
+RUN echo "=== BUILDER: Checking node_modules ===" && \
+    ls -la node_modules/ | head -20 && \
+    echo "=== BUILDER: Checking @nestjs ===" && \
+    ls -la node_modules/@nestjs/ | head -10 || echo "No @nestjs in builder!"
+
 # Build shared packages and API
-# Assuming 'turbo' is configured to handle deps, or manual ordering:
 RUN yarn workspace @repo/shared build
 RUN yarn workspace api build
 
-# Debug: Verify @nestjs/core is installed
+# Debug: Verify @nestjs/core is installed after build
 RUN ls -la node_modules/@nestjs/ || echo "No @nestjs in root node_modules" && \
     ls -la apps/api/node_modules/@nestjs/ 2>/dev/null || echo "No @nestjs in api node_modules"
 
