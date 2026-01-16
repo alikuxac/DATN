@@ -21,14 +21,16 @@ RUN corepack enable && corepack prepare yarn@4.12.0 --activate
 # Set Yarn cache folder
 ENV YARN_CACHE_FOLDER=/root/.yarn/berry/cache
 
-# Copy root config
-COPY package.json yarn.lock .yarnrc.yml ./
+# Copy root config (without .yarnrc.yml at first)
+COPY package.json yarn.lock ./
 
-# Override nmMode in .yarnrc.yml to use classic instead of hardlinks-local
-# Alpine uses BusyBox sed, need to use temp file
-RUN sed 's/nmMode: hardlinks-local/nmMode: classic/' .yarnrc.yml > /tmp/.yarnrc.yml && \
-    mv /tmp/.yarnrc.yml .yarnrc.yml && \
-    echo "=== Modified .yarnrc.yml ===" && \
+# Create Docker-optimized .yarnrc.yml (no hardlinks, classic mode)
+RUN echo 'nodeLinker: node-modules' > .yarnrc.yml && \
+    echo 'nmMode: classic' >> .yarnrc.yml && \
+    echo 'enableGlobalCache: false' >> .yarnrc.yml && \
+    echo 'compressionLevel: 0' >> .yarnrc.yml && \
+    echo 'nmHoistingLimits: workspaces' >> .yarnrc.yml && \
+    echo "=== Docker .yarnrc.yml ===" && \
     cat .yarnrc.yml
 
 # Copy workspace headers
