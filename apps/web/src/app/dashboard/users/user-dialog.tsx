@@ -94,24 +94,47 @@ export function UserDialog({ open, onOpenChange, user, currentUserRole }: UserDi
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     if (isEdit && user) {
-      const updateData: UpdateUserRequest = {
-        firstName: values.firstName,
-        lastName: values.lastName,
-        gender: values.gender,
-        mobileNumber: values.mobileNumber,
-        email: values.email,
-      };
+      const u = user as any;
+      const updateData: UpdateUserRequest = {};
+
+      // Chỉ thêm field nếu giá trị thay đổi
+      if (values.email !== u.email) {
+        updateData.email = values.email;
+      }
+      if (values.firstName !== u.firstName) {
+        updateData.firstName = values.firstName;
+      }
+      if (values.lastName !== u.lastName) {
+        updateData.lastName = values.lastName;
+      }
+      if (values.gender !== u.gender) {
+        updateData.gender = values.gender;
+      }
+      
+      // Xử lý mobileNumber: chỉ gửi nếu thay đổi và có giá trị
+      const oldMobileNumber = u.mobileNumber || "";
+      const newMobileNumber = values.mobileNumber?.trim() || "";
+      if (newMobileNumber !== oldMobileNumber) {
+        if (newMobileNumber !== "") {
+          updateData.mobileNumber = newMobileNumber;
+        }
+        // Nếu xóa số điện thoại (từ có giá trị → empty), không gửi field
+      }
       
       const promises = [];
-      promises.push(new Promise<void>((resolve, reject) => {
-          updateUser(
-            { id: user._id, data: updateData },
-            {
-              onSuccess: () => resolve(),
-              onError: (error) => reject(error),
-            }
-          );
-      }));
+      
+      // Chỉ gọi update nếu có field thay đổi
+      if (Object.keys(updateData).length > 0) {
+        promises.push(new Promise<void>((resolve, reject) => {
+            updateUser(
+              { id: user._id, data: updateData },
+              {
+                onSuccess: () => resolve(),
+                onError: (error) => reject(error),
+              }
+            );
+        }));
+      }
 
       // Check if role changed
       if (values.role && values.role !== user.role) {
@@ -124,6 +147,12 @@ export function UserDialog({ open, onOpenChange, user, currentUserRole }: UserDi
                   }
               )
           }));
+      }
+
+      // Nếu không có thay đổi nào, đóng dialog
+      if (promises.length === 0) {
+        onOpenChange(false);
+        return;
       }
 
       Promise.all(promises).then(() => {
