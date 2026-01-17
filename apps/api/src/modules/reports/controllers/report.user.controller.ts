@@ -100,7 +100,7 @@ export class ReportUserController {
 
     try {
       if (user.role !== ENUM_USER_ROLE.USER) {
-        return this.reportService.createByUser(user._id.toString(), body);
+        return this.reportService.createByUser(user._id.toString(), user._id.toString(), body);
       }
 
       if (!user.verification?.mobileNumber) {
@@ -116,7 +116,7 @@ export class ReportUserController {
         throw new BadRequestException('report.error.tooClose');
       }
 
-      await this.reportService.createByUser(user._id.toString(), body, { session });
+      await this.reportService.createByUser(user._id.toString(), user._id.toString(), body, { session });
 
       await this.databaseService.commitTransaction(session);
     } catch (err: unknown) {
