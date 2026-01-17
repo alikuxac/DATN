@@ -9,7 +9,7 @@ interface MapRescuerMarkerProps {
   onSelected: (rescuer: any) => void;
 }
 
-export const MapRescuerMarker = ({ rescuer, onSelected }: MapRescuerMarkerProps) => {
+export const MapRescuerMarker = React.memo(({ rescuer, onSelected }: MapRescuerMarkerProps) => {
   return (
     <PointAnnotation
       id={`rescuer-${rescuer._id}`}
@@ -35,4 +35,11 @@ export const MapRescuerMarker = ({ rescuer, onSelected }: MapRescuerMarkerProps)
       </View>
     </PointAnnotation>
   );
-};
+}, (prev, next) => {
+  return (
+    prev.rescuer._id === next.rescuer._id &&
+    prev.rescuer.location?.lat === next.rescuer.location?.lat &&
+    prev.rescuer.location?.lng === next.rescuer.location?.lng &&
+    prev.rescuer.lastLocationAt === next.rescuer.lastLocationAt
+  );
+});

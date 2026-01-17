@@ -15,7 +15,6 @@ export interface Insets {
 
 // Get device language
 
-
 interface AppState {
   theme: Theme;
   language: LanguageCode;
@@ -23,13 +22,14 @@ interface AppState {
   isFirstLaunch: boolean;
   isLoading: boolean;
   token: string | null;
+  refreshToken: string | null;
   user: IUserGetResponse | null;
   regionId: string;
 }
 
 const initialState: AppState = {
   theme: 'light',
-  language: getDeviceLanguage(),
+  language: 'vi',
   insets: {
     left: 0,
     top: 0,
@@ -39,6 +39,7 @@ const initialState: AppState = {
   isFirstLaunch: true,
   isLoading: false,
   token: null,
+  refreshToken: null,
   user: null,
   regionId: 'unknown',
 };
@@ -70,8 +71,12 @@ const appSlice = createSlice({
     setToken: (state, action: PayloadAction<string | null>) => {
       state.token = action.payload;
     },
+    setRefreshToken: (state, action: PayloadAction<string | null>) => {
+      state.refreshToken = action.payload;
+    },
     logout: (state) => {
       state.token = null;
+      state.refreshToken = null;
       state.user = null;
       state.theme = 'light';
       state.language = getDeviceLanguage();
@@ -86,5 +91,5 @@ const appSlice = createSlice({
   },
 });
 
-export const { setTheme, toggleTheme, setLanguage, setInsets, setIsFirstLaunch, setIsLoading, setToken, setUser, setRegionId, logout } = appSlice.actions;
+export const { setTheme, toggleTheme, setLanguage, setInsets, setIsFirstLaunch, setIsLoading, setToken, setRefreshToken, setUser, setRegionId, logout } = appSlice.actions;
 export default appSlice.reducer;

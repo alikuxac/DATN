@@ -13,7 +13,7 @@ import { AppText, AppInput, AppButton, Icon } from "@/components/ui";
 
 // Redux (để đổi theme/lang - dựa trên context cũ)
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { setLanguage, setTheme, setToken, setIsFirstLaunch } from "@/store/slices/appSlice"; // Giả định action
+import { setLanguage, setTheme, setToken, setRefreshToken, setIsFirstLaunch } from "@/store/slices/appSlice"; // Giả định action
 import { useToast } from "@/components/ui/ToastProvider";
 
 import AuthHeader from "@/components/auth/header";
@@ -88,12 +88,13 @@ export default function SignInScreen() {
         }
       );
 
-      const token = response?.data?.accessToken;
-
-      if (token) {
+      const { accessToken, refreshToken } = response?.data || {};
+      
+      if (accessToken) {
         // ✅ Lưu token
-        dispatch(setToken(token));
-        apiService.setAuthToken(token);
+        dispatch(setToken(accessToken));
+        dispatch(setRefreshToken(refreshToken));
+        apiService.setAuthToken(accessToken);
 
         // ✅ Lấy profile từ server để sync preferences
         try {
@@ -109,7 +110,7 @@ export default function SignInScreen() {
           }
 
           // Lưu user data
-          dispatch(setToken(token));
+          // dispatch(setToken(token)); // Removed redundant dispatch
         } catch (profileError) {
           console.warn("Failed to fetch profile, using local settings:", profileError);
         }

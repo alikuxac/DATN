@@ -54,7 +54,7 @@ function RootNavigator() {
 
   // Quan trọng: useSocketNotification có thể dùng navigation bên trong
   // Chúng ta truyền router hoặc check điều kiện bên trong hook
-  const { socket, alertData, setAlertData } = useSocketNotification();
+  const { socket, alertData, setAlertData, isConnected } = useSocketNotification();
 
   useLocationTracking(token);
 
@@ -109,6 +109,19 @@ function RootNavigator() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       </Stack>
+
+      {/* Socket Status Indicator */}
+      <View
+        className={`absolute w-3 h-3 rounded-full border border-white shadow-sm transition-all duration-300 ${
+          isConnected ? "bg-green-500" : "bg-red-500"
+        }`}
+        style={{
+          top: 50, // Avoid dynamic inset for now or use insets.top + 10
+          right: 20,
+          opacity: 0.8,
+        }}
+        pointerEvents="none"
+      />
     </ThemeProvider>
   );
 }

@@ -10,7 +10,7 @@ interface MapReportMarkerProps {
   onSelected: (report: any) => void;
 }
 
-export const MapReportMarker = ({ report, onSelected }: MapReportMarkerProps) => {
+export const MapReportMarker = React.memo(({ report, onSelected }: MapReportMarkerProps) => {
   const getPinColorClass = (status: ENUM_REPORT_STATUS) => {
     switch (status) {
       case ENUM_REPORT_STATUS.PENDING:
@@ -54,4 +54,12 @@ export const MapReportMarker = ({ report, onSelected }: MapReportMarkerProps) =>
       </View>
     </PointAnnotation>
   );
-};
+}, (prev, next) => {
+  return (
+    prev.report._id === next.report._id &&
+    prev.report.status === next.report.status &&
+    prev.report.type === next.report.type &&
+    prev.report.location?.lat === next.report.location?.lat &&
+    prev.report.location?.lng === next.report.location?.lng
+  );
+});

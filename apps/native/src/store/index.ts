@@ -9,10 +9,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import appReducer from './slices/appSlice'; // (Ví dụ reducer của bạn)
 import notificationReducer from './slices/notificationSlice';
+import offlineReducer from './slices/offlineSlice';
 
 const rootReducer = combineReducers({
   app: appReducer,
   notification: notificationReducer,
+  offline: offlineReducer,
   // ... các reducer khác
 });
 
@@ -20,7 +22,7 @@ const persistConfig = {
   key: 'root',
   version: 1,
   storage: AsyncStorage,
-  whitelist: ['app'], // Chỉ lưu những slice cần thiết
+  whitelist: ['app', 'offline'], // Chỉ lưu những slice cần thiết
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

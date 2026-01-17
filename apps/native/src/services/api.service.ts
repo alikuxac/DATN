@@ -1,5 +1,5 @@
 import { store } from "@/store";
-import { logout } from "@/store/slices/appSlice";
+import { logout, setRefreshToken, setToken } from "@/store/slices/appSlice";
 
 // 1. Cập nhật ApiError để chứa "code" (App Status Code)
 export class ApiError extends Error {
@@ -29,7 +29,7 @@ class ApiService {
 
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit & { _isRetry?: boolean } = {}
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
     const state = store.getState();
@@ -54,10 +54,53 @@ class ApiService {
 
       // Xử lý 401 - Session expired
       if (response.status === 401) {
-        // Dispatch logout action để clear toàn bộ auth state
-        store.dispatch(logout());
-        // AuthGuard sẽ tự động redirect về login khi token = null
-        throw new ApiError(401, 5100, 'Session expired');
+        if (options._isRetry) {
+          store.dispatch(logout());
+          throw new ApiError(401, 5100, 'Session expired');
+        }
+
+        try {
+          const refreshToken = state.app.refreshToken;
+          if (!refreshToken) {
+            store.dispatch(logout());
+            throw new ApiError(401, 5100, 'Session expired');
+          }
+
+          // Call Refresh API
+          const refreshResponse = await fetch(`${this.baseUrl}/auth/refresh`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${refreshToken}`
+            }
+          });
+
+          if (refreshResponse.ok) {
+            const resData = await refreshResponse.json();
+            const { accessToken, refreshToken: newRefreshToken } = resData.data;
+
+            // Dispatch update store
+            store.dispatch(setToken(accessToken));
+            store.dispatch(setRefreshToken(newRefreshToken));
+            this.setAuthToken(accessToken);
+
+            // Retry original request
+            return this.request<T>(endpoint, {
+              ...options,
+              headers: {
+                ...options.headers,
+                'Authorization': `Bearer ${accessToken}`
+              },
+              _isRetry: true
+            });
+          } else {
+            store.dispatch(logout());
+            throw new ApiError(401, 5100, 'Session expired');
+          }
+        } catch (error) {
+          store.dispatch(logout());
+          throw new ApiError(401, 5100, 'Session expired');
+        }
       }
 
       if (response.status === 204) {
