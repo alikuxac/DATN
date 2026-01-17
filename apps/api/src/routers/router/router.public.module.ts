@@ -12,6 +12,8 @@ import { ActivityModule } from '@modules/activity/activity.module';
 import { VerificationModule } from '@modules/verification/verification.module';
 import { HelloPublicController } from '@modules/hello/controllers/hello.public.controller';
 import { ResetPasswordModule } from '@modules/reset-password/reset-password.module';
+import { ReportPublicController } from '@modules/reports/controllers/report.public.controller';
+import { ReportsModule } from '@modules/reports/reports.module';
 
 @Module({
   imports: [
@@ -22,10 +24,11 @@ import { ResetPasswordModule } from '@modules/reset-password/reset-password.modu
     SessionModule,
     ActivityModule,
     VerificationModule,
+    ReportsModule,
     BullModule.registerQueueAsync({
       name: ENUM_WORKER_QUEUES.EMAIL_QUEUE,
     })
   ],
-  controllers: [AuthPublicController, ResetPasswordPublicController, HelloPublicController],
+  controllers: [AuthPublicController, ResetPasswordPublicController, HelloPublicController, ReportPublicController],
 })
 export class RoutesPublicModule { }

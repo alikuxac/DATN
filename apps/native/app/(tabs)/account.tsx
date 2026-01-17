@@ -18,7 +18,6 @@ import { ENUM_USER_ROLE, IResponse, IUserProfileReponse } from "@repo/shared";
 import { useToast } from "@/components/ui/ToastProvider";
 import { ProfileCard } from "@/components/account/ProfileCard";
 import { VolunteerStatusCard } from "@/components/account/VolunteerStatusCard";
-import { PhoneSettingsCard } from "@/components/account/PhoneSettingsCard";
 
 export default function AccountScreen() {
   const router = useRouter();
@@ -117,14 +116,6 @@ export default function AccountScreen() {
           theme={theme}
           colors={colors}
           t={t}
-        />
-
-        {/* 1.5. PHONE SETTINGS (Update Phone & Verify) */}
-        <PhoneSettingsCard
-             userData={userData}
-             colors={colors}
-             t={t}
-             onUpdateSuccess={fetchUserProfile}
         />
 
         {/* 2. TRẠNG THÁI HOẠT ĐỘNG (Ví dụ: Volunteer Mode) */}

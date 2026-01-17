@@ -22,7 +22,7 @@ interface Notification {
 export default function NotificationsScreen() {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { items: notifications } = useAppSelector((state) => state.notification);
+  const { items: notifications = [] } = useAppSelector((state) => state.notification);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const { socket } = useSocketNotification();

@@ -18193,6 +18193,7 @@ __metadata:
     chalk: "npm:^5.6.2"
     class-variance-authority: "npm:^0.7.1"
     clsx: "npm:^2.1.1"
+    date-fns: "npm:^4.1.0"
     dotenv: "npm:^17.2.3"
     expo: "npm:~54.0.29"
     expo-application: "npm:^7.0.8"
@@ -18217,8 +18218,6 @@ __metadata:
     react-native-country-picker-modal: "npm:^2.0.0"
     react-native-gesture-handler: "npm:~2.28.0"
     react-native-localize: "npm:^3.6.0"
-    react-native-mmkv: "npm:^4.1.0"
-    react-native-nitro-modules: "npm:^0.31.10"
     react-native-reanimated: "npm:~4.1.1"
     react-native-safe-area-context: "npm:5.6.2"
     react-native-screens: "npm:~4.16.0"
@@ -20529,27 +20528,6 @@ __metadata:
     react-native-macos:
       optional: true
   checksum: 10c0/d36f00c07d390aa86e72064266d4b21924920a900647bb99175aeccc7f67aad8e4fcebc7c4a932f3faf97221a0e3df78bd08f204bd4ba6fc5afc8386c8d4be71
-  languageName: node
-  linkType: hard
-
-"react-native-mmkv@npm:^4.1.0":
-  version: 4.1.1
-  resolution: "react-native-mmkv@npm:4.1.1"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-    react-native-nitro-modules: "*"
-  checksum: 10c0/53f87ab5daa31b5a1d236e29cacca4a7ea0cccb8604ee88fb7725db786b6415476a737ae1f0266225c4d283ef0326524250b3cef6add6eb6b7efa1c480d46678
-  languageName: node
-  linkType: hard
-
-"react-native-nitro-modules@npm:^0.31.10":
-  version: 0.31.10
-  resolution: "react-native-nitro-modules@npm:0.31.10"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: 10c0/0acc6ca5f12e24a6601e682070f257a771b95214c11fba911b342af705071234544c93076900f43400c8ae2f1a6738011b120e4425813968102997860ffd7626
   languageName: node
   linkType: hard
 

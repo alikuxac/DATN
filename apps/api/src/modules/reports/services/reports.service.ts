@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ReportRepository } from '@modules/reports/repository/repositories/report.repository';
 import { ReportCreateRequestDto } from '@modules/reports/dtos/request/report.create.request.dto';
 import { ReportDocument, ReportEntity } from '@modules/reports/repository/entities/report.entity';
-import { ENUM_REPORT_LOCATION_TYPE, ENUM_REPORT_STATUS, ENUM_USER_ROLE } from '@repo/shared';
+import { ENUM_REPORT_LOCATION_TYPE, ENUM_REPORT_SEVERITY, ENUM_REPORT_SOURCE, ENUM_REPORT_STATUS, ENUM_USER_ROLE } from '@repo/shared';
 import { IDatabaseCreateOptions, IDatabaseDeleteManyOptions, IDatabaseDeleteOptions, IDatabaseFindAllOptions, IDatabaseFindOneOptions, IDatabaseGetTotalOptions, IDatabaseUpdateOptions } from '@common/database/interfaces/database.interface';
 import { IReportDocument, IReportEntity } from '../interfaces/report.interface';
 import { ReportListResponseDto } from '../dtos/response/report.list.reponse.dto';
@@ -15,6 +15,7 @@ import { HelperGeoService } from '@common/helper/services/helper.geo.service';
 import { ReportUpdateRequestDto } from '../dtos/request/report.update.request.dto';
 import { ReportDetailResponseDto } from '../dtos/response/report.detail.response.dto';
 import { S3Service } from '@common/s3/s3.service';
+import { CreateGuestReportDto } from '../dtos/request/report.create-guest.request.dto';
 
 @Injectable()
 export class ReportService {
@@ -153,6 +154,7 @@ export class ReportService {
 
   async createByUser(
     userId: string,
+    creatorId: string,
     dto: ReportCreateRequestDto,
     options?: IDatabaseCreateOptions
   ): Promise<ReportEntity> {
@@ -204,6 +206,56 @@ export class ReportService {
     };
 
     return this.reportRepository.create<ReportEntity>(create, options);
+  }
+
+  async createGuest(
+    dto: CreateGuestReportDto,
+    options?: IDatabaseCreateOptions
+  ): Promise<ReportEntity> {
+    const create: ReportEntity = new ReportEntity();
+
+    create.type = dto.type;
+    create.notes = dto.notes;
+    create.severity = dto.severity || ENUM_REPORT_SEVERITY.HIGH; // Guest SOS implies urgency
+    create.peopleCount = 1;
+    create.isPublic = true;
+    create.status = ENUM_REPORT_STATUS.PENDING;
+    create.regionId = dto.regionId;
+    create.source = ENUM_REPORT_SOURCE.GUEST;
+    create.isVerified = false;
+    create.deviceId = dto.deviceId;
+
+    create.location = {
+      type: ENUM_REPORT_LOCATION_TYPE.POINT,
+      coordinates: dto.coordinates,
+    };
+
+    if (dto.phone) {
+      create.notes = (create.notes ? create.notes + '\n' : '') + `Guest Phone: ${dto.phone}`;
+    }
+
+    const report = await this.reportRepository.create<ReportEntity>(create, options);
+
+    this.eventEmitter.emit('report.created', {
+      reportId: report._id.toString(),
+      regionId: dto.regionId,
+      data: report
+    });
+
+    return report;
+  }
+
+  async checkGuestRateLimit(deviceId: string): Promise<boolean> {
+    const oneHourAgo = new Date();
+    oneHourAgo.setHours(oneHourAgo.getHours() - 1);
+
+    const count = await this.reportRepository.getTotal({
+      deviceId: deviceId,
+      source: ENUM_REPORT_SOURCE.GUEST,
+      createdAt: { $gte: oneHourAgo }
+    });
+
+    return count < 3;
   }
 
   async findAllApp(

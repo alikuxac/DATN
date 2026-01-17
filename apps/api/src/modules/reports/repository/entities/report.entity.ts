@@ -8,7 +8,8 @@ import {
   ENUM_REPORT_STATUS,
   ENUM_REPORT_LOCATION_TYPE,
   ENUM_REPORT_SEVERITY,
-  ENUM_REPORT_TYPE
+  ENUM_REPORT_TYPE,
+  ENUM_REPORT_SOURCE
 } from "@repo/shared";
 import { IDatabaseDocument } from "@common/database/interfaces/database.interface";
 import { UserEntity } from "@modules/users/repository/entities/user.entity";
@@ -40,7 +41,7 @@ export class ReportLocation {
 })
 export class ReportEntity extends DatabaseObjectIdEntityBase {
   @DatabaseProp({
-    required: true,
+    required: false,
     index: true,
     trim: true,
     type: String,
@@ -49,7 +50,7 @@ export class ReportEntity extends DatabaseObjectIdEntityBase {
   user: string;
 
   @DatabaseProp({
-    required: true,
+    required: false,
     index: true,
     trim: true,
     type: String,
@@ -138,6 +139,43 @@ export class ReportEntity extends DatabaseObjectIdEntityBase {
     type: Date,
   })
   resolvedAt?: Date;
+
+  @DatabaseProp({
+    required: true,
+    enum: ENUM_REPORT_SOURCE,
+    default: ENUM_REPORT_SOURCE.APP,
+    index: true,
+  })
+  source: ENUM_REPORT_SOURCE;
+
+  @DatabaseProp({
+    required: true,
+    default: true,
+  })
+  isVerified: boolean;
+
+  @DatabaseProp({
+    required: false,
+    index: true,
+    trim: true,
+  })
+  deviceId?: string;
+
+  @DatabaseProp({
+    required: true,
+    default: false,
+  })
+  isProxyReport: boolean;
+
+  @DatabaseProp({
+    type: Object, // Or specific schema if needed, keeping it simple as nested object for now or defined class
+    required: false,
+  })
+  proxyData?: {
+    victimName: string;
+    victimCount: number;
+    victimNote: string;
+  };
 }
 
 export const ReportSchema = DatabaseSchema(ReportEntity);

@@ -3,7 +3,14 @@ import "@/config/global.css";
 import "@/config/i18n";
 
 import React, { useEffect } from "react";
-import { StatusBar, View } from "react-native";
+import { StatusBar, View, LogBox } from "react-native";
+
+LogBox.ignoreLogs([
+  "line dasharray",
+  "Request failed due to a permanent error: Canceled",
+  "Reading from `value` during component render",
+]);
+
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -27,6 +34,7 @@ import { useSocketNotification } from "@/hooks/useSocketNotification";
 import { useLocationTracking } from "@/hooks/useUserLocation";
 import { useExpoPushToken } from "@/hooks/useExpoPushToken";
 import { usePreferencesSync } from "@/hooks/usePreferencesSync";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import InsetsHelper from "@/components/helpers/InsetsHelper";
 import { LanguageHelper } from "@/components/helpers/LanguageHelper";
 import { DialogProvider } from "@/components/ui/DialogProvider";
@@ -51,6 +59,7 @@ function RootNavigator() {
   // Gọi hooks nhưng có điều kiện hoặc để hook tự handle null
   useExpoPushToken();
   usePreferencesSync(); // ← Sync preferences từ server khi app khởi động
+  useAuthRedirect(); // ← Thêm Auth Redirect logic ở đây
 
   // Quan trọng: useSocketNotification có thể dùng navigation bên trong
   // Chúng ta truyền router hoặc check điều kiện bên trong hook

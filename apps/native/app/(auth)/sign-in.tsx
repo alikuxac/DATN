@@ -222,6 +222,25 @@ export default function SignInScreen() {
             {t("AUTH.BTN_LOGIN")}
           </AppButton>
 
+          <AppButton
+            variant="ghost" // Using ghost variant, but customizing style for outline look
+            size="lg"
+            onPress={() => router.push("/(auth)/guest-sos")}
+            className="w-full h-14 rounded-full shadow-md"
+            style={{
+              height: 56,
+              borderRadius: 100,
+              backgroundColor: theme === "dark" ? "#334155" : "#ffffff",
+              borderWidth: 2,
+              borderColor: "#D32F2F", // Red border for SOS
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+            textClassname="text-red-600 dark:text-red-400 font-sans-bold"
+          >
+            {t("AUTH.BTN_GUEST_SOS")}
+          </AppButton>
+
           {/* <AppButton
             variant="ghost"
             size="lg"
@@ -253,12 +272,9 @@ export default function SignInScreen() {
       </View>
       {/* 5. Footer: Register Link */}
       <View className="flex-row justify-center items-center mt-8 gap-1">
-        {/* Text câu hỏi: Màu xám trung tính */}
         <AppText className="text-neutrals600 dark:text-neutrals400 text-lg font-sans-regular">
           {t("AUTH.HINT_NO_ACCOUNT")}
         </AppText>
-
-        {/* Text Link: Màu xanh dương + In đậm */}
         <Pressable onPress={handleRegister}>
           <AppText
             className="text-lg font-sans-bold"

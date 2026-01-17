@@ -25,3 +25,8 @@ export enum ENUM_REPORT_TYPE {
   EVACUATION = 'evacuation',
   OTHER = 'other',
 }
+
+export enum ENUM_REPORT_SOURCE {
+  APP = 'app',
+  GUEST = 'guest',
+}

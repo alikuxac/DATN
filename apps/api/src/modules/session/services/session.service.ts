@@ -31,6 +31,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 @Injectable()
 export class SessionService {
     private readonly refreshTokenExpiration: number;
+    private readonly refreshTokenExpirationMs: number;
     private readonly appName: string;
 
     private readonly keyPrefix: string;
@@ -45,6 +46,9 @@ export class SessionService {
     ) {
         this.refreshTokenExpiration = this.configService.get<number>(
             'auth.jwt.refreshToken.expirationTime'
+        )!;
+        this.refreshTokenExpirationMs = this.configService.get<number>(
+            'auth.jwt.refreshToken.expirationTimeMs'
         )!;
         this.appName = this.configService.get<string>('app.name')!;
 
@@ -207,7 +211,7 @@ export class SessionService {
         await this.cacheManager.set(
             key,
             { user: user._id },
-            this.refreshTokenExpiration
+            this.refreshTokenExpirationMs
         );
 
         return;

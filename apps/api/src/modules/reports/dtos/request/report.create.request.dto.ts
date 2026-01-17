@@ -41,4 +41,15 @@ export class ReportCreateRequestDto implements IReportCreateRequest {
   @ArrayMaxSize(5)
   @IsOptional()
   images?: string[];
+
+  @IsBoolean()
+  @IsOptional()
+  isProxyReport?: boolean;
+
+  @IsOptional()
+  proxyData?: {
+    victimName: string;
+    victimCount: number;
+    victimNote: string;
+  };
 }

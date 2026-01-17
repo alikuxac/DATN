@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
 import { AppText, Avatar, Icon } from '@/components/ui';
 import { InfoRow } from './InfoRow';
 import { uploadAvatar } from '@/api/upload';
@@ -15,45 +16,7 @@ interface ProfileCardProps {
 }
 
 export const ProfileCard = ({ userData, theme, colors, t, onAvatarUpdate }: ProfileCardProps) => {
-  const [uploading, setUploading] = useState(false);
-
-  const handleUploadAvatar = async () => {
-    // Get token from storage
-    const token = await AsyncStorage.getItem('accessToken');
-    if (!token) {
-      Alert.alert('Lỗi', 'Không tìm thấy token. Vui lòng đăng nhập lại.');
-      return;
-    }
-    // Request permissions
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Quyền truy cập', 'Cần cấp quyền truy cập thư viện ảnh');
-      return;
-    }
-
-    // Pick image with compression
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.5,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      const asset = result.assets[0];
-      setUploading(true);
-
-      try {
-        const avatarUrl = await uploadAvatar(asset, token);
-        onAvatarUpdate?.(avatarUrl);
-        Alert.alert('Thành công', 'Đã cập nhật avatar');
-      } catch (error: any) {
-        Alert.alert('Lỗi', `Không thể upload avatar: ${error?.message || 'Unknown error'}`);
-      } finally {
-        setUploading(false);
-      }
-    }
-  };
+  const router = useRouter();
 
   return (
     <View
@@ -62,6 +25,12 @@ export const ProfileCard = ({ userData, theme, colors, t, onAvatarUpdate }: Prof
         { backgroundColor: colors.card, borderColor: colors.border },
       ]}
     >
+      <TouchableOpacity 
+        style={styles.settingsButton}
+        onPress={() => router.push('/settings/')}
+      >
+        <Icon name="Settings" size={24} color={colors.foreground} />
+      </TouchableOpacity>
       <View style={styles.profileHeader}>
         <View style={styles.avatarContainer}>
           <Avatar
@@ -71,17 +40,6 @@ export const ProfileCard = ({ userData, theme, colors, t, onAvatarUpdate }: Prof
             className="bg-blue-100"
             textClassName="text-blue-600 text-2xl"
           />
-          <TouchableOpacity
-            style={[styles.editAvatarButton, { backgroundColor: colors.primary }]}
-            onPress={handleUploadAvatar}
-            disabled={uploading}
-          >
-            {uploading ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <Icon name="Camera" size={16} color="#fff" />
-            )}
-          </TouchableOpacity>
         </View>
 
         <View style={styles.profileNameContainer}>
@@ -218,6 +176,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.03,
     shadowRadius: 2,
     elevation: 1,
+  },
+  settingsButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    zIndex: 10,
+    padding: 8,
   },
   profileHeader: {
     flexDirection: 'row',

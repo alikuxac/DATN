@@ -3,7 +3,9 @@ import {
     Controller,
     Get,
     InternalServerErrorException,
+    Param,
     Put,
+    NotFoundException
 } from '@nestjs/common';
 import { ClientSession } from 'mongoose';
 import { ENUM_STATUS_CODE_ERROR } from '@repo/shared';
@@ -295,5 +297,22 @@ export class UserSharedController {
                 _error: err,
             });
         }
+    }
+
+    @Response('user.publicInfo')
+    @AuthJwtAccessProtected()
+    @Get('/info/:id')
+    async info(
+        @Param('id') id: string
+    ): Promise<IResponse<UserProfileResponseDto>> {
+        const user = await this.userService.findOneById(id);
+        if (!user) {
+            throw new NotFoundException({
+                statusCode: ENUM_STATUS_CODE_ERROR.USER_NOT_FOUND,
+                message: 'user.error.notFound',
+            });
+        }
+        const mapped: UserProfileResponseDto = this.userService.mapProfile(user);
+        return { data: mapped };
     }
 }

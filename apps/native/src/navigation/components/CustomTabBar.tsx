@@ -39,7 +39,7 @@ export default function CustomTabBar({ state, descriptors, navigation }: BottomT
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
-      {state.routes.map((route, index) => {
+      {state.routes.filter(route => route.name !== 'index').map((route, index) => {
         const { options } = descriptors[route.key];
 
         const isFocused = state.index === index;

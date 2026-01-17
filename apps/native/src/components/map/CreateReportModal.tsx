@@ -30,6 +30,7 @@ interface Props {
   onClose: () => void;
   location: { lat: number; long: number } | null;
   onSuccess?: () => void;
+  onPickLocation?: () => void;
 }
 
 // Cấu hình hiển thị (Label + Màu + Icon)
@@ -88,6 +89,7 @@ export const CreateReportModal = ({
   onClose,
   location,
   onSuccess,
+  onPickLocation,
 }: Props) => {
   const [type, setType] = useState<ENUM_REPORT_TYPE>(ENUM_REPORT_TYPE.FOOD);
   const [severity, setSeverity] = useState<ENUM_REPORT_SEVERITY>(
@@ -96,6 +98,12 @@ export const CreateReportModal = ({
   const [peopleCount, setPeopleCount] = useState(1);
   const [description, setDescription] = useState("");
   
+  // Proxy State
+  const [isProxy, setIsProxy] = useState(false);
+  const [victimName, setVictimName] = useState("");
+  const [victimCount, setVictimCount] = useState(1);
+  const [victimNote, setVictimNote] = useState("");
+  
   const [loading, setLoading] = useState(false);
   const { showToast } = useToast();
 
@@ -103,21 +111,35 @@ export const CreateReportModal = ({
 
   const handleSubmit = async () => {
     if (!location) return;
-    if (!description.trim()) {
+    if (!description.trim() && !isProxy) { 
       showToast({ title: "Chưa nhập mô tả", message: "Vui lòng nhập mô tả nhu cầu", type: "warning" });
       return;
     }
 
+    if (isProxy && !victimName.trim()) {
+         showToast({ title: "Thiếu thông tin", message: "Vui lòng nhập tên người cần giúp", type: "warning" });
+         return;
+    }
+
     const regionId = getRegionFromGeoJSON(location.lat, location.long);
-    console.log('Region Id before create report:',regionId)
     
-    const payload = {
+    const payload: any = {
         coordinates: [location.long, location.lat], // [longitude, latitude]
         type,
         notes: description.trim(),
         regionId,
         severity,
+        peopleCount: isProxy ? victimCount : peopleCount,
+        isProxyReport: isProxy,
     };
+
+    if (isProxy) {
+        payload.proxyData = {
+            victimName,
+            victimCount,
+            victimNote
+        };
+    }
 
     try {
       setLoading(true);
@@ -135,6 +157,9 @@ export const CreateReportModal = ({
       showToast({ title: "Gửi yêu cầu thành công!", message: "Yêu cầu của bạn đã được gửi đi", type: "success" });
       setDescription("");
       setType(ENUM_REPORT_TYPE.FOOD);
+      setIsProxy(false);
+      setVictimName("");
+      setVictimNote("");
       onSuccess?.();
       onClose();
     } catch (error: any) {
@@ -142,6 +167,9 @@ export const CreateReportModal = ({
           showToast({ title: "Đã lưu Offline", message: "Hệ thống sẽ tự động gửi khi có mạng", type: "info" });
           setDescription("");
           setType(ENUM_REPORT_TYPE.FOOD);
+          setIsProxy(false);
+          setVictimName("");
+          setVictimNote("");
           onSuccess?.();
           onClose();
       } else {
@@ -188,6 +216,81 @@ export const CreateReportModal = ({
             className="flex-1 px-6 pt-4"
             showsVerticalScrollIndicator={false}
           >
+             {/* --- PROXY TOGGLE --- */}
+            <TouchableOpacity 
+                activeOpacity={0.8}
+                onPress={() => setIsProxy(!isProxy)}
+                className={`flex-row items-center justify-between p-4 rounded-xl border mb-6 ${isProxy ? 'bg-indigo-50 border-indigo-200' : 'bg-gray-50 border-gray-200'}`}
+            >
+                <View className="flex-row items-center">
+                    <View className={`w-10 h-10 rounded-full items-center justify-center mr-3 ${isProxy ? 'bg-indigo-500' : 'bg-gray-300'}`}>
+                         <Text className="text-white font-bold">{isProxy ? 'HO' : 'ME'}</Text> 
+                    </View>
+                    <View>
+                        <Text className={`font-bold text-base ${isProxy ? 'text-indigo-700' : 'text-gray-700'}`}>
+                            {isProxy ? 'Báo hộ người khác' : 'Báo cho chính tôi'}
+                        </Text>
+                        <Text className="text-xs text-gray-500">
+                            {isProxy ? 'Dùng khi nạn nhân không thể tự báo' : 'Dùng khi bạn gặp nạn'}
+                        </Text>
+                    </View>
+                </View>
+                 {/* Switch Visual */}
+                <View className={`w-12 h-6 rounded-full ${isProxy ? 'bg-indigo-500' : 'bg-gray-300'} justify-center px-1`}>
+                    <View className={`w-4 h-4 bg-white rounded-full shadow ${isProxy ? 'self-end' : 'self-start'}`} />
+                </View>
+            </TouchableOpacity>
+
+            {/* --- PROXY FIELDS --- */}
+            {isProxy && (
+                <View className="mb-6 bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+                     <Text className="text-xs font-bold text-indigo-500 mb-3 uppercase tracking-wider">
+                        Thông tin nạn nhân
+                    </Text>
+                    
+                    <View className="mb-3">
+                        <Text className="text-sm font-medium text-gray-700 mb-1">Tên nạn nhân / Nhóm *</Text>
+                        <TextInput 
+                            className="bg-white border border-gray-200 rounded-lg p-3 text-gray-800"
+                            placeholder="VD: Cụ Ba, Nhóm trẻ em..."
+                            value={victimName}
+                            onChangeText={setVictimName}
+                        />
+                    </View>
+                     
+                    <View className="mb-3">
+                         <Text className="text-sm font-medium text-gray-700 mb-1">Ghi chú về nạn nhân</Text>
+                         <TextInput 
+                            className="bg-white border border-gray-200 rounded-lg p-3 text-gray-800"
+                            placeholder="VD: Người già yếu, không có điện thoại..."
+                            value={victimNote}
+                            onChangeText={setVictimNote}
+                        />
+                    </View>
+
+                    {/* LOCATION PICKER BUTTON */}
+                    <TouchableOpacity 
+                        onPress={() => {
+                            if (onPickLocation) {
+                                onClose(); // Close modal temporarily
+                                onPickLocation(); // Trigger map pickup mode
+                            } else {
+                                showToast({ title: 'Info', message: "Chức năng chọn vị trí chưa sẵn sàng", type: 'info'});
+                            }
+                        }}
+                        className="flex-row items-center justify-center bg-white border border-indigo-300 p-3 rounded-lg border-dashed"
+                    >
+                        <View className="mr-2"><PlusIcon size={16} color="#4F46E5" /></View>
+                        <Text className="text-indigo-600 font-bold">Chỉnh sửa vị trí trên bản đồ</Text>
+                    </TouchableOpacity>
+                     {location && (
+                        <Text className="text-center text-xs text-indigo-400 mt-2">
+                            Đang chọn: {location.lat.toFixed(5)}, {location.long.toFixed(5)}
+                        </Text>
+                    )}
+                </View>
+            )}
+
             {/* 1. Chọn Loại Report */}
             <Text className="text-xs font-bold text-gray-400 mb-3 uppercase tracking-wider">
               Loại hỗ trợ
@@ -223,29 +326,27 @@ export const CreateReportModal = ({
             <View className="flex-row justify-between mb-6">
               {/* Cột Trái: Số người */}
               <View className="w-[45%]">
-                <Text className="text-xs font-bold text-gray-400 mb-3 uppercase tracking-wider">
-                  Số người cần giúp
-                </Text>
-                <View className="flex-row items-center justify-between bg-gray-50 border border-gray-200 rounded-xl p-2">
-                  <TouchableOpacity
-                    onPress={() => setPeopleCount(Math.max(1, peopleCount - 1))}
-                    className="w-10 h-10 bg-white rounded-lg items-center justify-center shadow-sm"
-                  >
-                    <Minus size={20} color="#666" />
-                  </TouchableOpacity>
-
-                  <Text className="text-xl font-bold text-gray-800">
-                    {peopleCount}
+                  <Text className="text-xs font-bold text-gray-400 mb-3 uppercase tracking-wider">
+                    {isProxy ? 'Số nạn nhân' : 'Số người cần giúp'}
                   </Text>
-
-                  <TouchableOpacity
-                    onPress={() =>
-                      setPeopleCount(Math.min(100, peopleCount + 1))
-                    }
-                    className="w-10 h-10 bg-primary rounded-lg items-center justify-center shadow-sm"
-                  >
-                    <PlusIcon size={20} color="white" />
-                  </TouchableOpacity>
+                  <View className="flex-row items-center justify-between bg-gray-50 border border-gray-200 rounded-xl p-2">
+                    <TouchableOpacity
+                      onPress={() => isProxy ? setVictimCount(Math.max(1, victimCount - 1)) : setPeopleCount(Math.max(1, peopleCount - 1))}
+                      className="w-10 h-10 bg-white rounded-lg items-center justify-center shadow-sm"
+                    >
+                      <Minus size={20} color="#666" />
+                    </TouchableOpacity>
+  
+                    <Text className="text-xl font-bold text-gray-800">
+                      {isProxy ? victimCount : peopleCount}
+                    </Text>
+  
+                    <TouchableOpacity
+                      onPress={() => isProxy ? setVictimCount(Math.min(100, victimCount + 1)) : setPeopleCount(Math.min(100, peopleCount + 1))}
+                      className="w-10 h-10 bg-primary rounded-lg items-center justify-center shadow-sm"
+                    >
+                      <PlusIcon size={20} color="white" />
+                    </TouchableOpacity>
                 </View>
               </View>
 
@@ -307,7 +408,7 @@ export const CreateReportModal = ({
                 <ActivityIndicator color="white" />
               ) : (
                 <Text className="text-white font-bold text-lg">
-                  Gửi Báo Cáo Ngay
+                  {isProxy ? 'Gửi Báo Cáo Hộ' : 'Gửi Báo Cáo Ngay'}
                 </Text>
               )}
             </TouchableOpacity>

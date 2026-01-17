@@ -57,7 +57,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Trang chủ',
+          href: null,
         }}
       />
       <Tabs.Screen
@@ -79,9 +79,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="account"
         options={{
-          title: 'Cá nhân',
+          title: 'TÀI KHOẢN',
         }}
       />
     </Tabs>
