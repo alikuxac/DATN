@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 
 // Components
 import AuthContainer from "@/components/auth/AuthContainer";
-import { AppText, AppInput, AppButton, Icon } from "@/components/ui"; // ❌ Bỏ import Select
+import { AppText, AppInput, AppButton, Icon } from "@/components/ui";
 
 // Redux & Logic
 import { useToast } from "@/components/ui/ToastProvider";
@@ -16,6 +16,7 @@ import { ENUM_STATUS_CODE_ERROR } from "@repo/shared";
 import AuthHeader from "@/components/auth/header";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setIsFirstLaunch } from "@/store/slices/appSlice";
+import { useColors } from "@/hooks/useColors";
 
 export default function SignUpScreen() {
   const router = useRouter();
@@ -24,6 +25,8 @@ export default function SignUpScreen() {
   const dispatch = useAppDispatch();
   const language = getDeviceLanguage();
   const { theme } = useAppSelector((state) => state.app);
+  const colors = useColors();
+
   // State
   const [formData, setFormData] = useState<RegisterFormData>({
     firstName: "",
@@ -185,7 +188,8 @@ export default function SignUpScreen() {
               <Pressable onPress={() => setShowPassword(!showPassword)}>
                 <Icon
                   name={showPassword ? "EyeOff" : "Eye"}
-                  className="text-neutrals400 w-5 h-5"
+                  size={20}
+                  color={colors.neutrals100}
                 />
               </Pressable>
             }
@@ -204,7 +208,8 @@ export default function SignUpScreen() {
               >
                 <Icon
                   name={showConfirmPassword ? "EyeOff" : "Eye"}
-                  className="text-neutrals400 w-5 h-5"
+                  size={20}
+                  color={colors.neutrals100}
                 />
               </Pressable>
             }

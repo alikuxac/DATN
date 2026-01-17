@@ -9,11 +9,12 @@ LogBox.ignoreLogs([
   "line dasharray",
   "Request failed due to a permanent error: Canceled",
   "Reading from `value` during component render",
+  "[Reanimated] Reading from `value` during component render",
 ]);
 
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { ThemeProvider, DefaultTheme } from "@react-navigation/native";
@@ -44,6 +45,11 @@ import { SystemAlertModal } from "@/components/SystemAlertModal";
 
 SplashScreen.preventAutoHideAsync();
 
+function AuthRedirectWrapper() {
+  useAuthRedirect();
+  return null;
+}
+
 // ----------------------------------------------------------------------
 // 1. Root Navigator & Logic (Đã gộp lại để fix lỗi Context)
 // ----------------------------------------------------------------------
@@ -51,6 +57,8 @@ function RootNavigator() {
   const { token, theme } = useAppSelector((state) => state.app);
   const navigationState = useRootNavigationState();
   const colors = useColors();
+  const insets = useSafeAreaInsets();
+
 
   // B. Logic App (Socket, Location, Push Token, Preferences Sync)
   // Chỉ chạy các hook này khi Navigation đã sẵn sàng để tránh lỗi "No Navigation Context"
@@ -59,7 +67,7 @@ function RootNavigator() {
   // Gọi hooks nhưng có điều kiện hoặc để hook tự handle null
   useExpoPushToken();
   usePreferencesSync(); // ← Sync preferences từ server khi app khởi động
-  useAuthRedirect(); // ← Thêm Auth Redirect logic ở đây
+  // useAuthRedirect(); // MOVED TO WRAPPER CHECK BELOW
 
   // Quan trọng: useSocketNotification có thể dùng navigation bên trong
   // Chúng ta truyền router hoặc check điều kiện bên trong hook
@@ -86,7 +94,11 @@ function RootNavigator() {
     <ThemeProvider value={navTheme}>
       {/* Các Helper & Modal toàn cục */}
       <InsetsHelper />
+      <InsetsHelper />
       <LanguageHelper />
+
+      {/* Chỉ chạy Auth Redirect khi Navigation đã sẵn sàng */}
+      {isNavigationReady && <AuthRedirectWrapper />}
 
       {/* Chỉ hiện Modal khi App đã load xong */}
       {isNavigationReady && (
@@ -102,22 +114,24 @@ function RootNavigator() {
       )}
 
       {/* Stack điều hướng chính */}
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          animation: "slide_from_right",
+      <View style={{ flex: 1, paddingTop: insets.top }}>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            animation: "slide_from_right",
 
-          // 2. Cho phép vuốt cạnh trái để back (UX chuẩn)
-          gestureEnabled: true,
-          gestureDirection: "horizontal",
+            // 2. Cho phép vuốt cạnh trái để back (UX chuẩn)
+            gestureEnabled: true,
+            gestureDirection: "horizontal",
 
-          // 3. Màu nền khi chuyển trang (tránh nháy trắng/đen)
-          contentStyle: { backgroundColor: "#fff" },
-        }}
-      >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      </Stack>
+            // 3. Màu nền khi chuyển trang (tránh nháy trắng/đen)
+            contentStyle: { backgroundColor: "#fff" },
+          }}
+        >
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        </Stack>
+      </View>
 
       {/* Socket Status Indicator */}
       <View
@@ -125,7 +139,7 @@ function RootNavigator() {
           isConnected ? "bg-green-500" : "bg-red-500"
         }`}
         style={{
-          top: 50, // Avoid dynamic inset for now or use insets.top + 10
+          top: insets.top + 10,
           right: 20,
           opacity: 0.8,
         }}
@@ -139,7 +153,20 @@ function RootNavigator() {
 // 2. Providers Wrapper (UI & Redux)
 // ----------------------------------------------------------------------
 const AppProviders = () => {
-  const { theme } = useAppSelector((state) => state.app);
+  const { theme, language } = useAppSelector((state) => state.app);
+
+  useEffect(() => {
+     // Sync NativeWind
+     import("nativewind").then(({ colorScheme }) => {
+       colorScheme.set(theme);
+     });
+     // Sync i18n
+     import("@/config/i18n").then((i18n) => {
+        if (i18n.default.language !== language) {
+           i18n.default.changeLanguage(language);
+        }
+     });
+  }, [theme, language]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

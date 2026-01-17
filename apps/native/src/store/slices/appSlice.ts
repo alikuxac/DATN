@@ -79,7 +79,7 @@ const appSlice = createSlice({
       state.refreshToken = null;
       state.user = null;
       state.theme = 'light';
-      state.language = getDeviceLanguage();
+      state.language = 'vi';
       state.regionId = 'unknown';
     },
     setUser: (state, action: PayloadAction<IUserGetResponse | null>) => {

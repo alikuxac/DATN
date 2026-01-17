@@ -31,6 +31,7 @@
     "BTN_LOGIN": "Login",
     "BTN_REGISTER": "Create Account",
     "BTN_LOGOUT": "Logout",
+    "BTN_GUEST_SOS": "Guest SOS",
 
     "HINT_NO_ACCOUNT": "Don't have an account?",
     "HINT_HAS_ACCOUNT": "Already have an account?",
@@ -47,7 +48,22 @@
     "ERR_NO_TOKEN": "No access token received from server",
     "ERR_EMAIL_NOT_EXIST": "Email does not exist",
     "ERR_INCORRECT_PASSWORD": "Incorrect password",
-    "ERR_SOMETHING_WENT_WRONG": "Something went wrong. Please try again later."
+    "ERR_SOMETHING_WENT_WRONG": "Something went wrong. Please try again later.",
+    "SESSION_EXPIRED": "Session expired",
+    "TITLE_FORGOT_PASSWORD": "Forgot Password",
+    "DESC_FORGOT_PASSWORD": "Enter your email to receive a verification code.",
+    "BTN_SEND_CODE": "Send Code",
+    "TITLE_VERIFY_OTP": "Verify OTP",
+    "DESC_VERIFY_OTP": "Please enter the OTP sent to your email.",
+    "LABEL_OTP": "OTP Code",
+    "DESC_OTP_HINT": "OTP code is 12 characters long.",
+    "BTN_VERIFY": "Verify",
+    "TITLE_RESET_PASSWORD": "Reset Password",
+    "DESC_RESET_PASSWORD": "Enter your new password.",
+    "LABEL_NEW_PASSWORD": "New Password",
+    "BTN_RESET_PASSWORD": "Reset Password",
+    "MSG_PASSWORD_RESET_SUCCESS": "Password reset successfully!",
+    "MSG_REDIRECTING": "Redirecting to login..."
   },
 
   "VALIDATION": {

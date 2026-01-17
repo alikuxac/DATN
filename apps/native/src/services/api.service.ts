@@ -1,5 +1,6 @@
 import { store } from "@/store";
 import { logout, setRefreshToken, setToken } from "@/store/slices/appSlice";
+import i18n from "@/config/i18n";
 
 // 1. Cập nhật ApiError để chứa "code" (App Status Code)
 export class ApiError extends Error {
@@ -9,7 +10,7 @@ export class ApiError extends Error {
 
   constructor(status: number, code: number, message: string, data?: any) {
     super(message);
-    this.name = 'ApiError';
+    // this.name = 'ApiError'; // Removed as per request
     this.status = status;
     this.code = code; // Lưu lại để switch case
     this.data = data;
@@ -54,16 +55,24 @@ class ApiService {
 
       // Xử lý 401 - Session expired
       if (response.status === 401) {
+        // Nếu không có token trong store, đây không phải là lỗi hết phiên -> chỉ là Unauthorized
+        const currentToken = state.app.token;
+        if (!currentToken) {
+          throw new ApiError(401, 401, "Unauthorized");
+        }
+
         if (options._isRetry) {
           store.dispatch(logout());
-          throw new ApiError(401, 5100, 'Session expired');
+          // throw new ApiError(401, 5100, i18n.t('AUTH.SESSION_EXPIRED'));
+          return new Promise(() => { }) as any; // Silent logout
         }
 
         try {
           const refreshToken = state.app.refreshToken;
           if (!refreshToken) {
             store.dispatch(logout());
-            throw new ApiError(401, 5100, 'Session expired');
+            // throw new ApiError(401, 5100, i18n.t('AUTH.SESSION_EXPIRED'));
+            return new Promise(() => { }) as any; // Silent logout
           }
 
           // Call Refresh API
@@ -95,11 +104,13 @@ class ApiService {
             });
           } else {
             store.dispatch(logout());
-            throw new ApiError(401, 5100, 'Session expired');
+            // throw new ApiError(401, 5100, i18n.t('AUTH.SESSION_EXPIRED'));
+            return new Promise(() => { }) as any; // Silent logout
           }
         } catch (error) {
           store.dispatch(logout());
-          throw new ApiError(401, 5100, 'Session expired');
+          // throw new ApiError(401, 5100, i18n.t('AUTH.SESSION_EXPIRED'));
+          return new Promise(() => { }) as any; // Silent logout
         }
       }
 
@@ -206,7 +217,7 @@ class ApiService {
 
       if (response.status === 401) {
         store.dispatch(logout());
-        throw new ApiError(401, 5100, 'Session expired');
+        throw new ApiError(401, 5100, i18n.t('AUTH.SESSION_EXPIRED'));
       }
 
       if (response.status === 204) {

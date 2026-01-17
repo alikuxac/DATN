@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, Alert, Platform, TouchableOpacity } from "react-native";
+import { View, ScrollView, Alert, Platform, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import * as Location from "expo-location";
 import { ENUM_REPORT_TYPE, ENUM_REPORT_SEVERITY } from "@repo/shared";
@@ -7,6 +7,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { apiService } from "@/services/api.service";
 import * as Application from 'expo-application';
 import { AppButton, AppInput, AppText } from "@/components/ui";
+import { useTranslation } from "react-i18next";
+import { useColors } from "@/hooks/useColors";
+import AuthHeaderActions from "@/components/auth/AuthHeaderActions";
 
 // Mock report types if not available from shared (or ensure shared is correct)
 const REPORT_TYPES = [
@@ -19,6 +22,8 @@ const REPORT_TYPES = [
 
 export default function GuestSOS() {
   const router = useRouter();
+  const { t } = useTranslation();
+  const colors = useColors();
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [loading, setLoading] = useState(false);
   const [deviceId, setDeviceId] = useState<string>("");
@@ -92,26 +97,51 @@ export default function GuestSOS() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={styles.header}>SOS KHẨN CẤP</Text>
-        <Text style={styles.subHeader}>Báo cáo khẩn cấp không cần đăng nhập</Text>
-        <Text style={styles.warning}>Lưu ý: Chỉ sử dụng trong trường hợp thực sự khẩn cấp. Lạm dụng sẽ bị chặn thiết bị.</Text>
+    <SafeAreaView className="flex-1 bg-white dark:bg-neutrals900">
+      <ScrollView contentContainerStyle={{ padding: 20 }}>
+        
+        {/* Header Actions for Theme Toggle */}
+        <View className="items-end mb-2">
+            <AuthHeaderActions />
+        </View>
 
-        <View style={styles.section}>
-          <Text style={styles.label}>Loại hỗ trợ cần thiết:</Text>
-          <View style={styles.typeContainer}>
-            {REPORT_TYPES.map((t) => (
+        <AppText raw className="text-3xl font-bold text-red-600 dark:text-red-500 text-center mb-2">
+            SOS KHẨN CẤP
+        </AppText>
+        <AppText raw className="text-base text-neutrals400 dark:text-neutrals400 text-center mb-3 font-sans-medium">
+            Báo cáo khẩn cấp không cần đăng nhập
+        </AppText>
+        
+        <View className="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg mb-6 border border-red-100 dark:border-red-900/50">
+            <AppText raw className="text-sm text-red-600 dark:text-red-400 italic text-center">
+                Lưu ý: Chỉ sử dụng trong trường hợp thực sự khẩn cấp. Lạm dụng sẽ bị chặn thiết bị.
+            </AppText>
+        </View>
+
+        <View className="mb-6">
+          <AppText raw className="text-base font-bold mb-3 ml-2">
+            Loại hỗ trợ cần thiết:
+          </AppText>
+          <View className="flex-row flex-wrap justify-between gap-y-3">
+            {REPORT_TYPES.map((t) => {
+              const isSelected = type === t.value;
+              return (
               <TouchableOpacity
                 key={t.value}
-                style={[styles.typeButton, type === t.value && styles.selectedTypeButton]}
+                className={`mb-2 rounded-full px-4 py-2 border ${
+                    isSelected 
+                    ? "bg-red-600 border-red-600 dark:bg-red-600 dark:border-red-600" 
+                    : "bg-transparent border-red-600 dark:border-red-500"
+                }`}
                 onPress={() => setType(t.value)}
               >
-                <Text style={[styles.typeButtonText, type === t.value && styles.selectedTypeButtonText]}>
+                <AppText raw className={`text-sm font-semibold ${
+                    isSelected ? "text-white" : "text-red-600 dark:text-red-500"
+                }`}>
                     {t.label}
-                </Text>
+                </AppText>
               </TouchableOpacity>
-            ))}
+            )})}
           </View>
         </View>
 
@@ -136,16 +166,16 @@ export default function GuestSOS() {
         />
 
         {location && (
-            <Text style={styles.locationText}>
+            <AppText className="text-center mb-6 text-green-600 dark:text-green-400 font-sans-medium">
                 Vị trí của bạn: {location.coords.latitude.toFixed(5)}, {location.coords.longitude.toFixed(5)}
-            </Text>
+            </AppText>
         )}
 
         <AppButton
           onPress={onSubmit}
           loading={loading}
           disabled={!location}
-          className="w-full bg-red-600 rounded-lg py-4"
+          className="w-full bg-red-600 dark:bg-red-700 rounded-full py-4 shadow-lg"
           textClassname="text-white font-bold text-lg"
         >
             GỬI YÊU CẦU CỨU HỘ
@@ -155,6 +185,7 @@ export default function GuestSOS() {
             variant="ghost"
             onPress={() => router.back()}
             className="mt-4"
+            textClassname="text-neutrals600 dark:text-neutrals400 font-sans-medium"
         >
             Quay lại Đăng nhập
         </AppButton>
@@ -163,76 +194,3 @@ export default function GuestSOS() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  scrollContainer: {
-    padding: 20,
-  },
-  header: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#D32F2F", // Red color for emergency
-    textAlign: "center",
-    marginBottom: 5,
-  },
-  subHeader: {
-    fontSize: 16,
-    color: "#555",
-    textAlign: "center",
-    marginBottom: 10,
-  },
-  warning: {
-    fontSize: 14,
-    color: "#D32F2F",
-    fontStyle: "italic",
-    textAlign: "center",
-    marginBottom: 20,
-    backgroundColor: "#FFEBEE",
-    padding: 10,
-    borderRadius: 5,
-  },
-  section: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 10,
-    marginLeft: 10,
-  },
-  typeContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-  },
-  typeButton: {
-    marginBottom: 10,
-    borderRadius: 20,
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: "#D32F2F",
-    backgroundColor: 'transparent'
-  },
-  selectedTypeButton: {
-    backgroundColor: "#D32F2F",
-    borderColor: "#D32F2F",
-  },
-  typeButtonText: {
-    color: "#D32F2F",
-    fontSize: 14,
-    fontWeight: '600'
-  },
-  selectedTypeButtonText: {
-    color: "#fff",
-  },
-  locationText: {
-      textAlign: 'center',
-      marginBottom: 20,
-      color: 'green'
-  }
-});

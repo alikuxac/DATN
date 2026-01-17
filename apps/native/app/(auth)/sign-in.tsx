@@ -1,30 +1,31 @@
 import React, { useState } from "react";
-import { View, Pressable, TouchableOpacity, Platform } from "react-native";
+import { View, Pressable, Platform } from "react-native";
 import * as Application from 'expo-application';
 import * as Device from 'expo-device';
-import { useRouter } from "expo-router"; // Giả sử dùng Expo Router
-import { useTranslation } from "react-i18next"; // Dựa trên file i18n config
-import { cn } from "@/utils";
+import { useRouter } from "expo-router";
+import { useTranslation } from "react-i18next";
 import { ApiError, apiService } from "@/services/api.service";
 
-// Components của bạn
+// Components
 import AuthContainer from "@/components/auth/AuthContainer";
 import { AppText, AppInput, AppButton, Icon } from "@/components/ui";
 
-// Redux (để đổi theme/lang - dựa trên context cũ)
+// Redux
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { setLanguage, setTheme, setToken, setRefreshToken, setIsFirstLaunch } from "@/store/slices/appSlice"; // Giả định action
+import { setLanguage, setTheme, setToken, setRefreshToken, setIsFirstLaunch } from "@/store/slices/appSlice";
 import { useToast } from "@/components/ui/ToastProvider";
 
 import AuthHeader from "@/components/auth/header";
 import { ENUM_STATUS_CODE_ERROR } from "@repo/shared";
+import { useColors } from "@/hooks/useColors";
 
 export default function SignInScreen() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const dispatch = useAppDispatch();
-  const { theme, language } = useAppSelector((state) => state.app);
+  const { theme } = useAppSelector((state) => state.app);
   const { showError, showSuccess } = useToast();
+  const colors = useColors();
 
   // State
   const [email, setEmail] = useState("");
@@ -108,9 +109,6 @@ export default function SignInScreen() {
             // Sync i18n
             i18n.changeLanguage(userPreferences.language);
           }
-
-          // Lưu user data
-          // dispatch(setToken(token)); // Removed redundant dispatch
         } catch (profileError) {
           console.warn("Failed to fetch profile, using local settings:", profileError);
         }
@@ -176,7 +174,7 @@ export default function SignInScreen() {
             errorText={errors.email}
             autoCapitalize="none"
             keyboardType="email-address"
-            leftIcon={<Icon name="Mail" className="text-neutrals400 w-5 h-5" />}
+            leftIcon={<Icon name="Mail" size={20} color={colors.neutrals100} />}
           />
 
           <AppInput
@@ -190,16 +188,24 @@ export default function SignInScreen() {
             }}
             errorText={errors.password}
             secureTextEntry={!showPassword}
-            leftIcon={<Icon name="Lock" className="text-neutrals400 w-5 h-5" />}
+            leftIcon={<Icon name="Lock" size={20} color={colors.neutrals100} />}
             rightIcon={
               <Pressable onPress={() => setShowPassword(!showPassword)}>
                 <Icon
                   name={showPassword ? "EyeOff" : "Eye"}
-                  className="text-neutrals400 w-5 h-5"
+                  size={20}
+                  color={colors.neutrals100}
                 />
               </Pressable>
             }
           />
+          <View className="items-end">
+            <Pressable onPress={() => router.push("/(auth)/forgot-password")}>
+              <AppText className="text-primary font-sans-medium text-sm">
+                {t("AUTH.TITLE_FORGOT_PASSWORD")}?
+              </AppText>
+            </Pressable>
+          </View>
         </View>
 
         {/* 4. Actions Buttons */}
@@ -240,34 +246,6 @@ export default function SignInScreen() {
           >
             {t("AUTH.BTN_GUEST_SOS")}
           </AppButton>
-
-          {/* <AppButton
-            variant="ghost"
-            size="lg"
-            onPress={() => {}} // Handle Survival Mode
-            className="w-full h-14 rounded-full shadow-md"
-            style={{
-              backgroundColor: theme === "dark" ? "#334155" : "#ffffff",
-              borderWidth: 2,
-              borderColor: theme === "dark" ? "#475569" : "#e2e8f0",
-              justifyContent: "center", // Căn giữa dọc
-              alignItems: "center", // Căn giữa ngang
-              flexDirection: "row", // Xếp Icon và Text ngang hàng
-              gap: 8,
-              height: 56,
-              borderRadius: 100,
-            }}
-            textClassname="text-slate-700 dark:text-slate-200 font-sans-medium"
-            // Icon
-            icon={
-              <Icon
-                name="Swords"
-                className="text-slate-700 dark:text-slate-200 w-4 h-4"
-              />
-            }
-          >
-            {t("FEATURE.SURVIVAL_MODE")}
-          </AppButton> */}
         </View>
       </View>
       {/* 5. Footer: Register Link */}
