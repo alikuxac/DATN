@@ -17,6 +17,7 @@ import { ReportAdminController } from "@modules/reports/controllers/report.admin
 import { AuthAdminController } from "@modules/auth/controllers/auth.admin.controller";
 import { StatsModule } from "@modules/stats/stats.module";
 import { StatsAdminController } from "@modules/stats/controllers/stats.admin.controller";
+import { NotificationModule } from "@modules/notifications/notification.module";
 @Module({
   imports: [
     UsersModule,
@@ -27,6 +28,7 @@ import { StatsAdminController } from "@modules/stats/controllers/stats.admin.con
     ReportsModule,
     VerificationModule,
     StatsModule,
+    NotificationModule,
     BullModule.registerQueueAsync({
       name: ENUM_WORKER_QUEUES.EMAIL_QUEUE,
     })

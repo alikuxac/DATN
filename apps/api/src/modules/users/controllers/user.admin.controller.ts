@@ -11,7 +11,9 @@ import {
     Put,
     ForbiddenException,
     Delete,
+    Query,
 } from '@nestjs/common';
+import { EventEmitter2 } from "@nestjs/event-emitter";
 import { PaginationService } from '@common/pagination/services/pagination.service';
 import {
     Response,
@@ -36,8 +38,10 @@ import {
     ENUM_USER_ROLE,
     ENUM_USER_SIGN_UP_FROM,
     ENUM_USER_STATUS,
-    IAuthJwtAccessTokenPayload
+    IAuthJwtAccessTokenPayload,
+    ENUM_NOTIFICATION_TYPE
 } from '@repo/shared';
+import { NotificationService } from '@modules/notifications/notification.service';
 import {
     AuthJwtAccessProtected,
     AuthJwtPayload,
@@ -91,7 +95,9 @@ export class UserAdminController {
         private readonly passwordHistoryService: PasswordHistoryService,
         private readonly activityService: ActivityService,
         private readonly messageService: MessageService,
-        private readonly verificationService: VerificationService
+        private readonly verificationService: VerificationService,
+        private readonly notificationService: NotificationService,
+        private readonly eventEmitter: EventEmitter2
     ) { }
 
     @ResponsePaging('user.list')
@@ -697,14 +703,35 @@ export class UserAdminController {
         }
     }
 
+    @Response('user.volunteer.nearby')
+    @UserProtected()
+    @AuthJwtAccessProtected()
+    @Throttle({ default: { limit: 100, ttl: 60000 } })
     @Get('/volunteer/nearby')
     async getNearbyVolunteers(
         @AuthJwtPayload<IAuthJwtAccessTokenPayload>('user', UserParsePipe)
-        user: UserDocument
-    ): Promise<void> {
+        user: UserDocument,
+        @Query('lat') lat?: number,
+        @Query('lng') lng?: number
+    ): Promise<IResponse<UserListResponseDto[]>> {
         if ([ENUM_USER_ROLE.SUPER_ADMIN, ENUM_USER_ROLE.ADMIN].includes(user.role)) {
-            await this.userService.getNearbyVolunteer(user);
+            const volunteers = await this.userService.getNearbyVolunteer(user, lat, lng);
+
+            if (!volunteers || volunteers.length === 0) {
+                throw new BadRequestException({
+                    statusCode: ENUM_STATUS_CODE_ERROR.USER_NOT_FOUND,
+                    message: 'user.error.noVolunteersFound',
+                });
+            }
+
+            const top5 = volunteers.slice(0, 5);
+            this.eventEmitter.emit('user.volunteer.request_support', { volunteers: top5, coordinates: { lat, lng } });
+
+            return {
+                data: this.userService.mapList(top5)
+            };
         }
+        return { data: [] };
     }
 
     @Response('user.delete')

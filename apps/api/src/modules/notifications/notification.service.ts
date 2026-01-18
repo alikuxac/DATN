@@ -5,7 +5,7 @@ import { OnEvent } from "@nestjs/event-emitter";
 
 import { NotificationRepository } from "./repository/repositories/notification.repository";
 import { NotificationEntity } from "./repository/entities/notification.entity";
-import { ENUM_NOTIFICATION_TYPE } from "@repo/shared";
+import { ENUM_NOTIFICATION_TYPE, ENUM_REPORT_SOURCE } from "@repo/shared";
 import { Expo, ExpoPushMessage } from 'expo-server-sdk';
 import { UserEntity } from "@modules/users/repository/entities/user.entity";
 import { HelperGeoService } from "@common/helper/services/helper.geo.service";
@@ -132,6 +132,9 @@ export class NotificationService {
     // 1. Gửi event 'new_sos' vào room region (Real-time cho app đang mở)
     this.notificationGateway.sendToRegion(payload.regionId, 'new_sos', payload.data);
 
+    // 1b. Gửi Global cho Admin Dashboard (để Admin thấy ngay lập tức mà không cần join region)
+    this.notificationGateway.server.emit('new_sos', payload.data);
+
     // 2. Logic tìm user xung quanh để gửi Push + Lưu Noti
     // Lấy tọa độ report
     const reportCoordinates = payload.data.location?.coordinates; // [lng, lat]
@@ -162,19 +165,23 @@ export class NotificationService {
     reportId: string;
     reporterId: string;
     rescuerId: string;
-    regionId: string
+    regionId: string;
+    report?: any;
   }) {
     // A. Báo cho người dân (Reporter): "Đã có người nhận!"
-    await this.sendToUser(
-      payload.reporterId,
-      ENUM_NOTIFICATION_TYPE.ACTIVITY,
-      'Cứu hộ đang tới!',
-      'Một tình nguyện viên đã nhận hỗ trợ bạn.',
-      {
-        reportId: payload.reportId,
-        rescuerId: payload.rescuerId,
-      }
-    );
+    // Chỉ báo nếu là USER report (Guest không có user ID để báo hoặc xử lý khác)
+    if (payload.report?.source === ENUM_REPORT_SOURCE.APP) {
+      await this.sendToUser(
+        payload.reporterId,
+        ENUM_NOTIFICATION_TYPE.ACTIVITY,
+        'Cứu hộ đang tới!',
+        'Một tình nguyện viên đã nhận hỗ trợ bạn.',
+        {
+          reportId: payload.reportId,
+          rescuerId: payload.rescuerId,
+        }
+      );
+    }
 
     // B. Báo cho các Rescuer khác trong vùng: "Kèo này có người nhận rồi, ẩn đi"
     // Client của Rescuer sẽ check: Nếu rescuerId != myId thì ẩn report này khỏi list
@@ -205,5 +212,26 @@ export class NotificationService {
       excludeSessionId: payload.excludeSessionId,
       reason: payload.reason,
     });
+  }
+
+  @OnEvent('user.volunteer.request_support')
+  async handleVolunteerRequestSupport(payload: { volunteers: UserEntity[] | any[], coordinates: { lat: number, lng: number } }) {
+    const { volunteers, coordinates } = payload;
+
+    for (const volunteer of volunteers) {
+      // Safe check for _id
+      const userId = volunteer._id ? volunteer._id.toString() : volunteer.id;
+
+      await this.sendToUser(
+        userId,
+        ENUM_NOTIFICATION_TYPE.SYSTEM,
+        '📢 YÊU CẦU HỖ TRỢ TỪ ADMIN',
+        'Admin đang yêu cầu hỗ trợ viên ở gần khu vực này. Vui lòng kiểm tra bản đồ.',
+        {
+          action: 'VIEW_MAP',
+          coordinates
+        }
+      );
+    }
   }
 }

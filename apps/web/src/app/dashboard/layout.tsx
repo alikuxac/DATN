@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Cookies from "js-cookie"; // using js-cookie client side to check availability
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
-import { SocketProvider } from "@/contexts/SocketContext";
+import { SocketProvider, useSocketContext } from "@/contexts/SocketContext";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -41,6 +41,60 @@ export default function DashboardLayout({
     return () => clearTimeout(timeoutId);
   }, [router]);
 
+  const { socket } = useSocketContext();
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewSos = (data: any) => {
+      const isGuest = data.source === 'GUEST';
+      const severity = data.severity || 'high';
+
+      let title = '';
+      let description = '';
+      let toastFn = toast.error; // Default to error/critical
+
+      // 1. Determine Title & Level
+      if (isGuest) {
+        title = '🆘 GUEST SOS (KHẨN CẤP)';
+        toastFn = toast.error;
+      } else {
+        if (severity === 'critical') {
+            title = '🆘 USER SOS (KHẨN CẤP)';
+            toastFn = toast.error;
+        } else if (severity === 'high') {
+            title = '⚠️ CẢNH BÁO CAO';
+            toastFn = toast.warning;
+        } else {
+            title = 'ℹ️ YÊU CẦU HỖ TRỢ';
+            toastFn = toast.info;
+        }
+      }
+
+      // 2. Determine Content
+      if (isGuest) {
+        description = `Khách vãng lai cần cứu trợ! SĐT: ${data.notes?.match(/Guest Phone: ([\d+]+)/)?.[1] || 'N/A'}`;
+      } else {
+        description = `Người dùng ${data.user?.firstName || 'ẩn danh'} cần hỗ trợ (${severity.toUpperCase()}).`;
+      }
+
+      // 3. Show Toast
+      toastFn(title, {
+        description: `${description}\nLoại: ${data.type}`,
+        duration: severity === 'critical' || isGuest ? 20000 : 10000, 
+        action: {
+          label: 'Xem Bản Đồ',
+          onClick: () => router.push(`/dashboard/map?reportId=${data._id}`)
+        }
+      });
+    };
+
+    socket.on('new_sos', handleNewSos);
+
+    return () => {
+      socket.off('new_sos', handleNewSos);
+    };
+  }, [socket, router]);
   useEffect(() => {
     if (authorized && user?.data) {
         const { email, mobileNumber } = user.data.verification || {};

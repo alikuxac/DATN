@@ -507,10 +507,13 @@ export class UsersService {
     }, options);
   }
 
-  async getNearbyVolunteer(user: UserDocument, options?: IDatabaseFindAllOptions) {
-    return this.findRescuersNearby(user.location.coordinates[1], user.location.coordinates[0], 5000,
-      {},
-      options);
+  async getNearbyVolunteer(user: UserDocument, lat?: number, lng?: number, options?: IDatabaseFindAllOptions) {
+    const targetLat = lat ?? user.location?.coordinates?.[1];
+    const targetLng = lng ?? user.location?.coordinates?.[0];
+
+    if (!targetLat || !targetLng) return [];
+
+    return this.findRescuersNearby(targetLat, targetLng, 10000, {}, options); // 10km radius as requested
   }
 
   async getGrowthStats(startDate: Date, endDate: Date, timezone = '+07:00') {

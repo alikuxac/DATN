@@ -32,20 +32,40 @@ api.interceptors.response.use(
       try {
         const refreshToken = Cookies.get('refreshToken');
         if (refreshToken) {
-          // Assuming there is an endpoint to refresh token
-          // For now, if 401, we might just redirect to login if refresh fails
-          // But typically: const { data } = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
-          // Cookies.set('accessToken', data.accessToken);
-          // return api(originalRequest);
+          // Use fetch or a separate axios instance to avoid interceptor loop
+          const response = await fetch(`${API_URL}/shared/auth/refresh`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${refreshToken}`,
+            },
+          });
+
+          if (response.ok) {
+            const resData = await response.json();
+            const { accessToken, refreshToken: newRefreshToken, user } = resData.data;
+
+            // Update Cookies
+            Cookies.set('accessToken', accessToken);
+            Cookies.set('refreshToken', newRefreshToken);
+            if (user) {
+              Cookies.set('user', JSON.stringify(user));
+            }
+
+            // Update Authorization header and retry
+            originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+            return api(originalRequest);
+          }
         }
       } catch (refreshError) {
-        // Handle refresh error (logout)
+        // Fall through to logout
       }
-      // If no refresh logic or failed:
+
+      // If refresh failed or no refresh token
       Cookies.remove('accessToken');
       Cookies.remove('refreshToken');
-      if (typeof window !== 'undefined') {
-        Cookies.remove('user');
+      Cookies.remove('user');
+      if (typeof window !== 'undefined' && !window.location.pathname.includes('/auth/login')) {
         window.location.href = '/auth/login';
       }
     }

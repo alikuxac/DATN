@@ -1,4 +1,4 @@
-import { ENUM_REPORT_SEVERITY, ENUM_REPORT_TYPE } from "../enums";
+import { ENUM_REPORT_SEVERITY, ENUM_REPORT_TYPE, ENUM_REPORT_SOURCE } from "../enums";
 import { IDatabaseDto } from "./database.interface";
 import { IUserShortResponse } from "./user.interface";
 
@@ -36,4 +36,13 @@ export interface IReportListResponse extends IDatabaseDto {
   images: string[];
   acceptedAt?: Date | string;
   resolvedAt?: Date | string;
+  source: ENUM_REPORT_SOURCE;
+  isVerified: boolean;
+  deviceId?: string;
+  isProxyReport: boolean;
+  proxyData?: {
+    victimName: string;
+    victimCount: number;
+    victimNote: string;
+  };
 }

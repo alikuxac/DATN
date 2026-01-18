@@ -252,7 +252,14 @@ export class ReportService {
     const count = await this.reportRepository.getTotal({
       deviceId: deviceId,
       source: ENUM_REPORT_SOURCE.GUEST,
-      createdAt: { $gte: oneHourAgo }
+      createdAt: { $gte: oneHourAgo },
+      status: {
+        $in: [
+          ENUM_REPORT_STATUS.PENDING,
+          ENUM_REPORT_STATUS.VERIFIED,
+          ENUM_REPORT_STATUS.IN_PROGRESS
+        ]
+      }
     });
 
     return count < 3;
