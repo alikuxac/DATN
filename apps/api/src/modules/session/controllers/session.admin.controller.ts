@@ -145,4 +145,28 @@ export class SessionAdminController {
 
         await this.sessionService.updateRevoke(session);
     }
+    @Response('session.cleanup')
+    @AuthJwtAccessProtected()
+    @PolicyAbilityProtected({
+        subject: ENUM_POLICY_SUBJECT.SESSION,
+        action: [ENUM_POLICY_ACTION.DELETE],
+    })
+    @Delete('/cleanup')
+    async cleanup(): Promise<void> {
+        await this.sessionService.deleteExpired();
+    }
+
+    @Response('session.revokeAll')
+    @AuthJwtAccessProtected()
+    @PolicyAbilityProtected({
+        subject: ENUM_POLICY_SUBJECT.SESSION,
+        action: [ENUM_POLICY_ACTION.UPDATE],
+    })
+    @Delete('/revoke-all/:user')
+    async revokeAll(
+        @Param('user', RequestRequiredPipe, UserParsePipe, UserNotSelfPipe)
+        user: UserDocument
+    ): Promise<void> {
+        await this.sessionService.updateManyRevokeByUser(user._id.toString());
+    }
 }

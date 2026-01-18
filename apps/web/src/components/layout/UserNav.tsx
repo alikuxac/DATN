@@ -28,12 +28,20 @@ export function UserNav() {
     return `${firstName?.[0] || ""}${lastName?.[0] || ""}`.toUpperCase();
   };
 
+  const getAvatarUrl = () => {
+    if (user.data.avatar) {
+      return user.data.avatar;
+    }
+    // Fallback to Dicebear if no avatar
+    return `https://api.dicebear.com/7.x/initials/svg?seed=${user.data.firstName} ${user.data.lastName}`;
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.data.firstName} ${user.data.lastName}`} alt={user.data.email} />
+            <AvatarImage src={getAvatarUrl()} alt={user.data.email} />
             <AvatarFallback>{getInitials(user.data.firstName, user.data.lastName)}</AvatarFallback>
           </Avatar>
         </Button>

@@ -22,6 +22,7 @@ import path from "path";
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { TelegramModule } from "./telegram/telegram.module";
 import { S3Module } from "./s3/s3.module";
+import { ScheduleModule } from "@nestjs/schedule";
 
 
 @Global()
@@ -140,6 +141,7 @@ import { S3Module } from "./s3/s3.module";
       })
     }),
     EventEmitterModule.forRoot(),
+    ScheduleModule.forRoot(),
     MessageModule.forRoot(),
     HelperModule.forRoot(),
     RequestModule,

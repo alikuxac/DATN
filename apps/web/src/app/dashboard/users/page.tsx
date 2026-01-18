@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { format } from "date-fns";
-import { Loader2, Eye, UserCircle, Plus, Pencil, Ban, CheckCircle, Key, Trash2, Undo } from "lucide-react"; // Added Key, Trash2, Undo
+import { Loader2, Eye, UserCircle, Plus, Pencil, Ban, CheckCircle, Key, Trash2, Undo, LogOut } from "lucide-react"; // Added Key, Trash2, Undo, LogOut
 
 import { useUsers } from "@/hooks/useUsers";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -55,7 +55,7 @@ export default function UsersPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserListResponse | null>(null);
 
-  const { users, metadata, isLoading, updateUserStatus, isUpdatingStatus, resetUserPassword, isResettingPassword, deleteUser, isDeleting, restoreUser, isRestoring } = useUsers({
+  const { users, metadata, isLoading, updateUserStatus, isUpdatingStatus, resetUserPassword, isResettingPassword, deleteUser, isDeleting, restoreUser, isRestoring, revokeAllUserSessions, isRevokingAll } = useUsers({
     page,
     limit: 10,
     q: debouncedSearch,
@@ -367,6 +367,23 @@ export default function UsersPage() {
                   <p className="text-foreground font-medium">{format(new Date(selectedUser.updatedAt), "PPpp")}</p>
                 </div>
               </div>
+
+              {currentUserRole === UserRole.SUPER_ADMIN || currentUserRole === UserRole.ADMIN ? (
+                 <div className="flex justify-end pt-4 border-t mt-2">
+                    <Button 
+                      variant="destructive" 
+                      onClick={() => {
+                        if (confirm(`Are you sure you want to revoke ALL sessions for ${selectedUser.email}? They will be logged out from all devices.`)) {
+                          revokeAllUserSessions(selectedUser._id);
+                        }
+                      }}
+                      disabled={isRevokingAll}
+                    >
+                      {isRevokingAll ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <LogOut className="h-4 w-4 mr-2" />}
+                      Revoke All Sessions
+                    </Button>
+                 </div>
+              ) : null}
             </div>
           )}
         </DialogContent>

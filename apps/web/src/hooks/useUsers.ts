@@ -181,6 +181,33 @@ export function useUsers(params: UseUsersParams) {
     },
   });
 
+  const revokeAllUserSessionsMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const { data } = await api.delete<ApiResponse<void>>(`/session/revoke-all/${userId}`); // Check if this endpoint matches controller
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sessions"] });
+      toast.success("All sessions revoked for user");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to revoke sessions");
+    },
+  });
+
+  const cleanUpExpiredSessionsMutation = useMutation({
+    mutationFn: async () => {
+      const { data } = await api.delete<ApiResponse<void>>('/session/cleanup'); // Check controller path
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Expired sessions cleaned up successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to cleanup sessions");
+    }
+  });
+
   return {
     users: data?.data || [],
     metadata: data?._pagination,
@@ -201,5 +228,9 @@ export function useUsers(params: UseUsersParams) {
     isUpdatingRole: updateUserRoleMutation.isPending,
     restoreUser: restoreUserMutation.mutate,
     isRestoring: restoreUserMutation.isPending,
+    revokeAllUserSessions: revokeAllUserSessionsMutation.mutate,
+    isRevokingAll: revokeAllUserSessionsMutation.isPending,
+    cleanUpExpiredSessions: cleanUpExpiredSessionsMutation.mutate,
+    isCleaningUp: cleanUpExpiredSessionsMutation.isPending,
   };
 }

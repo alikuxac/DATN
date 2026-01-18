@@ -80,7 +80,7 @@ export type IUserListResponse =
     'password' | 'passwordExpiredAt' | 'passwordCreatedAt' | 'signUpDate' | 'signUpFrom' | 'gender' | 'verification'
   >;
 
-export type IUserProfileReponse = Omit<IUserGetResponse, 'mobileNumber' | 'password' | 'passwordExpiredAt' | 'passwordCreatedAt'>;
+export type IUserProfileReponse = Omit<IUserGetResponse, 'password' | 'passwordExpiredAt' | 'passwordCreatedAt'>;
 
 export type IUserShortResponse = Omit<IUserListResponse, 'status' | 'createdAt' | 'updatedAt'> & {
   status: ENUM_USER_STATUS;

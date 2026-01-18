@@ -274,4 +274,13 @@ export class SessionService {
 
         return true;
     }
+    async deleteExpired(): Promise<boolean> {
+        const today = this.helperDateService.create();
+
+        await this.sessionRepository.deleteMany({
+            expiredAt: { $lte: today },
+        });
+
+        return true;
+    }
 }
