@@ -4,7 +4,7 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { Loader2, Monitor, Smartphone, Globe, LogOut } from "lucide-react";
 
-import { useSession } from "@/hooks/useSession";
+import { SessionData, useSession } from "@/hooks/useSession";
 import { Button } from "@/components/ui/button"; // id: 6
 import {
   Table,
@@ -23,11 +23,24 @@ export default function SecurityPage() {
     limit: 10,
   });
 
-  const getDeviceIcon = (os: string) => {
-    const lowerOs = os?.toLowerCase() || "";
-    if (lowerOs.includes("android") || lowerOs.includes("ios")) return <Smartphone className="h-4 w-4" />;
-    if (lowerOs.includes("mac") || lowerOs.includes("win")) return <Monitor className="h-4 w-4" />;
+  const getDeviceIcon = (session: SessionData) => {
+    const platform = session.platform?.toUpperCase();
+
+    if (platform === "MOBILE") return <Smartphone className="h-4 w-4" />;
+    
+    if (platform === "WEB") return <Monitor className="h-4 w-4" />;
     return <Globe className="h-4 w-4" />;
+  };
+
+  const formatSafeDate = (dateString: string) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "N/A";
+    try {
+      return format(date, "PP p");
+    } catch {
+      return "N/A";
+    }
   };
 
   const handleRevoke = (id: string) => {
@@ -73,10 +86,12 @@ export default function SecurityPage() {
                 <TableRow key={session._id}>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      {getDeviceIcon(session.os)}
+                      {getDeviceIcon(session)}
                       <div className="flex flex-col">
                         <span className="font-medium">{session.deviceName || "Unknown Device"}</span>
-                        <span className="text-xs text-muted-foreground">{session.os || "Unknown OS"}</span>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                             <span>{session.os && session.os !== "Unknown" ? session.os : (session.platform || "Unknown Platform")}</span>
+                        </div>
                       </div>
                     </div>
                   </TableCell>
@@ -85,7 +100,7 @@ export default function SecurityPage() {
                     {session.isCurrent ? (
                       <span className="text-green-600 font-medium">Active Now</span>
                     ) : (
-                      format(new Date(session.lastActiveAt), "PP p")
+                      formatSafeDate(session.lastActiveAt)
                     )}
                   </TableCell>
                   <TableCell>

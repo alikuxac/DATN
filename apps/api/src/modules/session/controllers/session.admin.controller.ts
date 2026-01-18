@@ -164,7 +164,7 @@ export class SessionAdminController {
     })
     @Delete('/revoke-all/:user')
     async revokeAll(
-        @Param('user', RequestRequiredPipe, UserParsePipe, UserNotSelfPipe)
+        @Param('user', RequestRequiredPipe, UserParsePipe)
         user: UserDocument
     ): Promise<void> {
         await this.sessionService.updateManyRevokeByUser(user._id.toString());

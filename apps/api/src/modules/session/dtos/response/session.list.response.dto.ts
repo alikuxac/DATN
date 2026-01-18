@@ -17,7 +17,7 @@ export class SessionListResponseDto extends DatabaseUUIDDto implements ISessionL
     @Expose()
     status: ENUM_SESSION_STATUS;
 
-    @Expose()
+    @Exclude()
     ip: string;
 
     @Exclude()
@@ -29,7 +29,7 @@ export class SessionListResponseDto extends DatabaseUUIDDto implements ISessionL
     @Exclude()
     method: string;
     @Exclude()
-    userAgent?: string; 
+    userAgent?: string;
     @Exclude()
     xForwardedFor?: string;
     @Exclude()
@@ -37,8 +37,16 @@ export class SessionListResponseDto extends DatabaseUUIDDto implements ISessionL
     @Exclude()
     xForwardedPorto?: string;
 
+    @Expose({ name: 'deviceName', toClassOnly: true })
+    storedDeviceName?: string;
+
     @Expose()
     get deviceName(): string {
+        // Prioritize stored device name from DB (e.g. "SM-A525F")
+        if (this.storedDeviceName) {
+            return this.storedDeviceName;
+        }
+
         if (!this.userAgent) return 'Unknown Device';
         const parser = new UAParser(this.userAgent);
         const browser = parser.getBrowser();
@@ -67,4 +75,12 @@ export class SessionListResponseDto extends DatabaseUUIDDto implements ISessionL
 
     @Expose()
     isCurrent: boolean;
+
+    @Expose()
+    platform: string;
+
+    @Expose({ name: 'ip' })
+    get ipAddress(): string {
+        return this.xForwardedFor || this['ip'];
+    }
 }

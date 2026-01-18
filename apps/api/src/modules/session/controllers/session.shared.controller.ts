@@ -35,11 +35,14 @@ import { SessionDoc } from '@modules/session/repository/entities/session.entity'
 import { SessionService } from '@modules/session/services/session.service';
 import { UserProtected } from '@modules/users/decorators/user.decorator';
 
+import { ClassSerializerInterceptor, UseInterceptors } from '@nestjs/common';
+
 @ApiTags('modules.shared.session')
 @Controller({
     version: '1',
     path: '/session',
 })
+@UseInterceptors(ClassSerializerInterceptor)
 export class SessionSharedController {
     constructor(
         private readonly paginationService: PaginationService,
