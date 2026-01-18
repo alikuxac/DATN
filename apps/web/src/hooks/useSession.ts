@@ -24,7 +24,12 @@ export const useSession = ({ page, limit }: PaginationState) => {
     queryKey: ["sessions", page, limit],
     queryFn: async () => {
       const res = await api.get("/shared/session/list", {
-        params: { _page: page, _limit: limit },
+        params: {
+          _page: page,
+          _limit: limit,
+          orderBy: 'createdAt',
+          orderDirection: 'desc'
+        },
       });
       return res.data;
     },

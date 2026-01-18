@@ -119,6 +119,20 @@ export class SessionService {
         );
     }
 
+    async findOneByIdAndUser(
+        _id: string,
+        user: string,
+        options?: IDatabaseFindOneOptions
+    ): Promise<SessionDoc> {
+        return this.sessionRepository.findOne<SessionDoc>(
+            {
+                _id,
+                user,
+            },
+            options
+        );
+    }
+
     async getTotal(
         find?: Record<string, any>,
         options?: IDatabaseGetTotalOptions

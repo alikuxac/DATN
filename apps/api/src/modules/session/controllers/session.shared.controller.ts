@@ -30,7 +30,7 @@ import {
     ENUM_STATUS_CODE_ERROR,
     IAuthJwtAccessTokenPayload,
 } from '@repo/shared';
-import { SessionActiveByUserParsePipe, SessionActiveParsePipe } from '@modules/session/pipes/session.parse.pipe';
+import { SessionActiveByUserParsePipe, SessionActiveParsePipe, SessionParseByUserPipe } from '@modules/session/pipes/session.parse.pipe';
 import { SessionDoc } from '@modules/session/repository/entities/session.entity';
 import { SessionService } from '@modules/session/services/session.service';
 import { UserProtected } from '@modules/users/decorators/user.decorator';
@@ -121,7 +121,7 @@ export class SessionSharedController {
     @AuthJwtAccessProtected()
     @Delete('/revoke/:session')
     async revoke(
-        @Param('session', RequestRequiredPipe, SessionActiveByUserParsePipe)
+        @Param('session', RequestRequiredPipe, SessionParseByUserPipe)
         session: SessionDoc,
         @AuthJwtPayload('session') sessionFromRequest: string
     ): Promise<void> {

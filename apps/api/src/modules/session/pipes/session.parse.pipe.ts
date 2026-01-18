@@ -16,7 +16,7 @@ export class SessionActiveParsePipe implements PipeTransform {
     constructor(
         @Inject(REQUEST) protected readonly request: IRequestApp,
         private readonly sessionService: SessionService
-    ) {}
+    ) { }
 
     async transform(value: string): Promise<SessionDoc> {
         const session = await this.sessionService.findOneActiveById(value);
@@ -36,12 +36,37 @@ export class SessionActiveByUserParsePipe implements PipeTransform {
     constructor(
         @Inject(REQUEST) protected readonly request: IRequestApp,
         private readonly sessionService: SessionService
-    ) {}
+    ) { }
 
     async transform(value: string): Promise<SessionDoc> {
         const { user } = this.request;
 
         const session = await this.sessionService.findOneActiveByIdAndUser(
+            value,
+            user!.user
+        );
+        if (!session) {
+            throw new NotFoundException({
+                statusCode: ENUM_STATUS_CODE_ERROR.SESSION_NOT_FOUND,
+                message: 'session.error.notFound',
+            });
+        }
+
+        return session;
+    }
+}
+
+@Injectable({ scope: Scope.REQUEST })
+export class SessionParseByUserPipe implements PipeTransform {
+    constructor(
+        @Inject(REQUEST) protected readonly request: IRequestApp,
+        private readonly sessionService: SessionService
+    ) { }
+
+    async transform(value: string): Promise<SessionDoc> {
+        const { user } = this.request;
+
+        const session = await this.sessionService.findOneByIdAndUser(
             value,
             user!.user
         );

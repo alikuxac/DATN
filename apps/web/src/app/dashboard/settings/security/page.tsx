@@ -20,7 +20,7 @@ export default function SecurityPage() {
   const [page, setPage] = useState(1);
   const { sessions, metadata, isLoading, revokeSession, isRevoking } = useSession({
     page,
-    limit: 10,
+    limit: 20,
   });
 
   const getDeviceIcon = (session: SessionData) => {
@@ -127,6 +127,30 @@ export default function SecurityPage() {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      <div className="flex items-center justify-end space-x-2 py-4">
+        <div className="flex-1 text-sm text-muted-foreground">
+             Page {page} of {metadata?.totalPage || 1}
+        </div>
+        <div className="space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(page - 1)}
+              disabled={page === 1 || isLoading}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(page + 1)}
+              disabled={page >= (metadata?.totalPage ?? 1) || isLoading}
+            >
+              Next
+            </Button>
+        </div>
       </div>
     </div>
   );
