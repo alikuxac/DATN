@@ -8,16 +8,12 @@ import { Response } from '@common/response/decorators/response.decorator';
 @ApiTags('modules.public.report')
 @Controller({
   version: '1',
-  path: '/public/report',
+  path: '/report',
 })
 export class ReportPublicController {
   constructor(private readonly reportService: ReportService) { }
 
   @Post('/guest')
-  @ApiOperation({
-    summary: 'Create a guest report',
-    description: 'Create a report without logging in',
-  })
   @Response('report.createGuest')
   async createGuest(
     @Body() body: CreateGuestReportDto,

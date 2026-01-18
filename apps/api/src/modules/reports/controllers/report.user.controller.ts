@@ -331,6 +331,10 @@ export class ReportUserController {
         throw new BadRequestException('report.error.notFound');
       }
 
+      if (report.rescuer.toString() !== user._id.toString()) {
+        throw new BadRequestException('report.error.cannotCancelOther');
+      }
+
       await this.reportService.cancelReport(report, { session });
 
       await this.databaseService.commitTransaction(session);

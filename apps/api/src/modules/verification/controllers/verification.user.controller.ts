@@ -178,7 +178,7 @@ export class VerificationUserController {
     }
 
     @Response('verification.resendMobileNumber')
-    @UserProtected()
+    @UserProtected([false])
     @AuthJwtAccessProtected()
     @Throttle({ default: { limit: 3, ttl: 60000 } })
     @Post('/resend/mobile-number')
@@ -331,10 +331,8 @@ export class VerificationUserController {
     }
 
     @Response('verification.verifyMobileNumber')
-
-    @UserProtected()
+    @UserProtected([false])
     @AuthJwtAccessProtected()
-
     @HttpCode(HttpStatus.OK)
     @Throttle({ default: { limit: 10, ttl: 60000 } })
     @Post('/verify/mobile-number')

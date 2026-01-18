@@ -50,7 +50,7 @@ export class SessionSharedController {
     ) { }
 
     @ResponsePaging('session.list')
-    @UserProtected()
+    @UserProtected([false])
     @AuthJwtAccessProtected()
     @Get('/list')
     async list(
@@ -117,7 +117,7 @@ export class SessionSharedController {
         };
     }
     @Response('session.revoke')
-    @UserProtected()
+    @UserProtected([false])
     @AuthJwtAccessProtected()
     @Delete('/revoke/:session')
     async revoke(
