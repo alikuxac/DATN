@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { ReportRepository } from '@modules/reports/repository/repositories/report.repository';
 import { ReportCreateRequestDto } from '@modules/reports/dtos/request/report.create.request.dto';
 import { ReportDocument, ReportEntity } from '@modules/reports/repository/entities/report.entity';
@@ -456,9 +456,41 @@ export class ReportService {
 
   async acceptReport(
     reportId: string,
-    rescuerId: string,
+    rescuer: UserDocument,
     options?: IDatabaseUpdateOptions
   ) {
+    // 1. Check if rescuer already has an active report
+    const activeReport = await this.reportRepository.findOne({
+      rescuer: rescuer._id.toString(),
+      status: ENUM_REPORT_STATUS.IN_PROGRESS
+    });
+
+    if (activeReport) {
+      throw new BadRequestException('report.error.alreadyHasActiveReport');
+    }
+
+    // 2. Check distance
+    const report = await this.reportRepository.findOneById(reportId);
+    if (!report) {
+      throw new BadRequestException('report.error.notFound');
+    }
+
+    // If rescuer has location, check distance
+    if (rescuer.location && rescuer.location.coordinates && report.location && report.location.coordinates) {
+      const distance = this.helperGeoService.calculateDistance(
+        rescuer.location.coordinates[1],
+        rescuer.location.coordinates[0],
+        report.location.coordinates[1],
+        report.location.coordinates[0]
+      );
+
+      // MAX RADIUS: 10km (10000m) - Hardcoded for now, or fetch from config
+      const MAX_RADIUS = 10000;
+
+      if (distance > MAX_RADIUS) {
+        throw new BadRequestException('report.error.tooFar');
+      }
+    }
 
     const updated = await this.reportRepository.updateRaw(
       {
@@ -467,7 +499,7 @@ export class ReportService {
       },
       {
         status: ENUM_REPORT_STATUS.IN_PROGRESS,
-        rescuer: rescuerId,
+        rescuer: rescuer._id.toString(),
         acceptedAt: new Date(),
       },
       options // Trả về data mới sau khi update
@@ -476,7 +508,7 @@ export class ReportService {
     if (updated) {
       this.eventEmitter.emit('report.accepted', {
         reportId: updated._id.toString(),
-        rescuerId: rescuerId,
+        rescuerId: rescuer._id.toString(),
         regionId: updated.regionId,
         report: updated // Pass full report for context if needed
       });

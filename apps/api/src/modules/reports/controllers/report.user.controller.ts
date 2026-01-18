@@ -233,7 +233,7 @@ export class ReportUserController {
     const session: ClientSession = await this.databaseService.createTransaction();
 
     try {
-      const report = await this.reportService.acceptReport(id, user._id.toString(), { session });
+      const report = await this.reportService.acceptReport(id, user, { session });
 
       if (!report) {
         throw new BadRequestException('report.error.alreadyAccepted');
