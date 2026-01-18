@@ -17,6 +17,6 @@ export interface ReportPerformanceStats {
 }
 
 export const getReportPerformanceStats = async (): Promise<ReportPerformanceStats> => {
-  const { data } = await api.get('/report/stats'); // Controller path is /report/stats
+  const { data } = await api.get('/admin/report/stats'); // Controller path is /report/stats
   return data;
 };
