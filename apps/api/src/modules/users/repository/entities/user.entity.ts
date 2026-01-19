@@ -78,7 +78,7 @@ export class UserEntity extends DatabaseObjectIdEntityBase {
 
   @DatabaseProp({
     type: { type: String, enum: ['Point'], default: 'Point' },
-    coordinates: { type: [Number], index: '2dsphere' }, // [Lng, Lat]
+    coordinates: { type: [Number] }, // [Lng, Lat]
   })
   location?: { type: string; coordinates: number[] };
 
@@ -100,4 +100,6 @@ export class UserEntity extends DatabaseObjectIdEntityBase {
 }
 
 export const UserSchema = DatabaseSchema(UserEntity);
+UserSchema.index({ location: '2dsphere' });
+
 export type UserDocument = IDatabaseDocument<UserEntity>;
