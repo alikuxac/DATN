@@ -61,13 +61,12 @@ export class PolicyAbilityFactory {
                     status: {
                         $in: [
                             ENUM_REPORT_STATUS.PENDING,
-                            ENUM_REPORT_STATUS.VERIFIED,
                             ENUM_REPORT_STATUS.IN_PROGRESS
                         ]
                     }
                 });
                 // Nhận nhiệm vụ
-                can(ENUM_POLICY_ACTION.UPDATE, ENUM_POLICY_SUBJECT.REPORT, { status: { $in: [ENUM_REPORT_STATUS.PENDING, ENUM_REPORT_STATUS.VERIFIED] } });
+                can(ENUM_POLICY_ACTION.UPDATE, ENUM_POLICY_SUBJECT.REPORT, { status: { $in: [ENUM_REPORT_STATUS.PENDING] } });
                 // Cập nhật nhiệm vụ mình đang làm
                 can(ENUM_POLICY_ACTION.UPDATE, ENUM_POLICY_SUBJECT.REPORT, {
                     status: ENUM_REPORT_STATUS.IN_PROGRESS,

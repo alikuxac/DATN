@@ -79,6 +79,9 @@ export default function MapPage() {
     // Process Reports
     if ((mapMode === "reports" || mapMode === "all") && reportsData) {
       reportsData.forEach(r => {
+        // Filter out RESOLVED and REJECTED as per user request
+        if (r.status === ReportStatus.RESOLVED || r.status === ReportStatus.REJECTED) return;
+
         if (r.location?.coordinates?.length === 2) {
           items.push({ type: 'report', data: r, coords: r.location.coordinates as [number, number] });
         }
@@ -171,9 +174,7 @@ export default function MapPage() {
              color = '#9333ea'; // Purple for Guest
           } else {
              if (report.status === ReportStatus.PENDING) color = '#ef4444'; // Red
-             else if (report.status === ReportStatus.RESOLVED) color = '#10b981'; // Green
              else if (report.status === ReportStatus.IN_PROGRESS) color = '#f59e0b'; // Orange
-             else if (report.status === ReportStatus.VERIFIED) color = '#3b82f6'; // Blue
           }
 
           // Guest Details parsing
@@ -395,9 +396,7 @@ export default function MapPage() {
                     {(mapMode === "reports" || mapMode === "all") && (
                         <>
                            <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-red-500" /> Pending</div>
-                           <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-blue-500" /> Verified</div>
                            <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-orange-500" /> In Progress</div>
-                           <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-green-500" /> Resolved</div>
                         </>
                     )}
                </div>

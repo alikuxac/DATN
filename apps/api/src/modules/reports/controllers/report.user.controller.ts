@@ -302,7 +302,7 @@ export class ReportUserController {
         }
       }
 
-      await this.reportService.rejectReport(report, { reason }, { session });
+      await this.reportService.rejectReport(report, reason, { session });
 
       await this.databaseService.commitTransaction(session);
       return { data: report };

@@ -21,8 +21,8 @@ export class UserCreateRequestDto implements IUserCreateRequest {
   @IsEnum(ENUM_USER_GENDER)
   gender: ENUM_USER_GENDER;
 
-  @IsOptional()
   @IsString()
+  @IsOptional()
   @MinLength(8)
   @MaxLength(22)
   mobileNumber: string;

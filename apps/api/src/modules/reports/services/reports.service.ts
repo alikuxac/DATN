@@ -63,7 +63,7 @@ export class ReportService {
     if (regionId) {
       volunteerConditions.push({
         regionId: regionId,
-        status: { $in: [ENUM_REPORT_STATUS.PENDING, ENUM_REPORT_STATUS.VERIFIED] },
+        status: { $in: [ENUM_REPORT_STATUS.PENDING] },
         rescuer: null,
       });
     }
@@ -123,7 +123,7 @@ export class ReportService {
     if (regionId) {
       volunteerConditions.push({
         regionId: regionId,
-        status: { $in: [ENUM_REPORT_STATUS.PENDING, ENUM_REPORT_STATUS.VERIFIED] },
+        status: { $in: [ENUM_REPORT_STATUS.PENDING] },
         rescuer: null,
       });
     }
@@ -259,7 +259,6 @@ export class ReportService {
       status: {
         $in: [
           ENUM_REPORT_STATUS.PENDING,
-          ENUM_REPORT_STATUS.VERIFIED,
           ENUM_REPORT_STATUS.IN_PROGRESS
         ]
       }
@@ -527,20 +526,7 @@ export class ReportService {
     return updated;
   }
 
-  async rejectReport(
-    report: ReportDocument,
-    data: { reason?: string } = {},
-    options?: IDatabaseUpdateOptions
-  ) {
-    report.status = ENUM_REPORT_STATUS.REJECTED;
-    report.rescuer = undefined; // Clear rescuer
 
-    if (data.reason) {
-      report.rejectReason = data.reason;
-    }
-
-    return this.reportRepository.save(report, options);
-  }
 
   async completeReport(report: ReportDocument, options?: IDatabaseUpdateOptions) {
     report.status = ENUM_REPORT_STATUS.RESOLVED;
@@ -573,6 +559,27 @@ export class ReportService {
       ...dto
     }, options);
   }
+
+  async rejectReport(
+    report: ReportDocument,
+    rejectReason: string,
+    options?: IDatabaseUpdateOptions
+  ) {
+    report.status = ENUM_REPORT_STATUS.REJECTED;
+    report.rejectReason = rejectReason;
+    report.rejectedAt = this.helperdateService.create();
+
+    const saved = await this.reportRepository.save(report, options);
+
+    this.eventEmitter.emit('report.rejected', {
+      reportId: saved._id.toString(),
+      report: saved,
+      reason: rejectReason
+    });
+
+    return saved;
+  }
+
 
   async checkLastReport(
     userId: string,

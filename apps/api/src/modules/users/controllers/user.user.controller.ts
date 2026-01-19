@@ -149,6 +149,7 @@ export class UserUserController {
 
     //     return;
     // }
+    @Response('user.sendOtp')
     @UserProtected()
     @AuthJwtAccessProtected()
     @Post('/phone/send-otp')

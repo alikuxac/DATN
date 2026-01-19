@@ -40,25 +40,46 @@ export function NotificationCenter() {
   useEffect(() => {
     if (!socket) return;
 
-    socket.on("notification", (data: any) => {
+    const handleNewNotification = (data: any) => {
       console.log("Received notification:", data);
-      // Assuming data matches Notification interface or needs mapping
       const newNotification: Notification = {
         _id: data._id || Date.now().toString(),
         title: data.title || "New Notification",
-        message: data.message || "",
+        message: data.body || data.message || "",
         type: data.type || "INFO",
         isRead: false,
-        createdAt: new Date().toISOString(),
-        metadata: data.metadata,
+        createdAt: data.createdAt || new Date().toISOString(),
+        metadata: data.data || data.metadata,
       };
 
       setNotifications((prev) => [newNotification, ...prev]);
       setHasUnread(true);
-    });
+    };
+
+    const handleNewSos = (data: any) => {
+      console.log("🆘 Received SOS Alert:", data);
+      const newNotification: Notification = {
+        _id: data._id || Date.now().toString(),
+        title: "🆘 SOS KHẨN CẤP",
+        message: `Báo cáo mới từ ${data.source === 'GUEST' ? 'Khách vãng lai' : data.user?.firstName || 'User'}: ${data.type}`,
+        type: "SOS",
+        isRead: false,
+        createdAt: new Date().toISOString(),
+        metadata: { reportId: data._id, ...data },
+      };
+
+      setNotifications((prev) => [newNotification, ...prev]);
+      setHasUnread(true);
+    };
+
+    socket.on("notification", handleNewNotification);
+    socket.on("new_notification", handleNewNotification);
+    socket.on("new_sos", handleNewSos);
 
     return () => {
-      socket.off("notification");
+      socket.off("notification", handleNewNotification);
+      socket.off("new_notification", handleNewNotification);
+      socket.off("new_sos", handleNewSos);
     };
   }, [socket]);
 

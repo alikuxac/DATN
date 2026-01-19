@@ -60,7 +60,17 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   // Auto-connect if user is authenticated
   useEffect(() => {
     const accessToken = Cookies.get('accessToken');
-    const userId = Cookies.get('userId'); // Assuming userId is stored in cookie
+    const userCookie = Cookies.get('user');
+    let userId = '';
+
+    if (userCookie) {
+      try {
+        const userData = JSON.parse(userCookie);
+        userId = userData.data?._id || userData.data?.id;
+      } catch (e) {
+        console.error('[SocketContext] Error parsing user cookie:', e);
+      }
+    }
 
     if (accessToken && userId) {
       connect(userId);

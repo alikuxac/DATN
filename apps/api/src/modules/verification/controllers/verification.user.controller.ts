@@ -38,6 +38,7 @@ import { ClientSession } from 'mongoose';
 import { Throttle } from '@nestjs/throttler';
 import { ENUM_STATUS_CODE_ERROR } from '@repo/shared';
 import { HeaderLang } from '@common/message/decorators/message.decorator';
+import { TelegramService } from '@common/telegram/services/telegram.service';
 
 @ApiTags('modules.user.verification')
 @Controller({
@@ -52,7 +53,8 @@ export class VerificationUserController {
         @InjectQueue(ENUM_WORKER_QUEUES.SMS_QUEUE)
         private readonly smsQueue: Queue,
         private readonly verificationService: VerificationService,
-        private readonly userService: UsersService
+        private readonly userService: UsersService,
+        private readonly telegramService: TelegramService
     ) { }
 
     @Response('verification.getEmail')
@@ -217,25 +219,11 @@ export class VerificationUserController {
 
             await this.databaseService.commitTransaction(session);
 
-            // await this.smsQueue.add(
-            //     ENUM_SEND_SMS_PROCESS.VERIFICATION,
-            //     {
-            //         send: { email: user.email, name: user.firstName },
-            //         data: {
-            //             otp: verification.otp,
-            //             expiredAt: verification.expiredDate,
-            //         },
-            //     },
-            //     {
-            //         debounce: {
-            //             id: `${ENUM_SEND_EMAIL_PROCESS.VERIFICATION}-${user._id.toString()}`,
-            //             ttl: 1000,
-            //         },
-            //     }
-            // );
-
             const mapped: VerificationResponse =
                 this.verificationService.map(verification);
+
+            // Send OTP via Telegram
+            await this.telegramService.sendOtp(mapped.to, verification.otp);
 
             return {
                 data: mapped,

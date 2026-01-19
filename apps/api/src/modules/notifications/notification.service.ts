@@ -94,13 +94,16 @@ export class NotificationService {
     if (type === ENUM_NOTIFICATION_TYPE.SYSTEM && user.settings?.newsLetters === false) return;
 
     // 3. Persistence: Lưu vào DB
-    await this.create(userId, type, title, body, payload);
+    const savedNotification = await this.create(userId, type, title, body, payload);
 
     // 4. Gửi Socket (Foreground)
-    this.notificationGateway.server.to(`user_${userId}`).emit('notification', {
+    this.notificationGateway.server.to(`user_${userId}`).emit('new_notification', {
+      _id: savedNotification._id.toString(),
       type,
       title,
       body,
+      isRead: false,
+      createdAt: savedNotification.createdAt || new Date().toISOString(),
       data: payload,
     });
 
@@ -133,7 +136,8 @@ export class NotificationService {
     this.notificationGateway.sendToRegion(payload.regionId, 'new_sos', payload.data);
 
     // 1b. Gửi Global cho Admin Dashboard (để Admin thấy ngay lập tức mà không cần join region)
-    this.notificationGateway.server.emit('new_sos', payload.data);
+    // admin room should be joined by admin clients
+    this.notificationGateway.server.to('admin_room').emit('new_sos', payload.data);
 
     // 2. Logic tìm user xung quanh để gửi Push + Lưu Noti
     // Lấy tọa độ report

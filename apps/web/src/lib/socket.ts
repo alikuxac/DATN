@@ -4,6 +4,8 @@ import { WS_URL } from './axios';
 export interface SocketEvents {
   // Server -> Client events
   notification: (data: unknown) => void;
+  new_notification: (data: any) => void;
+  new_sos: (data: any) => void;
   location_updated: (data: { userId: string; lat: number; lng: number }) => void;
   region_alert: (data: unknown) => void;
 

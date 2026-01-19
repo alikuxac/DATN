@@ -18,6 +18,7 @@ export interface IUserUpdateProfileRequest {
   firstName?: string;
   gender?: ENUM_USER_GENDER;
   avatar?: string;
+  mobileNumber?: string;
 }
 
 

@@ -141,6 +141,12 @@ export class ReportEntity extends DatabaseObjectIdEntityBase {
   resolvedAt?: Date;
 
   @DatabaseProp({
+    required: false,
+    type: Date,
+  })
+  rejectedAt?: Date;
+
+  @DatabaseProp({
     required: true,
     enum: ENUM_REPORT_SOURCE,
     default: ENUM_REPORT_SOURCE.APP,
@@ -178,10 +184,10 @@ export class ReportEntity extends DatabaseObjectIdEntityBase {
   };
 
   @DatabaseProp({
-      required: false,
-      trim: true,
-      type: String,
-    })
+    required: false,
+    trim: true,
+    type: String,
+  })
   rejectReason?: string;
 }
 
