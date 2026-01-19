@@ -9,6 +9,6 @@ export class UserVerifyOtpRequestDto {
   })
   @IsNotEmpty()
   @IsString()
-  @Length(6, 6)
+  @Length(8, 8)
   code: string;
 }
