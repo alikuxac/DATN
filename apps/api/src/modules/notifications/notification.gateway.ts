@@ -59,8 +59,11 @@ export class NotificationGateway implements OnGatewayConnection {
     if (!userId || !payload.lat || !payload.lng) return;
 
     try {
-      // 1. Update In DB (Fire & Forget)
-      this.usersService.updateLocation(userId, payload.lat, payload.lng);
+      // 1. Fetch User to update location
+      const user = await this.usersService.findOneById(userId);
+      if (user) {
+        await this.usersService.updateLocation(user, payload.lat, payload.lng);
+      }
 
       // 2. Realtime Tracking (Like Grab)
       if (payload.reportId) {
