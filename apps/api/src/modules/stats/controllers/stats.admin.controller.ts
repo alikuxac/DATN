@@ -24,8 +24,8 @@ export class StatsAdminController {
   ) { }
 
   @Response('stats.dashboard')
-  @UserProtected()
   @AuthJwtAccessProtected()
+  @UserProtected()
   @PolicyAbilityProtected({
     subject: ENUM_POLICY_SUBJECT.USER, // Or a dedicated STATS subject if available
     action: [ENUM_POLICY_ACTION.READ],
