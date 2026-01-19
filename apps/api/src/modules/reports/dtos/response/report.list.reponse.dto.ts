@@ -1,5 +1,5 @@
 import { Exclude, Expose, Type } from 'class-transformer';
-import { ENUM_REPORT_SEVERITY, ENUM_REPORT_STATUS, ENUM_REPORT_TYPE } from '@repo/shared';
+import { ENUM_REPORT_SEVERITY, ENUM_REPORT_STATUS, ENUM_REPORT_TYPE, ENUM_REPORT_SOURCE } from '@repo/shared';
 import { DatabaseObjectIdDto } from '@common/database/dtos/database.object-id.dto';
 import { UserShortResponseDto } from '@modules/users/dto/response/user.short.response.dto';
 
@@ -47,4 +47,20 @@ export class ReportListResponseDto extends DatabaseObjectIdDto {
 
   @Expose()
   images: string[];
+
+  @Expose()
+  rejectReason?: string;
+
+  @Expose()
+  source: ENUM_REPORT_SOURCE;
+
+  @Expose()
+  isProxyReport: boolean;
+
+  @Expose()
+  proxyData?: {
+    victimName: string;
+    victimCount: number;
+    victimNote: string;
+  };
 }
