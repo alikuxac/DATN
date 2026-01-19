@@ -7,6 +7,7 @@ interface ReportsParams {
   limit?: number;
   q?: string;
   status?: ReportStatus | "ALL";
+  source?: "app" | "guest" | "ALL";
   fromDate?: string; // ISO string
   toDate?: string;   // ISO string
   dateField?: 'createdAt' | 'updatedAt';
@@ -40,6 +41,7 @@ export function useReports(params: ReportsParams) {
           perPage: params.limit || 10,
           search: params.q,
           status: (params.status === 'ALL' || !params.status) ? undefined : params.status,
+          source: (params.source === 'ALL' || !params.source) ? undefined : params.source,
           fromDate: params.fromDate,
           toDate: params.toDate,
           dateField: params.dateField || 'createdAt',

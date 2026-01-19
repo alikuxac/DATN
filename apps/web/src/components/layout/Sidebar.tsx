@@ -63,11 +63,7 @@ export function Sidebar() {
           href: "/dashboard",
           icon: LayoutDashboard,
         },
-        {
-          title: t("SIDEBAR.REPORTS"),
-          href: "/dashboard/reports",
-          icon: FileText,
-        },
+
         {
           title: t("SIDEBAR.LIVE_MAP"),
           href: "/dashboard/map",
@@ -89,6 +85,11 @@ export function Sidebar() {
           href: "/dashboard/users",
           icon: Users,
         },
+        {
+          title: t("SIDEBAR.REPORTS"),
+          href: "/dashboard/reports",
+          icon: FileText,
+        },
       ],
     },
     {
@@ -103,7 +104,7 @@ export function Sidebar() {
             title: "System Settings", // TODO: Add translation key SIDEBAR.SYSTEM
             href: "/dashboard/settings/system",
             icon: Settings2,
-            roles: [UserRole.ADMIN, UserRole.SUPER_ADMIN],
+            roles: [UserRole.SUPER_ADMIN],
         },
       ]
     }

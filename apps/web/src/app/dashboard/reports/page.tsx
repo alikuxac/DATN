@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon, Loader2, Eye, CheckCircle, XCircle, Plus } from "lucide-react";
 import { DateRange } from "react-day-picker";
@@ -45,6 +46,7 @@ export default function ReportsPage() {
   const [page, setPage] = useState(1);
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<ReportStatus | "ALL">("ALL");
+  const [source, setSource] = useState<"ALL" | "APP" | "GUEST">("ALL");
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
@@ -114,6 +116,21 @@ export default function ReportsPage() {
             onChange={(e) => setQ(e.target.value)}
             className="w-[250px]"
           />
+               {/* Source Filter */}
+              <Select
+                value={source}
+                onValueChange={(val) => setSource(val as any)}
+              >
+               <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="Source" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Sources</SelectItem>
+                  <SelectItem value="app">App (User)</SelectItem>
+                  <SelectItem value="guest">Guest (SOS)</SelectItem>
+                </SelectContent>
+              </Select>
+
               {/* Only show specific status selector if needed, or rely on Tabs setting it */}
               <Select
                 value={status}

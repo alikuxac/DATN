@@ -27,6 +27,8 @@ import { Throttle } from '@nestjs/throttler';
 import { PolicyAbilityProtected } from '@modules/policy/decorators/policy.decorator';
 import { ENUM_POLICY_SUBJECT, ENUM_POLICY_ACTION } from '@repo/shared';
 
+import { UserProtected } from '@modules/users/decorators/user.decorator';
+
 @Controller({
   version: '1',
   path: '/report',
@@ -45,9 +47,10 @@ export class ReportAdminController {
     subject: ENUM_POLICY_SUBJECT.REPORT,
     action: [ENUM_POLICY_ACTION.READ],
   })
+  @UserProtected()
+  @AuthJwtAccessProtected()
   @Throttle({ default: { limit: 100, ttl: 60000 } })
   @Get('/list')
-  @AuthJwtAccessProtected()
   async list(
     @PaginationQuery({
       defaultPerPage: 20,
@@ -129,12 +132,8 @@ export class ReportAdminController {
   })
   @Throttle({ default: { limit: 100, ttl: 60000 } })
   @Post('/create')
+  @UserProtected()
   @AuthJwtAccessProtected()
-  @Response('report.create')
-  @PolicyAbilityProtected({
-    subject: ENUM_POLICY_SUBJECT.REPORT,
-    action: [ENUM_POLICY_ACTION.CREATE],
-  })
   async createByAdmin(
     @AuthJwtPayload('user', UserParsePipe) user: UserDocument,
     @Body() body: ReportCreateByAdminRequestDto
@@ -143,12 +142,13 @@ export class ReportAdminController {
     return created;
   }
 
-  @Get('/stats')
-  @AuthJwtAccessProtected()
   @PolicyAbilityProtected({
     subject: ENUM_POLICY_SUBJECT.REPORT,
     action: [ENUM_POLICY_ACTION.READ],
   })
+  @UserProtected()
+  @AuthJwtAccessProtected()
+  @Get('/stats')
   async getStats() {
     return this.reportService.getStatistics();
   }

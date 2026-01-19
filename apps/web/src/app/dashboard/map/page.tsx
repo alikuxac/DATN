@@ -164,20 +164,72 @@ export default function MapPage() {
 
       if (item.type === 'report') {
           const report = item.data as Report;
-          if (report.status === ReportStatus.PENDING) color = '#ef4444'; // Red
-          else if (report.status === ReportStatus.RESOLVED) color = '#10b981'; // Green
-          else if (report.status === ReportStatus.IN_PROGRESS) color = '#f59e0b'; // Orange
-          else if (report.status === ReportStatus.VERIFIED) color = '#3b82f6'; // Blue
+          const isGuest = (report as any).source === 'GUEST';
           
+          // Color Logic
+          if (isGuest) {
+             color = '#9333ea'; // Purple for Guest
+          } else {
+             if (report.status === ReportStatus.PENDING) color = '#ef4444'; // Red
+             else if (report.status === ReportStatus.RESOLVED) color = '#10b981'; // Green
+             else if (report.status === ReportStatus.IN_PROGRESS) color = '#f59e0b'; // Orange
+             else if (report.status === ReportStatus.VERIFIED) color = '#3b82f6'; // Blue
+          }
+
+          // Guest Details parsing
+          let guestPhone = 'N/A';
+          if (isGuest && report.notes) {
+              const match = report.notes.match(/Guest Phone: ([\d+]+)/);
+              if (match) guestPhone = match[1];
+          }
+
+          // Popup Content
           popupContent = `
-            <div class="p-2">
+            <div class="p-3 w-48">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isGuest ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'} uppercase">
+                        ${isGuest ? 'GUEST' : 'APP'}
+                    </span>
+                    <span class="text-[10px] font-medium text-gray-500 capitalize">${report.status.replace("_", " ")}</span>
+                </div>
+                
                 <h3 class="font-bold text-sm mb-1">${report.type.toUpperCase()}</h3>
-                <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-800">${report.status}</span>
-                <p class="text-xs mt-2">Severity: ${report.severity}</p>
-                ${report.notes ? `<p class="text-xs mt-1 text-gray-600">${report.notes.substring(0, 50)}...</p>` : ''}
+                
+                ${isGuest ? `
+                    <div class="mb-2 p-2 bg-gray-50 rounded text-xs border border-dashed border-gray-300">
+                        <p class="font-semibold text-gray-700">📞 Phone:</p>
+                        <a href="tel:${guestPhone}" class="text-blue-600 hover:underline block mb-1">${guestPhone}</a>
+                    </div>
+                ` : `
+                    <div class="mb-2 p-2 bg-gray-50 rounded text-xs">
+                        <p class="font-semibold text-gray-700">👤 User:</p>
+                         <p class="text-gray-600">${report.user?.firstName || 'Unknown'} ${report.user?.lastName || ''}</p>
+                         <p class="text-gray-500 text-[10px]">${report.user?.email || ''}</p>
+                    </div>
+                `}
+
+                <div class="flex items-center gap-1 text-xs mb-1">
+                    <span class="font-semibold">Severity:</span>
+                    <span class="${report.severity === 'critical' ? 'text-red-600 font-bold' : report.severity === 'high' ? 'text-orange-600 font-bold' : 'text-gray-600'} capitalize">
+                        ${report.severity || 'low'}
+                    </span>
+                </div>
+
+                ${report.notes ? `
+                    <div class="mt-2 pt-2 border-t text-xs text-gray-500 italic">
+                        "${report.notes.length > 50 ? report.notes.substring(0, 50) + '...' : report.notes}"
+                    </div>
+                ` : ''}
+                
+                <div class="mt-2 pt-2 border-t flex justify-end">
+                    <a href="/dashboard/reports?id=${report._id}" class="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1">
+                        View Details →
+                    </a>
+                </div>
             </div>
           `;
       } else if (item.type === 'volunteer') {
+          // ... (keep existing volunteer logic)
           const user = item.data as MapUser;
           // Support both _id and id
           const userId = (user as any)._id || (user as any).id;
@@ -204,6 +256,7 @@ export default function MapPage() {
             </div>
           `;
       } else {
+           // ... (keep existing user logic)
           color = '#06b6d4'; // Cyan
           const user = item.data as MapUser;
           el.innerHTML = 'U';
@@ -217,7 +270,7 @@ export default function MapPage() {
             </div>
           `;
       }
-
+      
       el.style.backgroundColor = color;
 
       const marker = new vietmapgl.Marker(el)
