@@ -19,6 +19,7 @@ import { UserParsePipe } from '@modules/users/pipes/user.parse.pipe';
 import { MAX_AVATAR_SIZE, ALLOWED_IMAGE_TYPES, S3_FOLDERS } from '@common/s3/s3.constant';
 import { Response } from '@common/response/decorators/response.decorator';
 import { IResponse } from '@common/response/interfaces/response.interface';
+import { UserProtected } from '@modules/users/decorators/user.decorator';
 
 
 @ApiTags('users.upload')
@@ -34,6 +35,7 @@ export class UserUploadController {
 
 
   @Response('user.upload.avatar')
+  @UserProtected([false])
   @AuthJwtAccessProtected()
   @ApiBearerAuth('accessToken')
   @Post('/avatar/upload')
@@ -105,6 +107,7 @@ export class UserUploadController {
   }
 
   @Response('user.delete.avatar')
+  @UserProtected([false])
   @AuthJwtAccessProtected()
   @ApiBearerAuth('accessToken')
   @Delete('/avatar')

@@ -24,12 +24,12 @@ export class StatsAdminController {
   ) { }
 
   @Response('stats.dashboard')
+  @UserProtected()
+  @AuthJwtAccessProtected()
   @PolicyAbilityProtected({
     subject: ENUM_POLICY_SUBJECT.USER, // Or a dedicated STATS subject if available
     action: [ENUM_POLICY_ACTION.READ],
   })
-  @UserProtected()
-  @AuthJwtAccessProtected()
   @Get('/dashboard')
   async getDashboardStats(): Promise<IResponse<StatsDashboardResponseDto>> {
     const stats = await this.statsService.getDashboardStats(this.usersService, this.reportService);

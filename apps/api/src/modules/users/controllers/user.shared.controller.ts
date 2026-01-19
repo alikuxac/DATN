@@ -58,7 +58,7 @@ export class UserSharedController {
     }
 
     @Response('user.updateProfile')
-    @UserProtected()
+    @UserProtected([false])
     @AuthJwtAccessProtected()
     @Put('/profile/update')
     async updateProfile(
@@ -114,7 +114,7 @@ export class UserSharedController {
     }
 
     @Response('user.updatePreferences')
-    @UserProtected()
+    @UserProtected([false])
     @AuthJwtAccessProtected()
     @Put('/preferences/update')
     async updatePreferences(
@@ -168,7 +168,7 @@ export class UserSharedController {
     }
 
     @Response('user.updateLocation')
-    @UserProtected()
+    @UserProtected([false])
     @AuthJwtAccessProtected()
     @Put('/location/update')
     async updateLocation(
@@ -207,7 +207,7 @@ export class UserSharedController {
     }
 
     @Response('user.updatePushToken')
-    @UserProtected()
+    @UserProtected([false])
     @AuthJwtAccessProtected()
     @Put('/push-token/update')
     async updatePushToken(
@@ -236,7 +236,7 @@ export class UserSharedController {
     }
 
     @Response('user.updateNotificationSettings')
-    @UserProtected()
+    @UserProtected([false])
     @AuthJwtAccessProtected()
     @Put('/settings/notification/update')
     async updateNotificationSettings(
@@ -263,7 +263,7 @@ export class UserSharedController {
     }
 
     @Response('user.updateVolunteerStatus')
-    @UserProtected()
+    @UserProtected([false])
     @AuthJwtAccessProtected()
     @Put('/volunteer/update')
     async updateVolunteer(
@@ -300,6 +300,7 @@ export class UserSharedController {
     }
 
     @Response('user.publicInfo')
+    @UserProtected([false])
     @AuthJwtAccessProtected()
     @Get('/info/:id')
     async info(
