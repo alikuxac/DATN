@@ -22,7 +22,12 @@ export const initializeSocket = (userId: string): Socket => {
     return socket;
   }
 
-  socket = io(`${WS_URL}/notifications`, {
+  let url = `${WS_URL}/notifications`;
+  if (typeof window !== 'undefined' && window.location.protocol === 'https:' && url.startsWith('ws://')) {
+    url = url.replace('ws://', 'wss://');
+  }
+
+  socket = io(url, {
     query: { userId },
     transports: ['websocket', 'polling'],
     reconnection: true,
