@@ -1,11 +1,10 @@
 import { Body, Controller, Post, Headers, HttpException, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+
 import { ReportService } from '../services/reports.service';
 import { CreateGuestReportDto } from '../dtos/request/report.create-guest.request.dto';
 import { ENUM_STATUS_CODE_ERROR } from '@repo/shared';
 import { Response } from '@common/response/decorators/response.decorator';
 
-@ApiTags('modules.public.report')
 @Controller({
   version: '1',
   path: '/report',
@@ -13,8 +12,8 @@ import { Response } from '@common/response/decorators/response.decorator';
 export class ReportPublicController {
   constructor(private readonly reportService: ReportService) { }
 
-  @Post('/guest')
   @Response('report.createGuest')
+  @Post('/guest')
   async createGuest(
     @Body() body: CreateGuestReportDto,
     @Headers('x-device-id') deviceId: string

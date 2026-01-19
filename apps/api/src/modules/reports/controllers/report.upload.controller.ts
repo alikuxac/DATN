@@ -10,7 +10,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+
 import { Multer } from 'multer';
 import { S3Service } from '@common/s3/s3.service';
 import { AuthJwtAccessProtected } from '@modules/auth/decorators/auth.jwt.decorator';
@@ -18,7 +18,6 @@ import { MAX_REPORT_IMAGE_SIZE, ALLOWED_IMAGE_TYPES, S3_FOLDERS, MAX_REPORT_IMAG
 import { Response } from '@common/response/decorators/response.decorator';
 import { IResponse } from '@common/response/interfaces/response.interface';
 
-@ApiTags('reports.upload')
 @Controller({
   version: '1',
   path: '/reports',
@@ -28,24 +27,8 @@ export class ReportUploadController {
 
   @Response('report.upload.images')
   @AuthJwtAccessProtected()
-  @ApiBearerAuth('accessToken')
   @Post('/images/upload')
   @HttpCode(HttpStatus.OK)
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        files: {
-          type: 'array',
-          items: {
-            type: 'string',
-            format: 'binary',
-          },
-        },
-      },
-    },
-  })
   @UseInterceptors(FilesInterceptor('files', MAX_REPORT_IMAGES))
   async uploadImages(
     @UploadedFiles() files: Multer.File[],
@@ -93,7 +76,6 @@ export class ReportUploadController {
 
   @Response('report.delete.images')
   @AuthJwtAccessProtected()
-  @ApiBearerAuth('accessToken')
   @Delete('/images')
   @HttpCode(HttpStatus.OK)
   async deleteImages(
