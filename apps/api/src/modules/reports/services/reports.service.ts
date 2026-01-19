@@ -508,7 +508,7 @@ export class ReportService {
       },
       {
         status: ENUM_REPORT_STATUS.IN_PROGRESS,
-        rescuer: rescuer._id.toString(),
+        rescuer: rescuer._id,
         acceptedAt: new Date(),
       },
       options // Trả về data mới sau khi update
