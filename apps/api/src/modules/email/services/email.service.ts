@@ -134,7 +134,9 @@ export class EmailService {
             {
                 name: title(name),
                 password,
-                passwordExpiredAt: this.helperDateService.formatToRFC2822(expiredDate),
+                passwordExpiredAt: this.helperDateService.formatToRFC2822(
+                    this.helperDateService.create(expiredDate)
+                ),
             },
             lang
         );

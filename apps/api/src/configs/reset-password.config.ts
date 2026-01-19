@@ -4,7 +4,7 @@ export default registerAs(
     'resetPassword',
     (): Record<string, any> => ({
         expiredInMinutes: 5,
-        otpLength: 6,
+        otpLength: 8,
         tokenLength: 20,
         prefixUrl: 'reset-password',
         reference: {

@@ -4,6 +4,7 @@ import { HelperDateService } from '@common/helper/services/helper.date.service';
 import { Algorithm } from 'jsonwebtoken';
 import { HelperHashService } from '@common/helper/services/helper.hash.service';
 import { HelperStringService } from '@common/helper/services/helper.string.service';
+import { HelperNumberService } from '@common/helper/services/helper.number.service';
 import {
     IAuthJwtAccessTokenPayload,
     IAuthJwtRefreshTokenPayload,
@@ -42,6 +43,7 @@ export class AuthService {
         private readonly helperHashService: HelperHashService,
         private readonly helperDateService: HelperDateService,
         private readonly helperStringService: HelperStringService,
+        private readonly helperNumberService: HelperNumberService,
         private readonly jwtService: JwtService,
         private readonly configService: ConfigService
     ) {

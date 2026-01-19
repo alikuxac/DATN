@@ -282,7 +282,7 @@ export class ResetPasswordService implements IResetPasswordService {
     }
 
     createOtp(): string {
-        return this.helperStringService.random(12); // Random string 12 ký tự
+        return this.helperNumberService.random(this.otpLength).toString();
     }
 
     createExpired(): Date {
