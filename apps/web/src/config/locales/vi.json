@@ -237,7 +237,23 @@
 
     "BTN_REJECT": "Từ chối",
     "BTN_APPROVE": "Phê duyệt / Đang xử lý",
-    "BTN_RESOLVE": "Giải quyết"
+    "BTN_RESOLVE": "Giải quyết",
+    
+    "REJECT_REASON": {
+      "TITLE": "Lý do từ chối",
+      "DESC": "Vui lòng chọn lý do từ chối báo cáo này",
+      "DUPLICATE": "Báo cáo bị trùng",
+      "SPAM": "Spam / Thông tin sai lệch",
+      "RESOLVED": "Đã được giải quyết bởi người khác",
+      "UNREACHABLE": "Không liên lạc được",
+      "OTHER": "Lý do khác",
+      "CUSTOM_LABEL": "Lý do cụ thể",
+      "CUSTOM_PLACEHOLDER": "Nhập lý do cụ thể...",
+      "REQUIRED": "Vui lòng chọn lý do",
+      "BTN_CONFIRM": "Xác nhận từ chối",
+      "BTN_CANCEL": "Hủy bỏ",
+      "REJECTING": "Đang từ chối..."
+    }
   },
 
   "MAP": {

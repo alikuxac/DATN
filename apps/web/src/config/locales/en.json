@@ -265,7 +265,23 @@
 
     "BTN_REJECT": "Reject",
     "BTN_APPROVE": "Approve / In Progress",
-    "BTN_RESOLVE": "Resolve"
+    "BTN_RESOLVE": "Resolve",
+    
+    "REJECT_REASON": {
+      "TITLE": "Rejection Reason",
+      "DESC": "Please select a reason for rejecting this report",
+      "DUPLICATE": "Duplicate Report",
+      "SPAM": "Spam / Misinformation",
+      "RESOLVED": "Already Resolved",
+      "UNREACHABLE": "Unreachable",
+      "OTHER": "Other",
+      "CUSTOM_LABEL": "Custom Reason",
+      "CUSTOM_PLACEHOLDER": "Enter specific reason...",
+      "REQUIRED": "Please select a reason",
+      "BTN_CONFIRM": "Confirm Reject",
+      "BTN_CANCEL": "Cancel",
+      "REJECTING": "Rejecting..."
+    }
   },
 
   "MAP": {

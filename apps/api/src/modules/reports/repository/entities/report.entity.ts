@@ -176,6 +176,13 @@ export class ReportEntity extends DatabaseObjectIdEntityBase {
     victimCount: number;
     victimNote: string;
   };
+
+  @DatabaseProp({
+      required: false,
+      trim: true,
+      type: String,
+    })
+  rejectReason?: string;
 }
 
 export const ReportSchema = DatabaseSchema(ReportEntity);

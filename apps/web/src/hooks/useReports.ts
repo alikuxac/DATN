@@ -18,6 +18,11 @@ interface UpdateReportStatusParams {
   status: ReportStatus;
 }
 
+interface RejectReportParams {
+  id: string;
+  reason: string;
+}
+
 export interface CreateReportRequest {
   userId: string;
   type: ReportType;
@@ -62,6 +67,16 @@ export function useReports(params: ReportsParams) {
     },
   });
 
+  const rejectReportMutation = useMutation({
+    mutationFn: async ({ id, reason }: RejectReportParams) => {
+      const { data } = await api.post<ApiResponse<Report>>(`/user/report/${id}/reject`, { reason });
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reports'] });
+    },
+  });
+
   const createReportMutation = useMutation({
     mutationFn: async (payload: CreateReportRequest) => {
       const { data } = await api.post<ApiResponse<Report>>('/admin/report/create', payload);
@@ -80,6 +95,8 @@ export function useReports(params: ReportsParams) {
     error: reportsQuery.error,
     updateStatus: updateStatusMutation.mutate,
     isUpdating: updateStatusMutation.isPending,
+    rejectReport: rejectReportMutation.mutate,
+    isRejecting: rejectReportMutation.isPending,
     createReport: createReportMutation.mutate,
     isCreating: createReportMutation.isPending,
   };

@@ -38,9 +38,19 @@ import {
 } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ReportDialog } from "./report-dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
+
+const REJECT_REASONS = [
+  { value: "DUPLICATE", key: "REPORTS.REJECT_REASON.DUPLICATE" },
+  { value: "SPAM", key: "REPORTS.REJECT_REASON.SPAM" },
+  { value: "RESOLVED", key: "REPORTS.REJECT_REASON.RESOLVED" },
+  { value: "UNREACHABLE", key: "REPORTS.REJECT_REASON.UNREACHABLE" },
+  { value: "OTHER", key: "REPORTS.REJECT_REASON.OTHER" },
+];
 
 export default function ReportsPage() {
   const [page, setPage] = useState(1);
@@ -54,6 +64,12 @@ export default function ReportsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
 
+  // Reject Modal State
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [rejectingReport, setRejectingReport] = useState<Report | null>(null);
+  const [selectedRejectReason, setSelectedRejectReason] = useState("");
+  const [customRejectReason, setCustomRejectReason] = useState("");
+
   const onTabChange = (val: string) => {
     setActiveTab(val);
     if (val === 'all') setStatus("ALL");
@@ -61,7 +77,7 @@ export default function ReportsPage() {
   };
   
   const { t } = useLanguage();
-  const { reports, metadata, isLoading, updateStatus, isUpdating } = useReports({
+  const { reports, metadata, isLoading, updateStatus, isUpdating, rejectReport, isRejecting } = useReports({
     page,
     limit: 10,
     q,
@@ -82,6 +98,38 @@ export default function ReportsPage() {
         }
       );
     }
+  };
+
+  const handleRejectClick = (report: Report) => {
+    setRejectingReport(report);
+    setRejectModalOpen(true);
+    setSelectedRejectReason("");
+    setCustomRejectReason("");
+  };
+
+  const handleRejectConfirm = () => {
+    if (!rejectingReport) return;
+    
+    const finalReason = selectedRejectReason === "OTHER" 
+      ? customRejectReason 
+      : t(REJECT_REASONS.find(r => r.value === selectedRejectReason)?.key || "");
+
+    if (!finalReason) {
+      alert(t("REPORTS.REJECT_REASON.REQUIRED"));
+      return;
+    }
+
+    rejectReport(
+      { id: rejectingReport._id, reason: finalReason },
+      {
+        onSuccess: () => {
+          setRejectModalOpen(false);
+          setRejectingReport(null);
+          setSelectedRejectReason("");
+          setCustomRejectReason("");
+        },
+      }
+    );
   };
 
   const openDetail = (report: Report) => {
@@ -337,12 +385,9 @@ export default function ReportsPage() {
                             variant="ghost" 
                             size="icon" 
                             className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                            onClick={() => {
-                              setSelectedReport(report);
-                              handleStatusChange(ReportStatus.REJECTED);
-                            }}
+                            onClick={() => handleRejectClick(report)}
                             title="Reject"
-                            disabled={isUpdating}
+                            disabled={isRejecting}
                           >
                             <XCircle className="h-4 w-4" />
                           </Button>
@@ -596,6 +641,62 @@ export default function ReportsPage() {
              <Button variant="outline" onClick={() => setDetailOpen(false)}>
                 Close
              </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Reject Reason Modal */}
+      <Dialog open={rejectModalOpen} onOpenChange={setRejectModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("REPORTS.REJECT_REASON.TITLE")}</DialogTitle>
+            <DialogDescription>
+              {t("REPORTS.REJECT_REASON.DESC")} (ID: {rejectingReport?._id})
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <RadioGroup value={selectedRejectReason} onValueChange={setSelectedRejectReason}>
+              {REJECT_REASONS.map((reason) => (
+                <div key={reason.value} className="flex items-center space-x-2">
+                  <RadioGroupItem value={reason.value} id={reason.value} />
+                  <Label htmlFor={reason.value} className="cursor-pointer">
+                    {t(reason.key)}
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
+            
+            {selectedRejectReason === "OTHER" && (
+              <div className="space-y-2">
+                <Label htmlFor="custom-reason">{t("REPORTS.REJECT_REASON.CUSTOM_LABEL")}</Label>
+                <Textarea
+                  id="custom-reason"
+                  placeholder={t("REPORTS.REJECT_REASON.CUSTOM_PLACEHOLDER")}
+                  value={customRejectReason}
+                  onChange={(e) => setCustomRejectReason(e.target.value)}
+                  rows={3}
+                />
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectModalOpen(false)} disabled={isRejecting}>
+              {t("REPORTS.REJECT_REASON.BTN_CANCEL")}
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleRejectConfirm}
+              disabled={isRejecting || !selectedRejectReason}
+            >
+              {isRejecting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {t("REPORTS.REJECT_REASON.REJECTING")}
+                </>
+              ) : (
+                t("REPORTS.REJECT_REASON.BTN_CONFIRM")
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -526,10 +526,16 @@ export class ReportService {
 
   async rejectReport(
     report: ReportDocument,
+    data: { reason?: string } = {},
     options?: IDatabaseUpdateOptions
   ) {
-    report.status = ENUM_REPORT_STATUS.PENDING;
-    report.rescuer = null;
+    report.status = ENUM_REPORT_STATUS.REJECTED;
+    report.rescuer = undefined; // Clear rescuer
+
+    if (data.reason) {
+      report.rejectReason = data.reason;
+    }
+
     return this.reportRepository.save(report, options);
   }
 

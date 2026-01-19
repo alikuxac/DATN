@@ -16,6 +16,8 @@ import { PaginationQuery, PaginationQueryFilterDate, PaginationQueryFilterDateTi
 import { PaginationService } from '@common/pagination/services/pagination.service';
 import { PolicyAbilityProtected } from '@modules/policy/decorators/policy.decorator';
 import { ENUM_POLICY_SUBJECT, ENUM_POLICY_ACTION } from '@repo/shared';
+import { UserProtected } from '@modules/users/decorators/user.decorator';
+
 @Controller({
   version: '1',
   path: '/report',
@@ -28,8 +30,9 @@ export class ReportUserController {
   ) { }
 
   @Get('/')
-  @AuthJwtAccessProtected()
   @ResponsePaging('report.list')
+  @UserProtected([false])
+  @AuthJwtAccessProtected()
   @PolicyAbilityProtected({
     subject: ENUM_POLICY_SUBJECT.REPORT,
     action: [ENUM_POLICY_ACTION.READ],
@@ -88,8 +91,9 @@ export class ReportUserController {
   }
 
   @Post('/')
-  @AuthJwtAccessProtected()
   @Response('report.create')
+  @UserProtected([false])
+  @AuthJwtAccessProtected()
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @PolicyAbilityProtected({
     subject: ENUM_POLICY_SUBJECT.REPORT,
@@ -135,8 +139,9 @@ export class ReportUserController {
   }
 
   @Post(':id')
-  @AuthJwtAccessProtected()
   @Response('report.update')
+  @UserProtected([false])
+  @AuthJwtAccessProtected()
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @PolicyAbilityProtected({
     subject: ENUM_POLICY_SUBJECT.REPORT,
@@ -184,8 +189,9 @@ export class ReportUserController {
   }
 
   @Get(':id')
-  @AuthJwtAccessProtected()
   @Response('report.detail')
+  @UserProtected([false])
+  @AuthJwtAccessProtected()
   @PolicyAbilityProtected({
     subject: ENUM_POLICY_SUBJECT.REPORT,
     action: [ENUM_POLICY_ACTION.READ],
@@ -202,8 +208,9 @@ export class ReportUserController {
   }
 
   @Delete(':id')
-  @AuthJwtAccessProtected()
   @Response('report.delete')
+  @UserProtected([false])
+  @AuthJwtAccessProtected()
   @PolicyAbilityProtected({
     subject: ENUM_POLICY_SUBJECT.REPORT,
     action: [ENUM_POLICY_ACTION.DELETE],
@@ -233,6 +240,22 @@ export class ReportUserController {
     action: [ENUM_POLICY_ACTION.UPDATE],
   })
   async accept(@AuthJwtPayload('user', UserParsePipe) user: UserDocument, @Param('id') id: string) {
+    // Check ownership to prevent self-accept (except for Admin/SuperAdmin)
+    const existingReport = await this.reportService.findOneById(id);
+    if (!existingReport) {
+      throw new BadRequestException('report.error.notFound');
+    }
+
+    // Only check ownership for non-admin users
+    if (user.role !== ENUM_USER_ROLE.ADMIN && user.role !== ENUM_USER_ROLE.SUPER_ADMIN) {
+      if (
+        (existingReport.by && existingReport.by.toString() === user._id.toString()) ||
+        (existingReport.user && existingReport.user.toString() === user._id.toString())
+      ) {
+        throw new BadRequestException('report.error.cannotAcceptOwn');
+      }
+    }
+
     const session: ClientSession = await this.databaseService.createTransaction();
 
     try {
@@ -263,7 +286,11 @@ export class ReportUserController {
     subject: ENUM_POLICY_SUBJECT.REPORT,
     action: [ENUM_POLICY_ACTION.UPDATE],
   })
-  async reject(@AuthJwtPayload('user', UserParsePipe) user: UserDocument, @Param('id') id: string) {
+  async reject(
+    @AuthJwtPayload('user', UserParsePipe) user: UserDocument,
+    @Param('id') id: string,
+    @Body('reason') reason?: string
+  ) {
     const session: ClientSession = await this.databaseService.createTransaction();
 
     try {
@@ -272,7 +299,17 @@ export class ReportUserController {
         throw new BadRequestException('report.error.notFound');
       }
 
-      await this.reportService.rejectReport(report, { session });
+      // Check ownership to prevent self-reject (except for Admin/SuperAdmin)
+      if (user.role !== ENUM_USER_ROLE.ADMIN && user.role !== ENUM_USER_ROLE.SUPER_ADMIN) {
+        if (
+          (report.by && report.by.toString() === user._id.toString()) ||
+          (report.user && report.user.toString() === user._id.toString())
+        ) {
+          throw new BadRequestException('report.error.cannotRejectOwn');
+        }
+      }
+
+      await this.reportService.rejectReport(report, { reason }, { session });
 
       await this.databaseService.commitTransaction(session);
       return { data: report };
