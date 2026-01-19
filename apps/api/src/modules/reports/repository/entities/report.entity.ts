@@ -13,6 +13,7 @@ import {
 } from "@repo/shared";
 import { IDatabaseDocument } from "@common/database/interfaces/database.interface";
 import { UserEntity } from "@modules/users/repository/entities/user.entity";
+import { Schema } from 'mongoose';
 
 export const REPORT_ENTITY_NAME = 'Reports';
 
@@ -44,7 +45,7 @@ export class ReportEntity extends DatabaseObjectIdEntityBase {
     required: false,
     index: true,
     trim: true,
-    type: String,
+    type: Schema.Types.ObjectId,
     ref: UserEntity.name
   })
   user: string;
@@ -53,7 +54,7 @@ export class ReportEntity extends DatabaseObjectIdEntityBase {
     required: false,
     index: true,
     trim: true,
-    type: String,
+    type: Schema.Types.ObjectId,
     ref: UserEntity.name
   })
   by: string;
@@ -67,7 +68,7 @@ export class ReportEntity extends DatabaseObjectIdEntityBase {
   @DatabaseProp({
     required: false,
     trim: true,
-    type: String,
+    type: Schema.Types.ObjectId,
     ref: UserEntity.name,
     index: true,
   })
