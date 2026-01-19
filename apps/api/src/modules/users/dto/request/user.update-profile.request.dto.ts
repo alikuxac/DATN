@@ -4,5 +4,5 @@ import { IUserUpdateProfileRequest } from '@repo/shared';
 
 export class UserUpdateProfileRequestDto extends PickType(
     UserCreateRequestDto,
-    ['firstName', 'lastName', 'gender'] as const
-) implements IUserUpdateProfileRequest {}
+    ['firstName', 'lastName', 'gender', 'mobileNumber'] as const
+) implements IUserUpdateProfileRequest { }

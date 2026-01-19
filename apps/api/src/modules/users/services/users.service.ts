@@ -321,12 +321,13 @@ export class UsersService {
 
   async updateProfile(
     repository: UserDocument,
-    { lastName, firstName, gender }: UserUpdateProfileRequestDto,
+    { lastName, firstName, gender, mobileNumber }: UserUpdateProfileRequestDto,
     options?: IDatabaseSaveOptions
   ) {
     repository.lastName = lastName;
     repository.firstName = firstName;
     repository.gender = gender;
+    repository.mobileNumber = mobileNumber;
 
     return this.userRepository.save(repository, options);
   }

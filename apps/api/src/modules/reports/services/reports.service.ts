@@ -168,6 +168,9 @@ export class ReportService {
     create.isPublic = dto.isPublic;
     create.status = ENUM_REPORT_STATUS.PENDING;
     create.regionId = dto.regionId;
+    create.images = dto.images || [];
+    create.isProxyReport = dto.isProxyReport || false;
+    create.proxyData = dto.proxyData;
 
     create.location = {
       type: ENUM_REPORT_LOCATION_TYPE.POINT,
