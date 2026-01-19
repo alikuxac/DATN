@@ -18,7 +18,7 @@ import {
 } from '@common/pagination/decorators/pagination.decorator';
 import { PaginationListDto } from '@common/pagination/dtos/pagination.list.dto';
 import { PaginationService } from '@common/pagination/services/pagination.service';
-import { ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS, ENUM_REPORT_SEVERITY, ENUM_REPORT_STATUS, ENUM_REPORT_TYPE } from '@repo/shared';
+import { ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS, ENUM_REPORT_SEVERITY, ENUM_REPORT_STATUS, ENUM_REPORT_TYPE, ENUM_REPORT_SOURCE } from '@repo/shared';
 import { UserDocument } from '@modules/users/repository/entities/user.entity';
 import { UserParsePipe } from '@modules/users/pipes/user.parse.pipe';
 import { IResponsePaging } from '@common/response/interfaces/response.interface';
@@ -67,6 +67,9 @@ export class ReportAdminController {
     @PaginationQueryFilterInEnum('type', ENUM_REPORT_TYPE.EVACUATION, ENUM_REPORT_TYPE)
     type: ENUM_REPORT_TYPE[],
 
+    @PaginationQueryFilterInEnum('source', ENUM_REPORT_SOURCE.APP, ENUM_REPORT_SOURCE)
+    source: ENUM_REPORT_SOURCE[],
+
     // 3. Dynamic Date Filters (Y hệt App)
     @Query('dateField') rawDateField: string,
     @PaginationQueryFilterDateTimeRange('timeRange') timeRange: Date,
@@ -90,6 +93,7 @@ export class ReportAdminController {
     if (severity?.length) find.severity = { $in: severity };
     if (status?.length) find.status = { $in: status };
     if (type?.length) find.type = { $in: type };
+    if (source?.length) find.source = { $in: source };
 
     // B. Merge Date Filters
     const dateQuery = this.paginationFilterService.buildDateQuery(

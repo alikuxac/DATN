@@ -8,7 +8,7 @@ import { Response, ResponsePaging } from '@common/response/decorators/response.d
 import { UserParsePipe } from '@modules/users/pipes/user.parse.pipe';
 import { IReportDocument } from '../interfaces/report.interface';
 import { ReportUpdateRequestDto } from '../dtos/request/report.update.request.dto';
-import { ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS, ENUM_REPORT_SEVERITY, ENUM_REPORT_STATUS, ENUM_REPORT_TYPE, ENUM_STATUS_CODE_ERROR, ENUM_USER_ROLE } from '@repo/shared';
+import { ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS, ENUM_REPORT_SEVERITY, ENUM_REPORT_STATUS, ENUM_REPORT_TYPE, ENUM_STATUS_CODE_ERROR, ENUM_USER_ROLE, ENUM_REPORT_SOURCE } from '@repo/shared';
 import { DatabaseService } from '@common/database/services/database.service';
 import { ClientSession } from 'mongoose';
 import { PaginationListDto } from '@common/pagination/dtos/pagination.list.dto';
@@ -47,6 +47,8 @@ export class ReportUserController {
     status: ENUM_REPORT_STATUS[],
     @PaginationQueryFilterInEnum('type', ENUM_REPORT_TYPE.EVACUATION, ENUM_REPORT_TYPE)
     type: ENUM_REPORT_TYPE[],
+    @PaginationQueryFilterInEnum('source', ENUM_REPORT_SOURCE.APP, ENUM_REPORT_SOURCE)
+    source: ENUM_REPORT_SOURCE[],
     @Query('dateField') rawDateField: string,
     @PaginationQueryFilterDateTimeRange('timeRange') timeRange: Date,
     @PaginationQueryFilterDate('fromDate', ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS.GREATER_THAN_EQUAL) fromDate: Date,
@@ -59,6 +61,7 @@ export class ReportUserController {
     if (severity?.length) find.severity = { $in: severity };
     if (status?.length) find.status = { $in: status };
     if (type?.length) find.type = { $in: type };
+    if (source?.length) find.source = { $in: source };
 
     const dateQuery = this.paginationService.buildDateQuery(
       { dateField: rawDateField, timeRange, fromDate, toDate, exactDate },
