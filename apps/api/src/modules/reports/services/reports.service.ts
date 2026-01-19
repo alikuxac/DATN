@@ -6,7 +6,7 @@ import { ENUM_REPORT_LOCATION_TYPE, ENUM_REPORT_SEVERITY, ENUM_REPORT_SOURCE, EN
 import { IDatabaseCreateOptions, IDatabaseDeleteManyOptions, IDatabaseDeleteOptions, IDatabaseFindAllOptions, IDatabaseFindOneOptions, IDatabaseGetTotalOptions, IDatabaseUpdateOptions } from '@common/database/interfaces/database.interface';
 import { IReportDocument, IReportEntity } from '../interfaces/report.interface';
 import { ReportListResponseDto } from '../dtos/response/report.list.reponse.dto';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 import { plainToInstance } from 'class-transformer';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UserDocument } from '@modules/users/repository/entities/user.entity';
@@ -503,7 +503,7 @@ export class ReportService {
 
     const updated = await this.reportRepository.updateRaw(
       {
-        _id: reportId,
+        _id: new Types.ObjectId(reportId) as any,
         status: ENUM_REPORT_STATUS.PENDING, // Chỉ nhận khi còn Pending
       },
       {
