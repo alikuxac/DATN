@@ -1,5 +1,5 @@
 import { ENUM_USER_GENDER } from '@repo/shared';
-import { IsEmail, IsNotEmpty, IsString, IsPhoneNumber, IsEnum, IsOptional } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, IsEnum, IsOptional, MinLength, MaxLength } from 'class-validator';
 import { IUserCreateRequest } from '@repo/shared';
 export class UserCreateRequestDto implements IUserCreateRequest {
   @IsEmail()
@@ -22,6 +22,8 @@ export class UserCreateRequestDto implements IUserCreateRequest {
   gender: ENUM_USER_GENDER;
 
   @IsOptional()
-  @IsPhoneNumber()
+  @IsString()
+  @MinLength(8)
+  @MaxLength(22)
   mobileNumber: string;
 }
