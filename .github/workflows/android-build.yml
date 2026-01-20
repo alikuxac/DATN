@@ -46,7 +46,6 @@ jobs:
       - name: 📦 Install dependencies
         run: |
           cd ../..
-          corepack enable
           yarn install --immutable
 
       - name: 🚀 Build APK
