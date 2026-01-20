@@ -118,6 +118,15 @@ export class AuthService {
         }
     }
 
+    verifyAccessToken(token: string): IAuthJwtAccessTokenPayload {
+        return this.jwtService.verify(token, {
+            secret: this.jwtSecret,
+            algorithms: [this.jwtAlgorithm],
+            audience: this.jwtAudience,
+            issuer: this.jwtIssuer,
+        });
+    }
+
     payload<T = any>(token: string): T {
         return this.jwtService.decode<T>(token);
     }

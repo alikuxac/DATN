@@ -77,8 +77,17 @@ export class UserEntity extends DatabaseObjectIdEntityBase {
   expoPushToken?: string;
 
   @DatabaseProp({
-    type: { type: String, enum: ['Point'], default: 'Point' },
-    coordinates: { type: [Number] }, // [Lng, Lat]
+    type: {
+      type: String,
+      enum: ['Point'],
+      default: 'Point',
+      required: true
+    },
+    coordinates: {
+      type: [Number],
+      required: true
+    },
+    _id: false
   })
   location?: { type: string; coordinates: number[] };
 

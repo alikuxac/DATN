@@ -496,6 +496,7 @@ export class UsersService {
   // SOS / Report function
   async findRescuersNearby(lat: number, long: number, radiusInMeters: number, find?: Record<string, any>, options?: IDatabaseFindAllOptions) {
     return this.userRepository.findAll({
+      ...find,
       location: {
         $near: {
           $geometry: { type: "Point", coordinates: [long, lat] },
@@ -505,6 +506,7 @@ export class UsersService {
       'settings.pushEnabled': true,
       'settings.sosAlerts': true,
       'isRescueMode': true,
+      status: ENUM_USER_STATUS.ACTIVE,
     }, options);
   }
 
@@ -514,7 +516,13 @@ export class UsersService {
 
     if (!targetLat || !targetLng) return [];
 
-    return this.findRescuersNearby(targetLat, targetLng, 10000, {}, options); // 10km radius as requested
+    return this.findRescuersNearby(
+      targetLat,
+      targetLng,
+      10000,
+      { _id: { $ne: user._id } },
+      options
+    ); // 10km radius
   }
 
   async getGrowthStats(startDate: Date, endDate: Date, timezone = '+07:00') {

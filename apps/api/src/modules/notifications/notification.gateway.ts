@@ -12,6 +12,7 @@ import { UsersService } from '../users/services/users.service';
 import { NotificationService } from './notification.service';
 import { OnEvent } from '@nestjs/event-emitter';
 import { ENUM_USER_ROLE } from '@repo/shared';
+import { AuthService } from '@modules/auth/services/auth.service';
 
 @WebSocketGateway({
   cors: { origin: '*' },
@@ -24,12 +25,24 @@ export class NotificationGateway implements OnGatewayConnection {
   constructor(
     private readonly usersService: UsersService,
     @Inject(forwardRef(() => NotificationService))
-    private readonly notificationService: NotificationService
+    private readonly notificationService: NotificationService,
+    private readonly authService: AuthService
   ) { }
 
   async handleConnection(client: Socket) {
     try {
-      const userId = client.handshake.query.userId as string;
+      let userId = client.handshake.query.userId as string;
+
+      // Fallback: Verify Token if userId is not in query
+      if (!userId && client.handshake.auth?.token) {
+        try {
+          const payload = this.authService.verifyAccessToken(client.handshake.auth.token);
+          userId = payload.user || payload.sub;
+        } catch (err) {
+          this.logger.warn(`Invalid token for client ${client.id}`);
+        }
+      }
+
       if (userId) {
 
         await client.join(`user_${userId}`);
@@ -43,6 +56,9 @@ export class NotificationGateway implements OnGatewayConnection {
         }
 
         this.logger.log(`User connected: ${userId}`);
+      } else {
+        // Optional: disconnect if unidentified?
+        // client.disconnect();
       }
     } catch (error) {
       this.logger.error('Connection error', error);
