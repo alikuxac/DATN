@@ -13,6 +13,9 @@ interface ReportFilterModalProps {
   onReset: () => void;
   TYPE_FILTERS: { label: string; value: string }[];
   STATUS_FILTERS: { label: string; value: string }[];
+  tempSourceFilter: string;
+  setTempSourceFilter: (val: string) => void;
+  SOURCE_FILTERS: { label: string; value: string }[];
 }
 
 export const ReportFilterModal = ({
@@ -26,6 +29,9 @@ export const ReportFilterModal = ({
   onReset,
   TYPE_FILTERS,
   STATUS_FILTERS,
+  tempSourceFilter,
+  setTempSourceFilter,
+  SOURCE_FILTERS,
 }: ReportFilterModalProps) => {
   return (
     <Modal visible={visible} transparent animationType="slide">
@@ -72,6 +78,27 @@ export const ReportFilterModal = ({
                   <AppText
                     className={
                       tempStatusFilter === f.value
+                        ? "text-white"
+                        : "text-gray-700"
+                    }
+                  >
+                    {f.label}
+                  </AppText>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <AppText className="font-bold text-gray-500 mb-3 mt-6">SOURCE</AppText>
+            <View className="flex-row flex-wrap gap-2">
+              {SOURCE_FILTERS.map((f) => (
+                <TouchableOpacity
+                  key={f.value}
+                  onPress={() => setTempSourceFilter(f.value)}
+                  className={`px-4 py-2 rounded-full border ${tempSourceFilter === f.value ? "bg-purple-500 border-purple-500" : "border-gray-200"}`}
+                >
+                  <AppText
+                    className={
+                      tempSourceFilter === f.value
                         ? "text-white"
                         : "text-gray-700"
                     }

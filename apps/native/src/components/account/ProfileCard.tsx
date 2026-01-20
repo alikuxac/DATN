@@ -68,7 +68,7 @@ export const ProfileCard = ({ userData, theme, colors, t, onAvatarUpdate }: Prof
               <View
                 style={[
                   styles.badge,
-                  { backgroundColor: '#dcfce7', marginLeft: 8 },
+                  { backgroundColor: '#dcfce7' },
                 ]}
               >
                 <Icon
@@ -78,14 +78,14 @@ export const ProfileCard = ({ userData, theme, colors, t, onAvatarUpdate }: Prof
                   style={{ marginRight: 4 }}
                 />
                 <AppText style={[styles.badgeText, { color: '#16a34a' }]}>
-                  VERIFIED
+                  {t('PROFILE.STATUS_VERIFIED')}
                 </AppText>
               </View>
             ) : (
               <View
                 style={[
                   styles.badge,
-                  { backgroundColor: '#fee2e2', marginLeft: 8 },
+                  { backgroundColor: '#fee2e2' },
                 ]}
               >
                 <Icon
@@ -95,7 +95,7 @@ export const ProfileCard = ({ userData, theme, colors, t, onAvatarUpdate }: Prof
                   style={{ marginRight: 4 }}
                 />
                 <AppText style={[styles.badgeText, { color: '#dc2626' }]}>
-                  UNVERIFIED
+                  {t('PROFILE.STATUS_UNVERIFIED')}
                 </AppText>
               </View>
             )}
@@ -105,7 +105,7 @@ export const ProfileCard = ({ userData, theme, colors, t, onAvatarUpdate }: Prof
               <View
                 style={[
                   styles.badge,
-                  { backgroundColor: '#dcfce7', marginLeft: 4 },
+                  { backgroundColor: '#dcfce7' },
                 ]}
               >
                 <Icon
@@ -115,14 +115,14 @@ export const ProfileCard = ({ userData, theme, colors, t, onAvatarUpdate }: Prof
                   style={{ marginRight: 4 }}
                 />
                  <AppText style={[styles.badgeText, { color: '#16a34a' }]}>
-                  VERIFIED
+                  {t('PROFILE.STATUS_VERIFIED')}
                 </AppText>
               </View>
             ) : (
               <View
                 style={[
                   styles.badge,
-                  { backgroundColor: '#fee2e2', marginLeft: 4 },
+                  { backgroundColor: '#fee2e2' },
                 ]}
               >
                 <Icon
@@ -132,7 +132,7 @@ export const ProfileCard = ({ userData, theme, colors, t, onAvatarUpdate }: Prof
                   style={{ marginRight: 4 }}
                 />
                 <AppText style={[styles.badgeText, { color: '#dc2626' }]}>
-                  UNVERIFIED
+                  {t('PROFILE.STATUS_UNVERIFIED')}
                 </AppText>
               </View>
             )}
@@ -142,19 +142,18 @@ export const ProfileCard = ({ userData, theme, colors, t, onAvatarUpdate }: Prof
 
       {/* Thông tin chi tiết (Read-only) */}
       <View style={styles.infoContainer}>
-        <InfoRow label="Email" value={userData?.email} colors={colors} />
+        <InfoRow label={t('AUTH.LABEL_EMAIL')} value={userData?.email} colors={colors} />
         <InfoRow
           label={t('PROFILE.LABEL_PHONE')}
-          value={userData?.phone}
+          value={userData?.mobileNumber}
           colors={colors}
           placeholder={t('PROFILE.VALUE_NO_PHONE')}
         />
         <InfoRow
           label={t('PROFILE.LABEL_GENDER')}
           value={
-            userData?.gender
-              ? userData.gender.charAt(0).toUpperCase() +
-                userData.gender.slice(1)
+             userData?.gender
+              ? t(`PROFILE.GENDER_OPTIONS.${userData.gender}`)
               : ''
           }
           colors={colors}
@@ -206,7 +205,12 @@ const styles = StyleSheet.create({
   },
   profileNameContainer: { marginLeft: 16, flex: 1 },
   profileName: { fontSize: 18, fontWeight: '700', marginBottom: 6 },
-  badgesRow: { flexDirection: 'row', alignItems: 'center' },
+  badgesRow: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    flexWrap: 'wrap',
+    gap: 6
+  },
   badge: {
     paddingHorizontal: 8,
     paddingVertical: 4,

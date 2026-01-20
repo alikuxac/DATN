@@ -3,6 +3,7 @@ import { View, TouchableOpacity, Image, ActivityIndicator, StyleSheet, Alert } f
 import * as ImagePicker from 'expo-image-picker';
 import { AppText, Icon } from '@/components/ui';
 import { useColors } from '@/hooks/useColors';
+import { useTranslation } from "react-i18next";
 
 interface ReportImagePickerProps {
   images: string[];
@@ -19,17 +20,18 @@ export const ReportImagePicker = ({
 }: ReportImagePickerProps) => {
   const colors = useColors();
   const [uploading, setUploading] = useState<boolean[]>([]);
+  const { t } = useTranslation();
 
   const pickImage = async () => {
     if (images.length >= maxImages) {
-      Alert.alert('Giới hạn', `Chỉ có thể upload tối đa ${maxImages} ảnh`);
+      Alert.alert(t('REPORT.IMAGE.LIMIT_TITLE'), t('REPORT.IMAGE.LIMIT_MSG', { max: maxImages }));
       return;
     }
 
     // Request permissions
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Quyền truy cập', 'Cần cấp quyền truy cập thư viện ảnh');
+      Alert.alert(t('REPORT.IMAGE.PERMISSION_TITLE'), t('REPORT.IMAGE.PERMISSION_MSG'));
       return;
     }
 
@@ -57,7 +59,7 @@ export const ReportImagePicker = ({
           onImagesChange([...images, asset.uri]);
         }
       } catch (error: any) {
-        Alert.alert('Lỗi', `Không thể upload ảnh: ${error?.message || 'Unknown error'}`);
+        Alert.alert(t('REPORT.IMAGE.ERROR_TITLE'), `${t('REPORT.IMAGE.ERROR_MSG')}: ${error?.message || 'Unknown error'}`);
       } finally {
         setUploading(uploading.slice(0, -1));
       }
@@ -72,7 +74,7 @@ export const ReportImagePicker = ({
   return (
     <View style={styles.container}>
       <AppText style={[styles.label, { color: colors.foreground }]}>
-        Hình ảnh ({images.length}/{maxImages})
+        {t('REPORT.IMAGE.LABEL')} ({images.length}/{maxImages})
       </AppText>
       
       <View style={styles.grid}>
@@ -101,7 +103,7 @@ export const ReportImagePicker = ({
           >
             <Icon name="Plus" size={32} color={colors.neutrals500} />
             <AppText style={[styles.addText, { color: colors.neutrals500 }]}>
-              Thêm ảnh
+              {t('REPORT.IMAGE.ADD')}
             </AppText>
           </TouchableOpacity>
         )}

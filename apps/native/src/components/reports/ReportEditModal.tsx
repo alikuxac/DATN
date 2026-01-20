@@ -2,10 +2,11 @@ import React from "react";
 import { View, Modal, TouchableOpacity, ScrollView } from "react-native";
 import { AppText, AppInput, AppButton, Icon } from "@/components/ui";
 import { ENUM_REPORT_SEVERITY } from "@repo/shared";
+import { useTranslation } from "react-i18next";
 
 interface ReportEditModalProps {
   editingReport: any;
-  setEditingReport: (report: any | null) => void; // Allow null to close or updater function
+  setEditingReport: (report: any | null) => void;
   isSubmitting: boolean;
   handleEditSave: () => void;
 }
@@ -16,9 +17,10 @@ export const ReportEditModal = ({
   isSubmitting,
   handleEditSave,
 }: ReportEditModalProps) => {
+  const { t } = useTranslation();
 
   const formatCoordinates = (coords: [number, number]) => {
-    if (!coords || coords.length < 2) return "Unknown location";
+    if (!coords || coords.length < 2) return t('COMMON.UNKNOWN_LOCATION') || "Unknown location";
     return `${coords[1].toFixed(5)}, ${coords[0].toFixed(5)}`;
   };
 
@@ -31,7 +33,7 @@ export const ReportEditModal = ({
       <View className="flex-1 bg-black/50 justify-end">
         <View className="bg-white dark:bg-neutrals900 h-[85%] rounded-t-3xl p-6">
           <View className="flex-row justify-between mb-6">
-            <AppText variant="heading4">Update Report</AppText>
+            <AppText variant="heading4">{t('REPORT.EDIT.TITLE')}</AppText>
             <TouchableOpacity onPress={() => setEditingReport(null)}>
               <Icon name="X" className="w-6 h-6" />
             </TouchableOpacity>
@@ -42,27 +44,27 @@ export const ReportEditModal = ({
             <View className="bg-gray-50 p-3 rounded-xl mb-4 flex-row items-center">
               <Icon name="MapPin" className="w-4 h-4 text-gray-400 mr-2" />
               <AppText className="text-gray-500 font-sans-medium">
-                Location:{" "}
-                {editingReport && formatCoordinates(editingReport.coordinates)}
+                {t('REPORT.EDIT.LOCATION')}:{" "}
+                {editingReport && formatCoordinates(editingReport.location.coordinates)}
               </AppText>
             </View>
 
-            <AppText className="font-bold mb-2">Description</AppText>
+            <AppText className="font-bold mb-2">{t('REPORT.EDIT.DESCRIPTION')}</AppText>
             <AppInput
-              value={editingReport?.description}
-              onChangeText={(t) => updateReport({ description: t })}
+              value={editingReport?.notes}
+              onChangeText={(t) => updateReport({ notes: t })}
               variant="textarea"
               className="h-32"
             />
 
-            <AppText className="font-bold mt-4 mb-2">People Count</AppText>
+            <AppText className="font-bold mt-4 mb-2">{t('REPORT.EDIT.PEOPLE_COUNT')}</AppText>
             <AppInput
               value={editingReport?.peopleCount?.toString()}
               onChangeText={(t) => updateReport({ peopleCount: parseInt(t) || 0 })}
               keyboardType="numeric"
             />
 
-            <AppText className="font-bold mt-4 mb-2">Severity</AppText>
+            <AppText className="font-bold mt-4 mb-2">{t('REPORT.EDIT.SEVERITY')}</AppText>
             <View className="flex-row gap-2 flex-wrap">
               {Object.values(ENUM_REPORT_SEVERITY).map((sev) => (
                 <TouchableOpacity
@@ -77,7 +79,7 @@ export const ReportEditModal = ({
                         : "text-gray-600"
                     }
                   >
-                    {sev.toUpperCase()}
+                    {t(`REPORT.SEVERITY.${sev}`)}
                   </AppText>
                 </TouchableOpacity>
               ))}
@@ -90,7 +92,7 @@ export const ReportEditModal = ({
             className="mt-4 bg-blue-600 rounded-xl"
             textClassname="text-white font-bold"
           >
-            {isSubmitting ? "Saving..." : "Confirm Update"}
+            {isSubmitting ? t('COMMON.LOADING') : t('REPORT.EDIT.BTN_CONFIRM')}
           </AppButton>
         </View>
       </View>

@@ -86,7 +86,7 @@ export const SystemAlertModal = ({ visible, data, onClose }: Props) => {
           {/* Footer */}
           <View style={styles.footer}>
             <AppButton
-              children={<AppText>TÔI ĐÃ HIỂU</AppText>}
+              children="TÔI ĐÃ HIỂU"
               onPress={onClose}
               style={{ backgroundColor: headerBg, width: "100%" }}
               textClassname="font-bold text-white"

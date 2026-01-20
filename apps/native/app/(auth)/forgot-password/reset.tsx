@@ -22,7 +22,14 @@ export default function ResetPasswordScreen() {
 
   const validate = () => {
       const newErrors: any = {};
-      if (newPassword.length < 8) newErrors.newPassword = t('VALIDATION.PASSWORD_MIN_LENGTH');
+      const passwordRegex = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9]).{8,}$/;
+
+      if (newPassword.length < 8) {
+        newErrors.newPassword = t('VALIDATION.PASSWORD_MIN_LENGTH');
+      } else if (!passwordRegex.test(newPassword)) {
+        newErrors.newPassword = t('VALIDATION.PASSWORD_WEAK'); // Make sure this key exists or use a hardcoded string/fallback
+      }
+
       if (newPassword !== confirmPassword) newErrors.confirmPassword = t('VALIDATION.PASSWORD_MISMATCH');
       setErrors(newErrors);
       return Object.keys(newErrors).length === 0;
@@ -39,13 +46,13 @@ export default function ResetPasswordScreen() {
       showSuccess(t('COMMON.SUCCESS'), t('AUTH.MSG_PASSWORD_RESET_SUCCESS'));
       
       setTimeout(() => {
-         // Pop back to sign-in, cleaning up the stack
-         router.dismissAll();
          router.replace('/(auth)/sign-in');
       }, 1500);
 
     } catch (err: any) {
-      showError(t('COMMON.ERROR'), err.response?.data?.message || t('AUTH.ERR_SOMETHING_WENT_WRONG'));
+      console.log('Reset password error:', err);
+      // Fix: Access err.message for ApiError
+      showError(t('COMMON.ERROR'), err.message || t('AUTH.ERR_SOMETHING_WENT_WRONG'));
     } finally {
       setLoading(false);
     }

@@ -10,6 +10,8 @@ interface VolunteerStatusCardProps {
   colors: any;
   activeColor: string;
   t: any;
+  theme: string;
+  disabled?: boolean;
 }
 
 export const VolunteerStatusCard = ({
@@ -20,6 +22,8 @@ export const VolunteerStatusCard = ({
   colors,
   activeColor,
   t,
+  theme,
+  disabled
 }: VolunteerStatusCardProps) => {
   return (
     <View
@@ -27,9 +31,9 @@ export const VolunteerStatusCard = ({
         styles.card,
         {
           backgroundColor: isRescueEnabled
-            ? "rgba(34, 197, 94, 0.05)"
-            : colors.card, // Tint xanh nhẹ khi bật
-          borderColor: isRescueEnabled ? activeColor : colors.border, // Viền xanh khi bật
+            ? (theme === 'dark' ? "rgba(34, 197, 94, 0.1)" : "#ecfdf5") // Explicit light green for Light Mode
+            : colors.card,
+          borderColor: isRescueEnabled ? activeColor : colors.border,
         },
       ]}
     >
@@ -43,7 +47,7 @@ export const VolunteerStatusCard = ({
               {
                 backgroundColor: isRescueEnabled
                   ? activeColor
-                  : colors.neutrals200,
+                  : theme === 'dark' ? colors.neutrals200 : '#f3f4f6', // Light gray for disabled in light mode
               },
             ]}
           >
@@ -76,7 +80,7 @@ export const VolunteerStatusCard = ({
               )}
             </View>
 
-            <AppText style={[styles.description, { color: colors.neutrals400 }]}>
+            <AppText style={[styles.description, { color: colors.neutrals100 }]}>
               {isRescueEnabled
                 ? t(
                     "PROFILE.VOLUNTEER_ON_DESC",
@@ -96,6 +100,7 @@ export const VolunteerStatusCard = ({
             <ActivityIndicator size="small" color={colors.primary} />
           ) : (
             <Switch
+              disabled={disabled}
               value={isRescueEnabled}
               onValueChange={updateVolunteer}
               trackColor={{ false: colors.neutrals200, true: activeColor }}

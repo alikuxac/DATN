@@ -32,7 +32,6 @@ import { useAppSelector } from "@/store/hooks";
 import LoadingScreen from "@/components/LoadingScreen";
 import { useColors } from "@/hooks/useColors";
 import { useSocketNotification } from "@/hooks/useSocketNotification";
-import { useLocationTracking } from "@/hooks/useUserLocation";
 import { useExpoPushToken } from "@/hooks/useExpoPushToken";
 import { usePreferencesSync } from "@/hooks/usePreferencesSync";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
@@ -42,6 +41,9 @@ import { DialogProvider } from "@/components/ui/DialogProvider";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { PermissionGuard } from "@/components/PermissionGuard";
 import { SystemAlertModal } from "@/components/SystemAlertModal";
+import { LocationProvider } from "@/context/LocationContext";
+import { SocketProvider } from "@/context/SocketContext";
+
 
 SplashScreen.preventAutoHideAsync();
 
@@ -73,7 +75,7 @@ function RootNavigator() {
   // Chúng ta truyền router hoặc check điều kiện bên trong hook
   const { socket, alertData, setAlertData, isConnected } = useSocketNotification();
 
-  useLocationTracking(token);
+  // useLocationTracking(token); // MOVED TO LocationProvider
 
   // C. Cấu hình Theme
   const navTheme = {
@@ -89,53 +91,41 @@ function RootNavigator() {
     },
   };
 
-  // D. Render Giao diện
   return (
     <ThemeProvider value={navTheme}>
-      {/* Các Helper & Modal toàn cục */}
-      <InsetsHelper />
       <InsetsHelper />
       <LanguageHelper />
-
-      {/* Chỉ chạy Auth Redirect khi Navigation đã sẵn sàng */}
-      {isNavigationReady && <AuthRedirectWrapper />}
-
-      {/* Chỉ hiện Modal khi App đã load xong */}
-      {isNavigationReady && (
-        <SystemAlertModal
-          visible={!!alertData}
-          data={alertData}
-          onClose={() => {
-            const { FeedbackUtils } = require('@/utils/feedback');
-            FeedbackUtils.stopSiren();
-            setAlertData(null);
-          }}
-        />
-      )}
-
-      {/* Stack điều hướng chính */}
+      {isNavigationReady ? (
+        <>
+          <AuthRedirectWrapper />
+          <SystemAlertModal
+            visible={!!alertData}
+            data={alertData}
+            onClose={() => {
+              const { FeedbackUtils } = require('@/utils/feedback');
+              FeedbackUtils.stopSiren();
+              setAlertData(null);
+            }}
+          />
+        </>
+      ) : null}
       <View style={{ flex: 1, paddingTop: insets.top }}>
         <Stack
           screenOptions={{
             headerShown: false,
             animation: "slide_from_right",
-
-            // 2. Cho phép vuốt cạnh trái để back (UX chuẩn)
             gestureEnabled: true,
             gestureDirection: "horizontal",
-
-            // 3. Màu nền khi chuyển trang (tránh nháy trắng/đen)
-            contentStyle: { backgroundColor: "#fff" },
+            contentStyle: { backgroundColor: colors.background },
           }}
         >
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         </Stack>
       </View>
-
-      {/* Socket Status Indicator */}
       <View
-        className={`absolute w-3 h-3 rounded-full border border-white shadow-sm transition-all duration-300 ${
+        key="socket-status-indicator"
+        className={`absolute w-3 h-3 rounded-full border border-white shadow-sm ${
           isConnected ? "bg-green-500" : "bg-red-500"
         }`}
         style={{
@@ -180,8 +170,12 @@ const AppProviders = () => {
           <SafeAreaProvider>
             <DialogProvider>
               <ToastProvider>
-                {/* RootNavigator nằm trong cùng để tận dụng mọi Provider */}
-                <RootNavigator />
+                <LocationProvider>
+                  <SocketProvider>
+                    {/* RootNavigator nằm trong cùng để tận dụng mọi Provider */}
+                    <RootNavigator />
+                  </SocketProvider>
+                </LocationProvider>
               </ToastProvider>
             </DialogProvider>
           </SafeAreaProvider>

@@ -1,4 +1,5 @@
 import { Tabs } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import CustomTabBar from '@/navigation/components/CustomTabBar';
 import { useSocketNotification } from '@/hooks/useSocketNotification';
 import { useEffect } from 'react';
@@ -7,6 +8,7 @@ import { addNotification, markAsReadLocal, setUnreadCount } from '@/store/slices
 import { apiService } from '@/services/api.service';
 
 export default function TabLayout() {
+  const { t } = useTranslation();
   const { socket } = useSocketNotification();
   const dispatch = useAppDispatch();
 
@@ -63,25 +65,25 @@ export default function TabLayout() {
       <Tabs.Screen
         name="map"
         options={{
-          title: 'Bản đồ',
+          title: t('TABS.MAP'),
         }}
       />
       <Tabs.Screen
-          name="reports"
-          options={{
-              title: 'Báo cáo',
-          }}
+        name="reports"
+        options={{
+          title: t('TABS.REPORTS'),
+        }}
       />
       <Tabs.Screen
         name="notifications"
         options={{
-          title: 'Thông báo',
+          title: t('TABS.NOTIFICATIONS'),
         }}
       />
       <Tabs.Screen
         name="account"
         options={{
-          title: 'TÀI KHOẢN',
+          title: t('TABS.ACCOUNT'),
         }}
       />
     </Tabs>

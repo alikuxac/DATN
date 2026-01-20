@@ -9,19 +9,22 @@ import {
   InteractionManager,
   Alert,
 } from "react-native";
+import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { useAppSelector } from "@/store/hooks";
 import { apiService } from "@/services/api.service";
 import { useDebounce } from "@/hooks/useDebounce";
 
 // Components
-import { AppInput, Icon, AppText } from "@/components/ui";
+import { AppInput, AppText, Chip, Icon } from "@/components/ui";
 import {
   ENUM_REPORT_SEVERITY,
   ENUM_REPORT_STATUS,
   ENUM_REPORT_TYPE,
+  ENUM_REPORT_SOURCE
 } from "@repo/shared";
-import { useLocationTracking } from "@/hooks/useUserLocation";
+import { useLocationContext } from "@/context/LocationContext";
+
 
 import { ReportCard } from "@/components/reports/ReportCard";
 import { ReportFilterModal } from "@/components/reports/ReportFilterModal";
@@ -63,15 +66,27 @@ const STATUS_FILTERS = [
   })),
 ];
 
+const SOURCE_FILTERS = [
+  { label: "All", value: "all" },
+  { label: "App (User)", value: ENUM_REPORT_SOURCE.APP },
+  { label: "Guest (SOS)", value: ENUM_REPORT_SOURCE.GUEST },
+];
+
 export default function ReportsScreen() {
+  const router = useRouter();
   const { t } = useTranslation();
-  const { theme, user, token  } = useAppSelector((state) => state.app);
-  const { currentRegion } = useLocationTracking(token);
+  const { user, token, theme } = useAppSelector((state) => state.app);
+  const { currentRegion } = useLocationContext();
+  const [activeTab, setActiveTab] = useState<"list" | "map">("list");
   // --- STATE ---
   const [data, setData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isReady, setIsReady] = useState(false);
+  
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
   // Filter & Search
   const [searchQuery, setSearchQuery] = useState("");
@@ -81,10 +96,12 @@ export default function ReportsScreen() {
   // Applied Filters
   const [appliedTypeFilter, setAppliedTypeFilter] = useState<string>("all");
   const [appliedStatusFilter, setAppliedStatusFilter] = useState<string>("all");
+  const [appliedSourceFilter, setAppliedSourceFilter] = useState<string>("all");
 
   // Temp Filters
   const [tempTypeFilter, setTempTypeFilter] = useState<string>("all");
   const [tempStatusFilter, setTempStatusFilter] = useState<string>("all");
+  const [tempSourceFilter, setTempSourceFilter] = useState<string>("all");
 
   // Edit / Action State
   const [editingReport, setEditingReport] = useState<any | null>(null);
@@ -92,49 +109,108 @@ export default function ReportsScreen() {
 
   // --- API HANDLERS ---
 
-  const fetchReports = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      console.log('RegionId before fetch',currentRegion)
+  const fetchReports = useCallback(async (pageNum = 1) => {
+    // If page 1, show full loading (unless refreshing). If > 1, show footer loader only (handled by list).
+    // Here we use single isLoading for simplicity or add isMoreLoading separately.
+    // For specific UI, let's keep isLoading for global spinner on first load only?
+    if (pageNum === 1 && !isRefreshing) setIsLoading(true);
 
+    try {
       const params: any = {
-        limit: 20,
-        page: 1,
-        regionId: currentRegion
+        limit: 10,
+        page: pageNum,
+        regionId: currentRegion,
+        sort: '-createdAt' // Sort by Latest
       };
 
       if (debouncedSearch) params.q = debouncedSearch;
       if (appliedTypeFilter !== "all") params.type = appliedTypeFilter;
       if (appliedStatusFilter !== "all") params.status = appliedStatusFilter;
+      if (appliedSourceFilter !== "all") params.source = appliedSourceFilter;
 
       const queryString = new URLSearchParams(params).toString();
 
       const response = await apiService.get<{ data: any[] }>(
-        `/admin/report/list?${queryString}`
+        `/user/report?${queryString}`
       );
 
       const reports = response.data || [];
-      setData(reports);
+      
+      // Update HasMore logic: If returned count < limit, no more data from server.
+      if (reports.length < 10) {
+        setHasMore(false);
+      } else {
+        setHasMore(true);
+      }
+
+      // CLIENT-SIDE FILTER: Hide reports irrelevant to current user
+      // Rule: Show only if (Mine) OR (My Rescue Task) OR (Pending & Unassigned)
+      const filteredReports = reports.filter((item: any) => {
+          const currentUserId = user?._id;
+          if (!currentUserId) return false;
+
+          // 1. Created by me
+          const isMyReport = 
+            item.user === currentUserId || 
+            item.by === currentUserId || 
+            item.user?._id === currentUserId || 
+            item.by?._id === currentUserId;
+          
+          if (isMyReport) return true;
+
+          // 2. Rescued by me
+          const rescuerId = typeof item.rescuer === 'object' ? item.rescuer?._id : item.rescuer;
+          if (rescuerId && rescuerId === currentUserId) return true;
+
+          // 3. Pending & Unassigned (Available for volunteers)
+          // If status is PENDING and no rescuer is assigned, show it.
+          // Note: If user is strictly USER role (not volunteer), they probably shouldn't see these either? 
+          // But typically Users don't see this list unless configured. Assuming Volunteer logic applies here.
+          if (item.status === ENUM_REPORT_STATUS.PENDING && !rescuerId) return true;
+
+          return false;
+      });
+
+      if (pageNum === 1) {
+        setData(filteredReports);
+      } else {
+        setData(prev => [...prev, ...filteredReports]);
+      }
+      
+      // Update current page ref if needed, or rely on state passed in
+      setPage(pageNum);
+
     } catch (error) {
       console.error("Fetch error:", error);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [debouncedSearch, appliedTypeFilter, appliedStatusFilter]);
+  }, [debouncedSearch, appliedTypeFilter, appliedStatusFilter, appliedSourceFilter, isRefreshing, currentRegion, user]);
 
+  // Initial Load & Filter Change
   useEffect(() => {
     const task = InteractionManager.runAfterInteractions(() => {
       setIsReady(true);
-      fetchReports();
+      // Reset to page 1 when filters change
+      fetchReports(1); 
     });
     return () => task.cancel();
-  }, [fetchReports]);
+  }, [debouncedSearch, appliedTypeFilter, appliedStatusFilter, appliedSourceFilter]); // Removed fetchReports from dep to avoid loop if not careful, added strict deps
 
   const onRefresh = () => {
     setIsRefreshing(true);
-    fetchReports();
+    setHasMore(true);
+    fetchReports(1);
   };
+
+  const handleLoadMore = () => {
+    if (!isLoading && !isRefreshing && hasMore) {
+        fetchReports(page + 1);
+    }
+  };
+
+
 
   // 1. UPDATE REPORT
   const handleEditSave = async () => {
@@ -142,7 +218,7 @@ export default function ReportsScreen() {
     try {
       setIsSubmitting(true);
       // Bỏ field address trong payload
-      await apiService.post(`/report/${editingReport._id}`, {
+      await apiService.post(`/user/report/${editingReport._id}`, {
         notes: editingReport.notes,
         peopleCount: editingReport.peopleCount,
         severity: editingReport.severity,
@@ -170,7 +246,7 @@ export default function ReportsScreen() {
         style: "destructive",
         onPress: async () => {
           try {
-            await apiService.delete(`/report/${id}`);
+            await apiService.delete(`/user/report/${id}`);
             setData((prev) => prev.filter((item) => item._id !== id));
           } catch (error) {
             Alert.alert("Error", "Failed to delete");
@@ -184,7 +260,7 @@ export default function ReportsScreen() {
   const handleAccept = async (id: string) => {
     try {
       setIsSubmitting(true);
-      await apiService.post(`/report/${id}/accept`, {});
+      await apiService.post(`/user/report/${id}/accept`, {});
       Alert.alert("Success", "You have accepted this rescue mission!");
       fetchReports();
     } catch (error: any) {
@@ -198,7 +274,7 @@ export default function ReportsScreen() {
   };
 
   // 4. REJECT/CANCEL REPORT
-  const handleReject = async (id: string) => {
+  const handleReject = async (id: string, data?: any) => {
     Alert.alert(
       "Confirm",
       "Are you sure you want to reject/cancel this report?",
@@ -210,7 +286,9 @@ export default function ReportsScreen() {
           onPress: async () => {
             try {
               setIsSubmitting(true);
-              await apiService.post(`/report/${id}/reject`, {});
+              await apiService.post(`/user/report/${id}/reject`, {
+                  reason: data?.reason || undefined
+              });
               fetchReports();
             } catch (error: any) {
               Alert.alert(
@@ -225,6 +303,53 @@ export default function ReportsScreen() {
       ]
     );
   };
+
+  // 5. RESOLVE REPORT (Mission Complete)
+  const handleResolve = async (id: string) => {
+     Alert.alert(
+      "Confirm",
+      "Have you completed this rescue mission?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Yes, Completed",
+          onPress: async () => {
+            try {
+              setIsSubmitting(true);
+              await apiService.post(`/report/${id}/complete`, {});
+              Alert.alert("Success", "Great job! Mission completed.");
+              fetchReports();
+            } catch (error: any) {
+               Alert.alert("Error", error?.response?.data?.message || "Cannot complete");
+            } finally {
+              setIsSubmitting(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleViewOnMap = (lat: number, long: number) => {
+    router.push({
+        pathname: "/(tabs)/map",
+        params: { lat, long, focus: Date.now().toString() }
+    });
+  };
+
+      const renderReportItem = useCallback(({ item }: { item: any }) => (
+    <ReportCard
+      item={item}
+      user={user}
+      handleAccept={handleAccept}
+      handleReject={handleReject}
+      handleResolve={handleResolve}
+      handleDelete={handleDelete}
+      setEditingReport={setEditingReport}
+      handleViewOnMap={handleViewOnMap}
+      isOwner={user?._id === item.by || user?._id === item.by?._id}
+    />
+  ), [user, handleAccept, handleReject, handleResolve, handleDelete, setEditingReport]);
 
   // --- MAIN RENDER ---
   if (!isReady) {
@@ -249,11 +374,11 @@ export default function ReportsScreen() {
           placeholder="Search..."
           leftIcon={<Icon name="Search" className="w-5 h-5 text-neutrals400" />}
           containerClassName="flex-1"
-          className="bg-gray-50 h-12 rounded-xl border-none"
+          className="bg-gray-50 dark:bg-neutrals800 h-12 rounded-xl border-none text-foreground"
         />
         <TouchableOpacity
           onPress={() => setShowFilterModal(true)}
-          className={`w-12 h-12 rounded-xl items-center justify-center ${appliedTypeFilter !== "all" ? "bg-emerald-500" : "bg-gray-100"}`}
+          className={`w-12 h-12 rounded-xl items-center justify-center ${appliedTypeFilter !== "all" ? "bg-emerald-500" : "bg-gray-100 dark:bg-neutrals800"}`}
         >
           <Icon
             name="ListFilter"
@@ -263,19 +388,11 @@ export default function ReportsScreen() {
       </View>
 
       {/* List Reports */}
+
       <FlatList
         data={data}
         keyExtractor={(item) => item._id}
-        renderItem={({ item }) => (
-          <ReportCard
-            item={item}
-            user={user}
-            handleAccept={handleAccept}
-            handleReject={handleReject}
-            handleDelete={handleDelete}
-            setEditingReport={setEditingReport}
-          />
-        )}
+        renderItem={renderReportItem}
         contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
         refreshControl={
           <RefreshControl
@@ -284,11 +401,24 @@ export default function ReportsScreen() {
             tintColor="#10b981"
           />
         }
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={() => {
+           if (isLoading && page > 1) {
+             return <ActivityIndicator className="mt-4" color="#10b981" />;
+           }
+           if (!hasMore && data.length > 0) {
+             return <AppText className="text-center text-gray-400 mt-4 mb-8">No more reports</AppText>;
+           }
+           return <View className="h-8" />;
+        }}
         ListEmptyComponent={
+          !isLoading ? (
           <View className="items-center mt-20">
             <Icon name="FileQuestionMark" className="w-16 h-16 text-gray-300" />
             <AppText className="text-gray-400 mt-4">No reports found</AppText>
           </View>
+          ) : null
         }
       />
 
@@ -311,14 +441,19 @@ export default function ReportsScreen() {
         onApply={() => {
           setAppliedTypeFilter(tempTypeFilter);
           setAppliedStatusFilter(tempStatusFilter);
+          setAppliedSourceFilter(tempSourceFilter);
           setShowFilterModal(false);
         }}
         onReset={() => {
           setTempTypeFilter("all");
           setTempStatusFilter("all");
+          setTempSourceFilter("all");
         }}
         TYPE_FILTERS={TYPE_FILTERS}
         STATUS_FILTERS={STATUS_FILTERS}
+        SOURCE_FILTERS={SOURCE_FILTERS}
+        tempSourceFilter={tempSourceFilter}
+        setTempSourceFilter={setTempSourceFilter}
       />
     </View>
   );

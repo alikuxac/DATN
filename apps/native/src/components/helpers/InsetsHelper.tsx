@@ -10,5 +10,5 @@ export default function InsetsHelper() {
   useEffect(() => {
     dispatch(setInsets(insets));
   }, [insets, dispatch]);
-  return <></>
+  return null;
 }

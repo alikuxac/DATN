@@ -10,14 +10,14 @@ import { AppButton, AppInput, AppText } from "@/components/ui";
 import { useTranslation } from "react-i18next";
 import { useColors } from "@/hooks/useColors";
 import AuthHeaderActions from "@/components/auth/AuthHeaderActions";
+import { Utensils, Droplet, Stethoscope, LifeBuoy, CircleHelp } from "lucide-react-native";
 
-// Mock report types if not available from shared (or ensure shared is correct)
 const REPORT_TYPES = [
-  { label: "Cần thực phẩm", value: ENUM_REPORT_TYPE.FOOD },
-  { label: "Cần nước uống", value: ENUM_REPORT_TYPE.WATER },
-  { label: "Cần y tế", value: ENUM_REPORT_TYPE.MEDICAL },
-  { label: "Cần sơ tán", value: ENUM_REPORT_TYPE.EVACUATION },
-  { label: "Khác", value: ENUM_REPORT_TYPE.OTHER },
+  { label: "Cần sơ tán", value: ENUM_REPORT_TYPE.EVACUATION, icon: LifeBuoy },
+  { label: "Cần y tế", value: ENUM_REPORT_TYPE.MEDICAL, icon: Stethoscope },
+  { label: "Thực phẩm", value: ENUM_REPORT_TYPE.FOOD, icon: Utensils },
+  { label: "Nước uống", value: ENUM_REPORT_TYPE.WATER, icon: Droplet },
+  { label: "Khác", value: ENUM_REPORT_TYPE.OTHER, icon: CircleHelp },
 ];
 
 export default function GuestSOS() {
@@ -42,8 +42,12 @@ export default function GuestSOS() {
         return;
       }
 
-      let location = await Location.getCurrentPositionAsync({});
-      setLocation(location);
+      try {
+        let location = await Location.getCurrentPositionAsync({});
+        setLocation(location);
+      } catch (error) {
+        console.warn('Failed to get location in Guest SOS:', error);
+      }
 
       let id = Platform.OS === 'android' ? Application.getAndroidId() : await Application.getIosIdForVendorAsync();
       setDeviceId(id || "unknown-device");
@@ -118,31 +122,43 @@ export default function GuestSOS() {
             </AppText>
         </View>
 
-        <View className="mb-6">
-          <AppText raw className="text-base font-bold mb-3 ml-2">
-            Loại hỗ trợ cần thiết:
-          </AppText>
-          <View className="flex-row flex-wrap justify-between gap-y-3">
-            {REPORT_TYPES.map((t) => {
-              const isSelected = type === t.value;
-              return (
-              <TouchableOpacity
-                key={t.value}
-                className={`mb-2 rounded-full px-4 py-2 border ${
-                    isSelected 
-                    ? "bg-red-600 border-red-600 dark:bg-red-600 dark:border-red-600" 
-                    : "bg-transparent border-red-600 dark:border-red-500"
-                }`}
-                onPress={() => setType(t.value)}
-              >
-                <AppText raw className={`text-sm font-semibold ${
-                    isSelected ? "text-white" : "text-red-600 dark:text-red-500"
-                }`}>
-                    {t.label}
-                </AppText>
-              </TouchableOpacity>
-            )})}
-          </View>
+
+
+          <View className="mb-6">
+              <AppText raw className="text-base font-bold mb-3 ml-1 text-foreground">
+                Loại hỗ trợ cần thiết:
+              </AppText>
+              <View className="flex-row flex-wrap justify-between">
+                {REPORT_TYPES.map((t, index) => {
+                  const isSelected = type === t.value;
+                  const IconComp = t.icon;
+                  // Last item (Other) spans full width if odd count, but with 5 items, index 4 is last.
+                  // 0, 1 (row 1)
+                  // 2, 3 (row 2)
+                  // 4 (row 3) -> Full width looks good.
+                  const isFullWidth = index === REPORT_TYPES.length - 1;
+
+                  return (
+                    <TouchableOpacity
+                      key={t.value}
+                      className={`mb-3 rounded-xl p-4 border flex-row items-center justify-center gap-3 shadow-sm ${
+                          isFullWidth ? "w-full" : "w-[48%]"
+                      } ${
+                          isSelected 
+                          ? "bg-red-600 border-red-600 dark:bg-red-600 dark:border-red-600" 
+                          : "bg-white dark:bg-neutrals800 border-gray-200 dark:border-neutrals700"
+                      }`}
+                      onPress={() => setType(t.value)}
+                    >
+                      <IconComp size={20} color={isSelected ? "white" : "#DC2626"} />
+                      <AppText raw className={`text-sm font-bold ${
+                          isSelected ? "text-white" : "text-gray-700 dark:text-gray-200"
+                      }`}>
+                          {t.label}
+                      </AppText>
+                    </TouchableOpacity>
+                  )})}
+              </View>
         </View>
 
         <AppInput

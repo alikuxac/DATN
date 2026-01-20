@@ -10,13 +10,25 @@
     "CONFIRM": "Confirm",
     "LOADING": "Loading...",
     "VERSION": "Version",
+    "UNKNOWN_LOCATION": "Unknown location",
     "UNKNOWN_ERROR": "An unknown error occurred",
-
+    "APP_TAGLINE": "Emergency Relief Network",
+    "UNVERIFIED_ACCOUNT_DESC": "Your account is unverified. Please verify your Email and Phone Number to increase reliability.",
     "BTN_SAVE_CHANGES": "Save Changes",
 
-    "ERR_UPDATE_FAILED": "Failed to save settings"
+    "ERR_UPDATE_FAILED": "Failed to save settings",
+    "PHONE_NUMBER": "Phone Number",
+    "GUEST_USER": "Guest User",
+    "NO_PHONE": "No Phone",
+    "NOTE": "Note"
   },
 
+  "TABS": {
+    "MAP": "Map",
+    "REPORTS": "Reports",
+    "NOTIFICATIONS": "Notifications",
+    "ACCOUNT": "Account"
+  },
   "AUTH": {
     "LOGIN_TITLE": "Login",
     "REGISTER_TITLE": "Register",
@@ -27,6 +39,8 @@
     "LABEL_CONFIRM_PASSWORD": "Confirm Password",
     "LABEL_FIRST_NAME": "First Name",
     "LABEL_LAST_NAME": "Last Name",
+    "PLACEHOLDER_PASSWORD": "At least 8 characters",
+    "PLACEHOLDER_CONFIRM_PASSWORD": "Re-enter password",
 
     "BTN_LOGIN": "Login",
     "BTN_REGISTER": "Create Account",
@@ -69,10 +83,137 @@
   "VALIDATION": {
     "REQUIRED": "{{field}} is required",
     "EMAIL_INVALID": "Invalid email address",
-    "PASSWORD_MIN_LENGTH": "Password must be at least 6 characters",
+    "PASSWORD_MIN_LENGTH": "Password must be at least 8 characters",
     "PASSWORD_MISMATCH": "Passwords do not match",
     "PASSWORD_WEAK": "Password must contain uppercase, lowercase, and a number",
     "GENDER_REQUIRED": "Please select a gender"
+  },
+
+  "REPORT": {
+    "PRIORITY": "Priority",
+    "REPORTER": "Reporter",
+    "VICTIM": "Victim",
+    "VICTIM_PROXY": "Victim (Proxy)",
+    "TYPE": {
+      "food": "Food",
+      "water": "Water",
+      "medical": "Medical",
+      "evacuation": "Evacuation",
+      "other": "Other"
+    },
+    "SEVERITY": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "critical": "Critical"
+    },
+    "CARD": {
+      "BTN_MAP": "Map",
+      "BTN_DIRECTIONS": "Directions",
+      "BTN_ACCEPT": "Accept",
+      "BTN_RESOLVE": "Resolve",
+      "BTN_REJECT": "Reject",
+      "BTN_ABORT": "Abort",
+      "BTN_EDIT": "Edit",
+      "BTN_DELETE": "Delete"
+    },
+    "EDIT": {
+      "TITLE": "Update Report",
+      "LOCATION": "Location",
+      "DESCRIPTION": "Description",
+      "PEOPLE_COUNT": "People Count",
+      "SEVERITY": "Severity",
+      "BTN_CONFIRM": "Confirm Update"
+    },
+    "IMAGE": {
+      "LABEL": "Images",
+      "ADD": "Add Image",
+      "LIMIT_TITLE": "Limit Reached",
+      "LIMIT_MSG": "You can only upload up to {{max}} images",
+      "PERMISSION_TITLE": "Permission Required",
+      "PERMISSION_MSG": "Photo library access is needed",
+      "ERROR_TITLE": "Error",
+      "ERROR_MSG": "Failed to upload image"
+    },
+    "DETAIL": {
+      "TITLE_PREFIX": "Emergency: ",
+      "NO_DESCRIPTION": "No details available.",
+      "LABEL_PEOPLE": "People",
+      "LABEL_SEVERITY": "Severity",
+      "LABEL_VICTIM": "Victim",
+      "BTN_ACCEPT": "ACCEPT RESCUE",
+      "BTN_CANCEL": "CANCEL",
+      "BTN_COMPLETE": "COMPLETED",
+      "BTN_DIRECTIONS": "Directions",
+      "BTN_DENY": "DENY",
+      "WARNING_UNVERIFIED": "This user has not verified Email/Phone. Be wary of fake info."
+    },
+    "REJECTION_REASON": "Rejection Reason",
+    "REJECT_REASON": {
+      "DUPLICATE": "Duplicate Report",
+      "SPAM": "Spam / Misinformation",
+      "RESOLVED": "Already Resolved",
+      "UNREACHABLE": "Unreachable",
+      "OTHER": "Other",
+      "REQUIRED": "Please select a reason",
+      "TITLE": "Rejection Reason",
+      "PLACEHOLDER": "Enter specific reason..."
+    },
+    "GUEST_SOS": "Guest SOS",
+    "SOURCE": {
+      "APP": "APP",
+      "GUEST": "GUEST"
+    }
+  },
+
+  "MAP": {
+    "CREATE": {
+      "TITLE": "Request Support",
+      "SUBTITLE": "Accurate info helps rescue faster",
+      "PROXY": {
+        "TITLE": "Report for others",
+        "DESC": "Use when victim cannot report",
+        "AVATAR": "HO"
+      },
+      "SELF": {
+        "TITLE": "Report for myself",
+        "DESC": "Use when you are in danger",
+        "AVATAR": "ME"
+      },
+      "VICTIM_INFO_TITLE": "VICTIM INFORMATION",
+      "LABEL_VICTIM_NAME": "Victim Name / Group *",
+      "PLACEHOLDER_VICTIM_NAME": "Ex: Grandma Ba, Kids Group...",
+      "LABEL_VICTIM_NOTE": "Victim Note",
+      "PLACEHOLDER_VICTIM_NOTE": "Ex: Elderly, no phone...",
+      "BTN_PICK_LOCATION": "Adjust location on map",
+      "PICKED_LOCATION": "Selected:",
+      "LABEL_TYPE": "TYPE OF SUPPORT",
+      "LABEL_PEOPLE_COUNT_PROXY": "NUMBER OF VICTIMS",
+      "LABEL_PEOPLE_COUNT_SELF": "PEOPLE NEED HELP",
+      "LABEL_SEVERITY": "URGENCY LEVEL",
+      "LABEL_DESCRIPTION": "SITUATION DETAILS",
+      "PLACEHOLDER_DESCRIPTION": "Ex: Water 1m deep, elderly people, out of food for 2 days...",
+      "BTN_SUBMIT_PROXY": "Submit Proxy Report",
+      "BTN_SUBMIT_SELF": "Submit Report Now",
+      "VALIDATION": {
+        "DESC_MISSING": "Description missing",
+        "DESC_REQUIRED": "Please describe the need",
+        "NAME_MISSING": "Information missing",
+        "NAME_REQUIRED": "Please enter victim name"
+      },
+      "SUCCESS": {
+        "TITLE": "Request Sent!",
+        "MSG": "Your request has been submitted"
+      },
+      "OFFLINE": {
+        "TITLE": "Saved Offline",
+        "MSG": "Will verify when online"
+      },
+      "ERROR": {
+        "TITLE": "Submission Failed",
+        "MSG": "An error occurred, please try again"
+      }
+    }
   },
 
   "PROFILE": {
@@ -87,6 +228,9 @@
     "LABEL_SELECT_GENDER": "Select Gender",
     "VALUE_NO_PHONE": "No phone number added",
     "VALUE_NOT_SPECIFIED": "Not specified",
+    
+    "STATUS_VERIFIED": "VERIFIED",
+    "STATUS_UNVERIFIED": "UNVERIFIED",
 
     "GENDER_OPTIONS": {
       "MALE": "Male",
@@ -136,6 +280,12 @@
       "SYSTEM": "System Default",
       "VI": "Vietnamese",
       "EN": "English"
+    },
+    "PHONE": {
+        "OTP_SENT": "OTP sent via Telegram",
+        "VERIFIED": "Phone number verified!",
+        "SEND_ERROR": "Failed to send OTP",
+        "VERIFY_ERROR": "Invalid OTP"
     }
   },
 

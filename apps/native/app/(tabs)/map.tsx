@@ -14,9 +14,17 @@ import {
   ActivityIndicator,
   Linking,
   Text,
+  LogBox,
 } from "react-native";
+
+// Suppress benign VietMap/Mapbox GL warnings regarding style parsing
+LogBox.ignoreLogs([
+  "line dasharray requires at least two elements",
+  "{Thread-", // General thread warnings from native map
+  "[ParseStyle]: line dasharray"
+]);
 import { useTranslation } from "react-i18next";
-import { Redirect, useFocusEffect } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 
 // Components
 import { useColors } from "@/hooks/useColors";
@@ -42,301 +50,427 @@ import {
   ENUM_REPORT_STATUS,
   ENUM_USER_ROLE,
   ENUM_REPORT_TYPE,
+  IReportListResponse, // Import from shared
 } from "@repo/shared";
-import { useLocationTracking } from "@/hooks/useUserLocation";
+import { useLocationContext } from "@/context/LocationContext";
+import { useIsFocused } from "@react-navigation/native";
+import { Icon } from "@/components/ui";
+import { calculateDistance } from "@/utils/geo";
 
-// --- CONFIG ---
-const VIETMAP_API_KEY = process.env.EXPO_PUBLIC_VIETMAP_API_KEY;
+  // --- CONFIG ---
+  const rawKey = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || "";
+  const VIETMAP_API_KEY = rawKey.trim();
 
-// Interfaces (Should handle import normally, but defining here for now if not shared)
-interface ReportData {
-  _id: string;
-  title: string;
-  type: ENUM_REPORT_TYPE;
-  status: ENUM_REPORT_STATUS;
-  location: { 
-    lat: number; 
-    lng: number;
-    coordinates?: [number, number]; // GeoJSON: [lng, lat]
-  };
-  coordinates?: [number, number];
-  description?: string;
-  peopleCount: number;
-  severity: string;
-  user?: { 
-    _id: string; 
-    firstName: string; 
-    lastName: string; 
-    phone?: string;
-    lastLocationAt?: string; // Thêm trường này
-  };
-  volunteer?: string; // ID của rescuer
-  createdAt: string;
-}
-
-interface RescuerData {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  phone?: string;
-  location: { lat: number; lng: number, coordinates?: [number, number] }; // Vị trí hiện tại của Rescuer
-  coordinates?: [number, number];
-  isOnline: boolean;
-  lastLocationAt?: string; // Thêm trường này để tính online
-}
-
-export default function MapScreen() {
-  const { t } = useTranslation();
-  const { theme, user, token } = useAppSelector((state) => state.app);
-  const { userLocation, currentRegion, socket } = useLocationTracking(token);
-  const { showSuccess, showError, showToast } = useToast();
-  const colors = useColors();
-  const cameraRef = useRef<React.ComponentRef<typeof Camera>>(null);
-
-  if (Platform.OS === "web") return <Redirect href="/(tabs)/account" />;
-
-  // --- STATE ---
-  const [reports, setReports] = useState<ReportData[]>([]);
-  const [rescuers, setRescuers] = useState<RescuerData[]>([]); // Danh sách Rescuer
-
-  const [selectedReport, setSelectedReport] = useState<ReportData | null>(null);
-  const [selectedRescuer, setSelectedRescuer] = useState<RescuerData | null>(
-    null
-  );
-
-  const [isActionLoading, setIsActionLoading] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
+  // No local ReportData interface needed anymore
   
-  // Location Picker State
-  const [isPickingLocation, setIsPickingLocation] = useState(false);
-  const [pickedLocation, setPickedLocation] = useState<{ lat: number; long: number } | null>(null);
-  const centerCoordinateRef = useRef<[number, number] | null>(null);
-
-  // --- MAP STYLE ---
-  const getMapStyleUrl = () =>
-    `https://maps.vietmap.vn/api/maps/${theme === "dark" ? "dark" : "light"}/styles.json?apikey=${VIETMAP_API_KEY}`;
+  
+  interface RescuerData {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    phone?: string;
+    location: { lat: number; lng: number, coordinates?: [number, number] }; // Vị trí hiện tại của Rescuer
+    coordinates?: [number, number];
+    isOnline: boolean;
+    lastLocationAt?: string; // Thêm trường này để tính online
+  }
+  
+  export default function MapScreen() {
+    const { t } = useTranslation();
+    const { theme, user, token } = useAppSelector((state) => state.app);
+    const { userLocation, currentRegion, socket, setActiveReportId } = useLocationContext();
+    const isFocused = useIsFocused();
+    const { showSuccess, showError, showToast } = useToast();
+    const colors = useColors();
+    const cameraRef = useRef<React.ComponentRef<typeof Camera>>(null);
+    const router = useRouter();
     
-  // --- LOCATION PICKER LOGIC ---
-  const handlePickLocation = () => {
-      setModalVisible(false);
-      setIsPickingLocation(true);
-      showToast({ title: "Thông báo", message: "Di chuyển bản đồ và bấm 'Chọn vị trí này'", type: "info" });
-  };
+    // Fix Map Validation/Loading: Force remount key
+    const [mountKey, setMountKey] = useState(0);
 
-  const confirmLocation = async () => {
-       // Prefer using Ref from onRegionDidChange
-       let center = centerCoordinateRef.current;
-       
-       if (center) {
-           setPickedLocation({ lat: center[1], long: center[0] });
-           setIsPickingLocation(false);
-           setModalVisible(true);
-       } else {
-           showError("Lỗi", "Chưa lấy được vị trí, vui lòng di chuyển bản đồ chút xíu.");
-       }
-  };
+    useFocusEffect(
+      useCallback(() => {
+         // Force a re-mount of the MapView on the first real focus interaction
+         // This helps resolve GL context race conditions causing "blank map" or style parse errors on init
+         if (mountKey === 0) {
+             setMountKey(k => k + 1);
+         }
+         fetchData();
+      }, [token, currentRegion, user?.role, user?.verification?.email]) // removed mountKey dependency to avoid loop? No, callback dependency...
+    );
 
-  // --- API FETCHING ---
-  const fetchData = async () => {
-    if (!token) return;
-
-    try {
-      const param = {
-        regionId: currentRegion!,
+    useEffect(() => {
+      if (Platform.OS === "web") {
+        router.replace("/(tabs)/account");
       }
-
-      const queryString = new URLSearchParams(param as any).toString();
-      // 1. Fetch Reports
-      const reportRes = await apiService.get<{ data: ReportData[] }>(
-        `/admin/report/list?${queryString}`
-      );
-      setReports(reportRes.data);
-
-      setReports(reportRes.data);
-
-      // 2. Fetch Rescuers (Real Data)
-      if (user?.role === ENUM_USER_ROLE.USER) {
-          const activeReports = reportRes.data.filter(r => 
-              r.status === ENUM_REPORT_STATUS.IN_PROGRESS && r.volunteer
+    }, []);
+  
+    if (Platform.OS === "web") return null; // Render nothing on web while redirecting
+  
+    // --- STATE ---
+    const [reports, setReports] = useState<IReportListResponse[]>([]);
+    const [rescuers, setRescuers] = useState<RescuerData[]>([]); // Danh sách Rescuer
+  
+    const [selectedReport, setSelectedReport] = useState<IReportListResponse | null>(null);
+    const [selectedRescuer, setSelectedRescuer] = useState<RescuerData | null>(
+      null
+    );
+  
+    const [isActionLoading, setIsActionLoading] = useState(false);
+    const [modalVisible, setModalVisible] = useState(false);
+    
+    // Location Picker State
+    const [isPickingLocation, setIsPickingLocation] = useState(false);
+    const [pickedLocation, setPickedLocation] = useState<{ lat: number; long: number } | null>(null);
+    const centerCoordinateRef = useRef<[number, number] | null>(null);
+    
+    // Params handling
+    const params = useLocalSearchParams<{ lat: string; long: string; focus: string }>();
+  
+    useEffect(() => {
+        // Only fly to location if focus param changes and is present
+        if (params.focus && params.lat && params.long && cameraRef.current) {
+            const lat = parseFloat(params.lat);
+            const long = parseFloat(params.long);
+            
+            if (!isNaN(lat) && !isNaN(long)) {
+                 // Use a shorter timeout or none if possible.
+                 // Also, we can clear the params using router.setParams({ focus: null }) to avoid re-triggering?
+                 // But router.setParams works on current route.
+                 
+                 const timeoutId = setTimeout(() => {
+                     cameraRef.current?.setCamera({
+                          centerCoordinate: [long, lat],
+                          zoomLevel: 16,
+                          animationDuration: 1000,
+                          animationMode: "flyTo"
+                     });
+                     // Optional: Clear focus param so it doesn't trigger again on component re-renders if params persist
+                     // router.setParams({ focus: "" }); 
+                 }, 500);
+                 
+                 return () => clearTimeout(timeoutId);
+            }
+        }
+    }, [params.focus, params.lat, params.long]);
+  
+    // Auto-center on user location when first loaded (if not focused/navigated to specific report)
+    const hasCenteredRef = useRef(false);
+    useEffect(() => {
+        if (userLocation && !hasCenteredRef.current && !params.focus) {
+            hasCenteredRef.current = true;
+            cameraRef.current?.setCamera({
+                centerCoordinate: [userLocation.longitude, userLocation.latitude],
+                zoomLevel: 15,
+                animationMode: "flyTo"
+            });
+        }
+    }, [userLocation, params.focus]);
+  
+    // --- MAP STYLE ---
+    const getMapStyleUrl = () =>
+      `https://maps.vietmap.vn/api/maps/${theme === "dark" ? "dark" : "light"}/styles.json?apikey=${VIETMAP_API_KEY}`;
+      
+    // --- LOCATION PICKER LOGIC ---
+    const handlePickLocation = () => {
+        setModalVisible(false);
+        setIsPickingLocation(true);
+        showToast({ title: "Thông báo", message: "Di chuyển bản đồ và bấm 'Chọn vị trí này'", type: "info" });
+    };
+  
+    const confirmLocation = async () => {
+         // Prefer using Ref from onRegionDidChange
+         let center = centerCoordinateRef.current;
+         
+         if (center) {
+             setPickedLocation({ lat: center[1], long: center[0] });
+             setIsPickingLocation(false);
+             setModalVisible(true);
+         } else {
+             showError("Lỗi", "Chưa lấy được vị trí, vui lòng di chuyển bản đồ chút xíu.");
+         }
+    };
+  
+    // --- API FETCHING ---
+    const fetchData = async () => {
+      if (!token) return;
+  
+      try {
+        const param = {
+          regionId: currentRegion!,
+        }
+  
+        const queryString = new URLSearchParams(param as any).toString();
+  
+        // 1. Fetch Reports
+        const reportRes = await apiService.get<{ data: IReportListResponse[] }>(
+          `/user/report?${queryString}`
+        );
+        setReports(reportRes.data);
+  
+        // 2. Fetch Rescuers (Real Data)
+        if (user?.role === ENUM_USER_ROLE.USER) {
+            const activeReports = reportRes.data.filter(r => 
+                r.status === ENUM_REPORT_STATUS.IN_PROGRESS && r.rescuer
+            );
+            
+            if (activeReports.length > 0) {
+                const rescuerIds = [...new Set(activeReports.map(r => typeof r.rescuer === 'string' ? r.rescuer : r.rescuer?._id.toString()))].filter(Boolean) as string[];
+                const fetchedRescuers: RescuerData[] = [];
+                
+                // Fetch details for each unique rescuer
+                for (const rescuerId of rescuerIds) {
+                    try {
+                        // Using a public or accessible endpoint to get basic rescuer info
+                        // Assuming GET /users/:id or similar exists and returns location
+                        // If not, we might need a specific endpoint. 
+                        // Trying /users/info/${id} or similar if defined, otherwise falling back
+                        // to waiting for socket or basic info if available.
+                        // Investigating User Controller later if this fails.
+                        // For now, let's try to fetch user info.
+                        const res = await apiService.get<any>(`/shared/user/info/${rescuerId}`); // Corrected endpoint
+                        console.log(res.data.location);
+                        if (res.data) {
+                            const coords = res.data.location?.coordinates;
+                            
+                            fetchedRescuers.push({
+                                _id: res.data._id.toString(),
+                                firstName: res.data.firstName,
+                                lastName: res.data.lastName,
+                                phone: res.data.mobileNumber,
+                                location: coords ? { lat: coords[1], lng: coords[0] } : { lat: 0, lng: 0 },
+                                coordinates: coords,
+                                isOnline: true, 
+                            });
+                        }
+                    } catch (e) {
+                        console.log(`Failed to fetch rescuer ${rescuerId}`, e);
+                    }
+                }
+                setRescuers(fetchedRescuers);
+            }
+        }
+      } catch (error) {
+        console.error("Fetch data error:", error);
+      }
+    };
+  
+    // Removed old useFocusEffect that just fetched data, as we merged it with the mountKey logic above.
+    // Wait, I should not duplicate useFocusEffect.
+    // The previous code had useFocusEffect at line 231.
+    // In this replacement, I am overwriting the top section up to line 445 (before MapView children).
+    // So I need to ensure I don't leave duplicate useFocusEffects if I replace a large chunk.
+  
+    // --- SOCKET TRACKING ---
+    useEffect(() => {
+      if (!socket) return;
+      
+      // Listen for rescuer movement
+      const handleRescuerMoved = (data: { rescuerId: string; lat: number; lng: number }) => {
+        setRescuers((prev) => 
+          prev.map((r) => 
+            r._id === data.rescuerId 
+              ? { 
+                  ...r, 
+                  location: { ...r.location, lat: data.lat, lng: data.lng }, 
+                  coordinates: [data.lng, data.lat],
+                  lastLocationAt: new Date().toISOString()
+                } 
+              : r
+          )
+        );
+      };
+  
+      socket.on('rescuer_moved', handleRescuerMoved);
+      
+      if (user && user.role === ENUM_USER_ROLE.USER) {
+         const myActiveReport = reports.find(r => r.user?._id === user._id && r.status === ENUM_REPORT_STATUS.IN_PROGRESS);
+         if (myActiveReport) {
+             socket.emit('join_report_room', { reportId: myActiveReport._id });
+         }
+      }
+  
+      return () => {
+        socket.off('rescuer_moved', handleRescuerMoved);
+      };
+    }, [socket, reports, user]);
+  
+    const isVolunteerMode = useMemo(() => {
+      return user?.role === ENUM_USER_ROLE.VOLUNTEER || user?.isRescueMode;
+    }, [user]);
+  
+    // --- LOGIC FILTER REPORTS ---
+    const displayedReports = useMemo(() => {
+      if (!user) return reports; // Fallback show all while loading user
+      const currentUserId = user._id.toString();
+      const isAdmin = user.role === ENUM_USER_ROLE.ADMIN || user.role === ENUM_USER_ROLE.SUPER_ADMIN;
+  
+      // 1. Volunteer Mode (Higher Priority - Focus on Rescue)
+      if (isVolunteerMode) {
+        // A. Check active task (If has active task, ONLY show it)
+        const myActiveReport = reports.find(r => {
+          if (r.status !== ENUM_REPORT_STATUS.IN_PROGRESS) return false;
+          
+          let rRescuerId: string | undefined;
+          if (typeof r.rescuer === 'string') {
+               rRescuerId = r.rescuer;
+          } else if (typeof r.rescuer === 'object' && r.rescuer) {
+               rRescuerId = (r.rescuer as any)._id?.toString();
+          }
+  
+          const isMatch = rRescuerId === currentUserId;
+  
+          return isMatch;
+        });
+  
+        if (myActiveReport) return [myActiveReport];
+  
+        // B. Filter by radius (10km) & Pending status
+        // ALSO: Include my own reports so I don't lose them
+        return reports.filter((r) => {
+           const isMyReport = r.user?._id === currentUserId;
+           if (isMyReport) return true;
+  
+           if (r.status !== ENUM_REPORT_STATUS.PENDING) return false;
+           
+           // If no user location, show all PENDING reports (don't hide them)
+           if (!userLocation) return true;
+           
+           if (!r.location?.coordinates) return false; 
+  
+           const dist = calculateDistance(
+               userLocation.latitude, userLocation.longitude,
+               r.location.coordinates[1], r.location.coordinates[0]
+           );
+           return dist <= 10000;
+        });
+      }
+  
+      // 2. Admin Mode (Show All)
+      if (isAdmin) return reports;
+      
+      // 3. User Mode (Show Own Only)
+      return reports.filter((r) => r.user?._id === currentUserId);
+    }, [reports, user, isVolunteerMode, userLocation]);
+  
+    const displayedRescuers = useMemo(() => {
+      if (!user) return [];
+      const isAdmin = user.role === ENUM_USER_ROLE.ADMIN || user.role === ENUM_USER_ROLE.SUPER_ADMIN;
+  
+      const result = isAdmin ? rescuers : 
+                     user.role === ENUM_USER_ROLE.USER ? (() => {
+                        const myActiveVolunteers = reports
+                          .filter(r => r.user?._id.toString() === user._id.toString() && r.status === ENUM_REPORT_STATUS.IN_PROGRESS)
+                          .map(r => typeof r.rescuer === 'string' ? r.rescuer : r.rescuer?._id.toString());
+                        return rescuers.filter(res => myActiveVolunteers.includes(res._id.toString()));
+                     })() : [];
+      
+      return result;
+    }, [rescuers, reports, user]);
+  
+    // --- LOCATION TRACKING FOR VOLUNTEER ---
+    // Sync active report ID to LocationContext so it sends 'rescuer_moved'
+    useEffect(() => {
+      if (user?.role === ENUM_USER_ROLE.VOLUNTEER || user?.isRescueMode) {
+          const activeReport = reports.find(
+              r => r.status === ENUM_REPORT_STATUS.IN_PROGRESS && 
+              (typeof r.rescuer === 'string' ? r.rescuer : r.rescuer?._id) === user._id.toString()
           );
           
-          if (activeReports.length > 0) {
-              const rescuerIds = [...new Set(activeReports.map(r => r.volunteer!))];
-              const fetchedRescuers: RescuerData[] = [];
-
-              // Fetch details for each unique rescuer
-              for (const rescuerId of rescuerIds) {
-                  try {
-                      // Using a public or accessible endpoint to get basic rescuer info
-                      // Assuming GET /users/:id or similar exists and returns location
-                      // If not, we might need a specific endpoint. 
-                      // Trying /users/info/${id} or similar if defined, otherwise falling back
-                      // to waiting for socket or basic info if available.
-                      // Investigating User Controller later if this fails.
-                      // For now, let's try to fetch user info.
-                      const res = await apiService.get<any>(`/user/info/${rescuerId}`); // Corrected endpoint
-                      if (res.data) {
-                          fetchedRescuers.push({
-                              _id: res.data._id,
-                              firstName: res.data.firstName,
-                              lastName: res.data.lastName,
-                              phone: res.data.mobileNumber, // Using mobileNumber from DTO
-                              location: res.data.lastLocation || { lat: 0, lng: 0 }, // fallback
-                              isOnline: true, // simplified
-                          });
-                      }
-                  } catch (e) {
-                      console.log(`Failed to fetch rescuer ${rescuerId}`, e);
-                  }
-              }
-              setRescuers(fetchedRescuers);
+          if (activeReport) {
+              setActiveReportId(activeReport._id);
+          } else {
+              setActiveReportId(null);
           }
+      } else {
+          setActiveReportId(null);
       }
-    } catch (error) {
-      console.error("Fetch data error:", error);
-    }
-  };
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchData();
-    }, [token, currentRegion])
-  );
-
-  // --- SOCKET TRACKING ---
-  useEffect(() => {
-    if (!socket) return;
-    
-    // Listen for rescuer movement
-    const handleRescuerMoved = (data: { rescuerId: string; lat: number; lng: number }) => {
-      setRescuers((prev) => 
-        prev.map((r) => 
-          r._id === data.rescuerId 
-            ? { 
-                ...r, 
-                location: { ...r.location, lat: data.lat, lng: data.lng }, 
-                coordinates: [data.lng, data.lat],
-                lastLocationAt: new Date().toISOString()
-              } 
-            : r
-        )
-      );
-    };
-
-    socket.on('rescuer_moved', handleRescuerMoved);
-    
-    if (user && user.role === ENUM_USER_ROLE.USER) {
-       const myActiveReport = reports.find(r => r.user?._id === user._id && r.status === ENUM_REPORT_STATUS.IN_PROGRESS);
-       if (myActiveReport) {
-           socket.emit('join_report_room', { reportId: myActiveReport._id });
-       }
-    }
-
-    return () => {
-      socket.off('rescuer_moved', handleRescuerMoved);
-    };
-  }, [socket, reports, user]);
-
-  const isVolunteerMode = useMemo(() => {
-    return user?.role === ENUM_USER_ROLE.VOLUNTEER || user?.isRescueMode;
-  }, [user]);
-
-  // --- LOGIC FILTER REPORTS ---
-  const displayedReports = useMemo(() => {
-    if (!user) return reports; // Fallback show all while loading user
-    const currentUserId = user._id;
-
-    if (user.role === ENUM_USER_ROLE.ADMIN) return reports;
-
-    if (isVolunteerMode) {
-      return reports.filter((r) => r.status === ENUM_REPORT_STATUS.PENDING || (r.status === ENUM_REPORT_STATUS.IN_PROGRESS && r.volunteer === currentUserId));
-    }
-    
-    return reports.filter((r) => r.user?._id === currentUserId);
-  }, [reports, user, isVolunteerMode]);
-
-  const displayedRescuers = useMemo(() => {
-    if (!user) return [];
-
-    const result = user.role === ENUM_USER_ROLE.ADMIN ? rescuers : 
-                   user.role === ENUM_USER_ROLE.USER ? (() => {
-                      const myActiveVolunteers = reports
-                        .filter(r => r.user?._id === user._id && r.status === ENUM_REPORT_STATUS.IN_PROGRESS)
-                        .map(r => r.volunteer);
-                      return rescuers.filter(res => myActiveVolunteers.includes(res._id));
-                   })() : [];
-    
-    return result;
-  }, [rescuers, reports, user]);
-
-  // --- ACTIONS (Xử lý trực tiếp, ko navigate) ---
-  const handleReportAction = async (action: "accept" | "reject" | "cancel" | "complete") => {
-    if (!selectedReport) return;
-    setIsActionLoading(true);
-    try {
-      if (action === "accept") {
-        await apiService.post(`/report/${selectedReport._id}/accept`, {});
-        showSuccess("Đã tiếp nhận!");
-      } else if (action === "reject") {
-        await apiService.post(`/report/${selectedReport._id}/reject`, {});
-        showSuccess("Đã hủy tiếp nhận!");
-      } else if (action === "complete") {
-        await apiService.post(`/report/${selectedReport._id}/complete`, {});
-        showSuccess("Nhiệm vụ hoàn thành! Cảm ơn bạn.");
-      }
-      // Refresh data & Close modal
-      await fetchData();
-      setSelectedReport(null);
-    } catch (err) {
-      showError("Lỗi", "Không thể thực hiện hành động.");
-    } finally {
-      setIsActionLoading(false);
-    }
-  };
-
-  const handleCall = (phone?: string) => {
-    if (phone) Linking.openURL(`tel:${phone}`);
-    else showError("Lỗi", "Không có số điện thoại");
-  };
-
-  const handleRecenter = () => {
-    if (userLocation && cameraRef.current) {
-      cameraRef.current.setCamera({
-        centerCoordinate: [userLocation.longitude, userLocation.latitude],
-        zoomLevel: 15, // Zoom gần lại chút cho dễ nhìn
-        animationDuration: 2000, // Hiệu ứng bay trong 1 giây
-        animationMode: "flyTo",
-      });
-    } else {
-      // Nếu chưa có vị trí (do chưa load xong hoặc chưa cấp quyền), thử gọi lại hàm lấy vị trí
-      // getUserLocation(); // Gọi hàm này nếu bạn đã define nó như ở bước trước
-      showError("Chưa có vị trí", "Đang định vị...");
-    }
-  };
-
-  return (
-    <View style={styles.container}>
-      <StatusBar
-        translucent
-        backgroundColor="transparent"
-        barStyle={theme === "dark" ? "light-content" : "dark-content"}
-      />
-
-      <MapView
-        style={styles.map}
-        mapStyle={getMapStyleUrl()}
-        logoEnabled={false}
-        attributionEnabled={false}
-        onPress={() => {
+    }, [reports, user, setActiveReportId]);
+  
+    // --- ACTIONS (Xử lý trực tiếp, ko navigate) ---
+    const handleReportAction = async (action: "accept" | "reject" | "cancel" | "complete", data?: any) => {
+      if (!selectedReport) return;
+      setIsActionLoading(true);
+      try {
+        if (action === "accept") {
+          await apiService.post(`/user/report/${selectedReport._id}/accept`, {});
+          showSuccess("Đã tiếp nhận!");
+          await fetchData();
           setSelectedReport(null);
-          setSelectedRescuer(null);
-        }}
-        onRegionDidChange={(event) => {
-            if (event && event.geometry && event.geometry.coordinates) {
-                centerCoordinateRef.current = event.geometry.coordinates as [number, number];
+        } else if (action === "reject") {
+            const reason = data?.reason;
+            if (reason) {
+                  // If reason is provided (from ReportDetailSheet modal), use it directly
+                  try {
+                      await apiService.post(`/user/report/${selectedReport._id}/reject`, { reason });
+                      showSuccess("Đã từ chối báo cáo!");
+                      await fetchData();
+                      setSelectedReport(null);
+                  } catch (e) {
+                      showError("Lỗi", "Không thể từ chối báo cáo.");
+                  } finally {
+                      setIsActionLoading(false);
+                  }
+                  return;
             }
-        }}
-      >
+        } else if (action === "complete") {
+          await apiService.post(`/user/report/${selectedReport._id}/complete`, {});
+          showSuccess("Nhiệm vụ hoàn thành! Cảm ơn bạn.");
+          await fetchData();
+          setSelectedReport(null);
+        }
+  
+      } catch (err) {
+        showError("Lỗi", "Không thể thực hiện hành động.");
+      } finally {
+        setIsActionLoading(false);
+      }
+    };
+  
+    const handleCall = (phone?: string) => {
+      if (phone) Linking.openURL(`tel:${phone}`);
+      else showError("Lỗi", "Không có số điện thoại");
+    };
+  
+    const handleRecenter = () => {
+      if (userLocation && cameraRef.current) {
+        cameraRef.current.setCamera({
+          centerCoordinate: [userLocation.longitude, userLocation.latitude],
+          zoomLevel: 15, // Zoom gần lại chút cho dễ nhìn
+          animationDuration: 2000, // Hiệu ứng bay trong 1 giây
+          animationMode: "flyTo",
+        });
+      } else {
+        // Nếu chưa có vị trí (do chưa load xong hoặc chưa cấp quyền), thử gọi lại hàm lấy vị trí
+        // getUserLocation(); // Gọi hàm này nếu bạn đã define nó như ở bước trước
+        showError("Chưa có vị trí", "Đang định vị...");
+      }
+    };
+  
+    return (
+      <View style={styles.container}>
+        <StatusBar
+          translucent
+          backgroundColor="transparent"
+          barStyle={theme === "dark" ? "light-content" : "dark-content"}
+        />
+  
+        <MapView
+          key={`${theme}-${mountKey}`} // Force remount if theme/key changes to fix GL context issues
+          style={styles.map}
+          mapStyle={getMapStyleUrl()}
+          logoEnabled={false}
+          attributionEnabled={false}
+          onPress={() => {
+            setSelectedReport(null);
+            setSelectedRescuer(null);
+          }}
+          onRegionDidChange={(event) => {
+              if (event && event.geometry && event.geometry.coordinates) {
+                  centerCoordinateRef.current = event.geometry.coordinates as [number, number];
+              }
+          }}
+        >
         <Camera
           ref={cameraRef}
           zoomLevel={13}
@@ -346,13 +480,6 @@ export default function MapScreen() {
           animationMode="flyTo"
         />
         
-        {/* PICKING LOCATION PIN (Center) */}
-        {isPickingLocation && (
-             <View style={{ position: 'absolute', top: '50%', left: '50%', marginTop: -32, marginLeft: -16, zIndex: 100, elevation: 10 }}>
-                 <LocateFixed size={32} color="#EF4444" fill="white" /> 
-             </View>
-        )}
-
         {/* 1. REPORT MARKERS (Trên cùng để dễ bấm) */}
         {displayedReports.map((report) => (
           <MapReportMarker
@@ -380,6 +507,7 @@ export default function MapScreen() {
         {/* 3. MY LOCATION (Dưới cùng để tránh chặn click của Marker) */}
         {userLocation && (
           <PointAnnotation
+            key="user-location-marker"
             id="user-location"
             coordinate={[userLocation.longitude, userLocation.latitude]}
           >
@@ -390,6 +518,23 @@ export default function MapScreen() {
           </PointAnnotation>
         )}
       </MapView>
+      
+      {/* 4. PICKING LOCATION PIN (Overlay - Center of Screen) */}
+      {isPickingLocation && (
+          <View style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              marginTop: -24, // adjust half height
+              marginLeft: -12, // adjust half width
+              zIndex: 100,
+              alignItems: 'center',
+              justifyContent: 'center',
+              pointerEvents: 'none' // Allow touches to pass through to map
+          }}>
+              <Icon name="MapPin" size={48} color={colors.primary} fill={colors.primary} />
+          </View>
+      )}
 
       {!userLocation && (
         <View style={styles.loadingContainer}>
@@ -414,6 +559,35 @@ export default function MapScreen() {
                </TouchableOpacity>
           </View>
       )}
+
+      <View
+        style={{
+          position: "absolute",
+          top: Platform.OS === "android" ? (StatusBar.currentHeight || 24) + 10 : 50,
+          right: 20,
+          zIndex: 50,
+        }}
+      >
+        <TouchableOpacity
+          onPress={() => {
+            showToast({ title: "Đang tải lại...", message: "Đang cập nhật dữ liệu", type: "info" });
+            fetchData();
+          }}
+          disabled={false} // Maybe add loading state block
+          style={{
+            backgroundColor: theme === "dark" ? colors.neutrals800 : "white",
+            padding: 10,
+            borderRadius: 25,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.25,
+            shadowRadius: 3.84,
+            elevation: 5,
+          }}
+        >
+          <Icon name="RotateCw" size={20} color={colors.primary} />
+        </TouchableOpacity>
+      </View>
 
       {/* --- CREATE BUTTON (User/Volunteer) --- */}
       {!isPickingLocation && user?.role !== ENUM_USER_ROLE.ADMIN && (
@@ -456,6 +630,7 @@ export default function MapScreen() {
           onClose={() => setSelectedReport(null)}
           isVolunteerMode={!!isVolunteerMode}
           user={user}
+          userLocation={userLocation}
           isActionLoading={isActionLoading}
           handleReportAction={handleReportAction}
           handleCall={handleCall}

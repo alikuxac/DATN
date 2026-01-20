@@ -16,6 +16,7 @@ import { useColors } from "@/hooks/useColors";
 import { ApiError, apiService } from "@/services/api.service";
 import { ENUM_USER_ROLE, IResponse, IUserProfileReponse } from "@repo/shared";
 import { useToast } from "@/components/ui/ToastProvider";
+import { AppText } from "@/components/ui";
 import { ProfileCard } from "@/components/account/ProfileCard";
 import { VolunteerStatusCard } from "@/components/account/VolunteerStatusCard";
 
@@ -120,14 +121,24 @@ export default function AccountScreen() {
 
         {/* 2. TRẠNG THÁI HOẠT ĐỘNG (Ví dụ: Volunteer Mode) */}
         <VolunteerStatusCard
-          isRescueEnabled={isRescueEnabled}
-          userData={userData}
-          isUpdatingVolunteer={isUpdatingVolunteer}
-          updateVolunteer={updateVolunteer}
-          colors={colors}
-          activeColor={activeColor}
-          t={t}
+            isRescueEnabled={isRescueEnabled}
+            userData={userData}
+            isUpdatingVolunteer={isUpdatingVolunteer}
+            updateVolunteer={updateVolunteer}
+            colors={colors}
+            activeColor={activeColor}
+            t={t}
+            theme={theme}
+            disabled={!(userData?.verification?.email && userData?.verification?.mobileNumber)}
         />
+        
+        {!(userData?.verification?.email && userData?.verification?.mobileNumber) && (
+            <View style={{ padding: 16, backgroundColor: colors.card, borderRadius: 12, marginTop: 8 }}>
+                <AppText style={{ color: colors.foreground, textAlign: 'center' }}>
+                    {t("COMMON.UNVERIFIED_ACCOUNT_DESC")}
+                </AppText>
+            </View>
+        )}
       </ScrollView>
     </View>
   );

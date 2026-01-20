@@ -5,8 +5,12 @@
   "main": "index.js",
   "scripts": {
     "prebuild": "expo prebuild",
+    "eas-build-pre-install": "corepack enable",
+    "eas-build-post-install": "cd ../.. && yarn build --filter=@repo/shared",
     "build": "expo prebuild",
-    "dev": "expo start --web",
+    "dev": "expo start --dev-client",
+    "dev:cache": "expo start -c --dev-client",
+    "dev:offline": "expo start --offline --dev-client",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",

@@ -6,15 +6,16 @@ interface OTPVerificationModalProps {
   visible: boolean;
   onClose: () => void;
   onVerify: (otp: string) => Promise<void>;
-  mobileNumber: string;
+  contact: string;
+  type?: 'email' | 'phone';
 }
 
-export const OTPVerificationModal = ({ visible, onClose, onVerify, mobileNumber }: OTPVerificationModalProps) => {
+export const OTPVerificationModal = ({ visible, onClose, onVerify, contact, type = 'phone' }: OTPVerificationModalProps) => {
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleVerify = async () => {
-    if (otp.length !== 6) return;
+    if (otp.length !== 8) return;
     setLoading(true);
     try {
       await onVerify(otp);
@@ -32,7 +33,7 @@ export const OTPVerificationModal = ({ visible, onClose, onVerify, mobileNumber 
         <View style={styles.container}>
           <AppText style={styles.title}>Verify OTP</AppText>
           <AppText style={styles.description}>
-            Enter the 6-digit code sent to {mobileNumber}.
+            Enter the 8-digit code sent to {type === 'email' ? 'your email' : contact}.
           </AppText>
 
           <View style={styles.otpContainer}>
@@ -41,8 +42,8 @@ export const OTPVerificationModal = ({ visible, onClose, onVerify, mobileNumber 
               value={otp}
               onChangeText={setOtp}
               keyboardType="number-pad"
-              maxLength={6}
-              placeholder="000000"
+              maxLength={8}
+              placeholder="00000000"
               placeholderTextColor="#94a3b8"
               editable={!loading}
             />
@@ -55,7 +56,7 @@ export const OTPVerificationModal = ({ visible, onClose, onVerify, mobileNumber 
             
             <AppButton 
                 onPress={handleVerify} 
-                disabled={otp.length !== 6 || loading}
+                disabled={otp.length !== 8 || loading}
                 loading={loading}
                 style={styles.verifyButton}
             >

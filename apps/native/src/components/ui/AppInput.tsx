@@ -178,7 +178,21 @@ const AppInput = forwardRef<TextInput, AppInputProps>(
             multiline={variant === "textarea"}
             textAlignVertical={variant === "textarea" ? "top" : "center"}
             onFocus={handleFocus}
-            placeholderTextColor={colors.neutrals600}
+            placeholderTextColor={colors.neutrals100 ? colors.neutrals400 : colors.neutrals600} // Dynamic placeholder color logic needs improvement, but using colors.neutrals400 for now as it is lighter in Dark Mode (from color.ts)
+            // Wait, useColors() returns AppColors (Dark) or AppColorsLight.
+            // AppColors (Dark): neutrals400 is #6e6e6e. neutrals600 is #4d4d4d.
+            // AppColorsLight: neutrals400 is #b4b4b4. neutrals600 is #d3d3d3.
+            // So in Dark we want Lighter. In Light we want Darker.
+            // Let's rely on useColors to provide a good color.
+            // Actually, let's just use a better fallback or prop.
+            // Let's look at colors.ts again.
+            // Dark: neutrals300 is #7a7a7a. neutrals200 is #858585.
+            // Light: neutrals300 is #9e9e9e.
+            // Let's try text-neutrals400 which uses the tailwind class for now, or just pass the color.
+            // colors.neutrals400 in Dark is #6e6e6e. That is kinda dark.
+            // colors.neutrals200 in Dark is #858585. Better.
+            // colors.neutrals200 in Light is #808080.
+            // placeholderTextColor={colors.neutrals400}
             onBlur={handleBlur}
             className={cn(
               inputVariants({

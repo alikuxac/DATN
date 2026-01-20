@@ -66,7 +66,7 @@ export default function SecurityScreen() {
     }
     try {
       setLoading(true);
-      await apiService.post("/auth/change-password", form);
+      await apiService.patch("/shared/auth/change-password", form);
       showSuccess(t("COMMON.SUCCESS"), t("SECURITY.MSG_PASSWORD_CHANGED"));
       setForm({ oldPassword: "", newPassword: "", confirmPassword: "" });
     } catch (error) {

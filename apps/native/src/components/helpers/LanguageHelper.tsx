@@ -11,5 +11,5 @@ export const LanguageHelper = () => {
     })
   }, [language]);
 
-  return <></>;
+  return null;
 }

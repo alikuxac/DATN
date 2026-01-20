@@ -43,8 +43,6 @@ export const MapReportMarker = React.memo(
           return styles.pending;
         case ENUM_REPORT_STATUS.IN_PROGRESS:
           return styles.inProgress;
-        case ENUM_REPORT_STATUS.VERIFIED:
-          return styles.verified;
         case ENUM_REPORT_STATUS.RESOLVED:
           return styles.resolved;
         default:
@@ -95,7 +93,6 @@ const getStatusColor = (status: ENUM_REPORT_STATUS) => {
   switch (status) {
     case ENUM_REPORT_STATUS.PENDING: return "#ef4444";
     case ENUM_REPORT_STATUS.IN_PROGRESS: return "#eab308";
-    case ENUM_REPORT_STATUS.VERIFIED: return "#3b82f6";
     case ENUM_REPORT_STATUS.RESOLVED: return "#22c55e";
     default: return "#6b7280";
   }

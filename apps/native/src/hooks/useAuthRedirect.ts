@@ -1,25 +1,51 @@
 import { useEffect } from "react";
-import { useRouter, useSegments, useRootNavigationState } from "expo-router";
+import { useRouter, useRootNavigationState } from "expo-router";
 import { useAppSelector } from "@/store/hooks";
 
 export function useAuthRedirect() {
   const { token, isFirstLaunch } = useAppSelector((state) => state.app);
   const rootNavigationState = useRootNavigationState();
-  const segments = useSegments();
-  const router = useRouter();
+
+  let router: any;
+  try {
+    router = useRouter();
+  } catch (e) {
+    // router not ready
+  }
+
+  // Helper to find leaf route
+  const getActiveRouteName = (state: any): string | null => {
+    if (!state || typeof state.index !== 'number') return null;
+    const route = state.routes[state.index];
+    if (route.state) return getActiveRouteName(route.state);
+    return route.name;
+  };
 
   useEffect(() => {
-    // Chỉ chạy khi navigation đã ready
+    // 1. Check if navigation is ready (key exists)
     if (!rootNavigationState?.key) return;
 
-    const inAuthGroup = segments[0] === "(auth)";
-    const inTabsGroup = segments[0] === "(tabs)";
+    const activeRouteName = getActiveRouteName(rootNavigationState);
 
-    // Logic Redirect
+    // If activeRouteName is null, we don't know where we are yet.
+    if (!activeRouteName) return;
+
+    // Check if we are in an Auth Screen
+    const authScreens = ['sign-in', 'sign-up', 'forgot-password', 'guest-sos'];
+    const isAuthScreen = authScreens.includes(activeRouteName);
+
+    // Also check for (auth) group just in case
+    const inAuthGroup = isAuthScreen || activeRouteName === '(auth)';
+
+    console.log(`[AuthRedirect] State: ${token ? 'Logged In' : 'Logged Out'}, Route: ${activeRouteName}`);
+
+    // 3. Logic Redirect
+    if (!router) return;
+
     if (!token && !inAuthGroup && !isFirstLaunch) {
       router.replace("/(auth)/sign-in");
     } else if (token && inAuthGroup) {
       router.replace("/(tabs)");
     }
-  }, [token, segments, isFirstLaunch, rootNavigationState?.key]);
+  }, [token, isFirstLaunch, rootNavigationState]);
 }

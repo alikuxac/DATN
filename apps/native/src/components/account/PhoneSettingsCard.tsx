@@ -30,10 +30,10 @@ export const PhoneSettingsCard = ({ userData, colors, t, onUpdateSuccess }: Phon
     setLoading(true);
     try {
       await apiService.post("/user/user/phone/send-otp", { mobileNumber });
-      showSuccess(t("COMMON.SUCCESS"), "OTP sent via Telegram");
+      showSuccess(t("COMMON.SUCCESS"), t("SETTINGS.PHONE.OTP_SENT"));
       setIsModalVisible(true);
     } catch (error: any) {
-       showError(t("COMMON.ERROR"), error?.message || "Failed to send OTP");
+       showError(t("COMMON.ERROR"), error?.message || t("SETTINGS.PHONE.SEND_ERROR"));
     } finally {
       setLoading(false);
     }
@@ -42,10 +42,10 @@ export const PhoneSettingsCard = ({ userData, colors, t, onUpdateSuccess }: Phon
   const handleVerifyOtp = async (otp: string) => {
     try {
       await apiService.post("/user/user/phone/verify-otp", { code: otp });
-      showSuccess(t("COMMON.SUCCESS"), "Phone number verified!");
+      showSuccess(t("COMMON.SUCCESS"), t("SETTINGS.PHONE.VERIFIED"));
       onUpdateSuccess();
     } catch (error: any) {
-        showError(t("COMMON.ERROR"), error?.message || "Invalid OTP");
+        showError(t("COMMON.ERROR"), error?.message || t("SETTINGS.PHONE.VERIFY_ERROR"));
         throw error; // Re-throw to keep modal open or handle inside modal
     }
   };
@@ -74,7 +74,7 @@ export const PhoneSettingsCard = ({ userData, colors, t, onUpdateSuccess }: Phon
              ) : isVerified ? (
                  <Icon name="Check" size={16} color="white" />
              ) : (
-                 <AppText style={styles.btnText}>{t("COMMON.BTN_VERIFY") || "Verify"}</AppText>
+                 <AppText style={styles.btnText}>{t("AUTH.BTN_VERIFY")}</AppText>
              )}
         </TouchableOpacity>
       </View>
@@ -83,14 +83,14 @@ export const PhoneSettingsCard = ({ userData, colors, t, onUpdateSuccess }: Phon
           <View style={[styles.verifiedBadge, { backgroundColor: "#dcfce7" }]}>
               <Icon name="Check" size={12} color="#16a34a" />
               <AppText style={[styles.verifiedText, { color: "#16a34a", marginTop: 0, marginLeft: 4 }]}>
-                  Verified
+                  {t("PROFILE.STATUS_VERIFIED")}
               </AppText>
           </View>
       ) : (
           <View style={[styles.verifiedBadge, { backgroundColor: "#fee2e2" }]}>
               <Icon name="TriangleAlert" size={12} color="#dc2626" />
               <AppText style={[styles.verifiedText, { color: "#dc2626", marginTop: 0, marginLeft: 4 }]}>
-                  Unverified
+                  {t("PROFILE.STATUS_UNVERIFIED")}
               </AppText>
           </View>
       )}
@@ -99,7 +99,7 @@ export const PhoneSettingsCard = ({ userData, colors, t, onUpdateSuccess }: Phon
         visible={isModalVisible}
         onClose={() => setIsModalVisible(false)}
         onVerify={handleVerifyOtp}
-        mobileNumber={mobileNumber}
+        contact={mobileNumber}
       />
     </View>
   );

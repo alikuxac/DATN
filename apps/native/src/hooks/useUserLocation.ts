@@ -29,6 +29,7 @@ export const useLocationTracking = (token: string | null) => {
     const handleNewLocation = (lat: number, lng: number) => {
       // A. Update UI
       setUserLocation({ latitude: lat, longitude: lng });
+      console.log(lat, lng)
 
       // B. Bắn Socket toạ độ
       socketRef.current?.emit('update_location', { lat, lng });
@@ -62,8 +63,12 @@ export const useLocationTracking = (token: string | null) => {
         handleNewLocation(lastKnown.coords.latitude, lastKnown.coords.longitude);
       }
 
-      const current = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      handleNewLocation(current.coords.latitude, current.coords.longitude);
+      try {
+        const current = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        handleNewLocation(current.coords.latitude, current.coords.longitude);
+      } catch (error) {
+        console.warn('[useLocationTracking] Failed to get initial position:', error);
+      }
 
       // 2. Theo dõi vị trí (Update mỗi 100m)
       sub = await Location.watchPositionAsync(

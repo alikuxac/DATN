@@ -17,7 +17,7 @@ import { useToast } from "@/components/ui/ToastProvider";
 import { OptionItem } from "@/components/settings/OptionItem";
 
 // Định nghĩa kiểu dữ liệu cho Preferences từ API
-interface UserPreferences {
+export interface UserPreferences {
   theme?: string;
   language?: string;
 }
@@ -40,10 +40,7 @@ export default function PreferencesScreen() {
   useEffect(
     useCallback(() => {
       fetchUserPreferences();
-      // Cleanup timer khi unmount/blur
-      return () => {
-        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-      };
+      // No cleanup for timer to allow API call to complete even if unmounted
     }, [])
   );
 
@@ -62,7 +59,6 @@ export default function PreferencesScreen() {
       // Lưu ý: Logic language cần cẩn thận để tránh override nhầm system
       if (prefs.language && prefs.language !== language) {
         dispatch(setLanguage(prefs.language as any));
-        i18n.changeLanguage(prefs.language);
       }
     } catch (error) {
       console.error("Failed to fetch preferences:", error);
@@ -118,7 +114,6 @@ export default function PreferencesScreen() {
 
     // 1. Optimistic Update
     dispatch(setLanguage(newLang as any));
-    i18n.changeLanguage(newLang);
 
     // 2. Gọi API update
     updatePreferencesApi("language", newLang);

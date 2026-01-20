@@ -76,7 +76,7 @@ class ApiService {
           }
 
           // Call Refresh API
-          const refreshResponse = await fetch(`${this.baseUrl}/auth/refresh`, {
+          const refreshResponse = await fetch(`${this.baseUrl}/shared/auth/refresh`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

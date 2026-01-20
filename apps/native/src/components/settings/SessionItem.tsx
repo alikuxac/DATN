@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { AppText, Icon } from "@/components/ui";
 import { useColors } from "@/hooks/useColors";
@@ -10,6 +11,7 @@ export interface SessionData {
   ip: string;
   lastActiveAt: string;
   isCurrent: boolean;
+  platform: string;
 }
 
 interface SessionItemProps {
@@ -19,18 +21,21 @@ interface SessionItemProps {
 }
 
 export const SessionItem = ({ session, isCurrent, onRevoke }: SessionItemProps) => {
+  const { t } = useTranslation();
   const colors = useColors();
 
-  const getDeviceIcon = (os: string) => {
-    const lowerOs = os?.toLowerCase() || "";
-    if (lowerOs.includes("android") || lowerOs.includes("ios"))
-      return "Smartphone";
-    if (lowerOs.includes("mac") || lowerOs.includes("win")) return "Monitor";
+  const getDeviceIcon = (session: SessionData) => {
+    const platform = session.platform?.toUpperCase();
+    
+    if (platform === "MOBILE") return "Smartphone";
+    if (platform === "WEB") return "Monitor";
     return "Globe";
   };
 
   const formatTime = (dateString: string) => {
+    if (!dateString) return "N/A";
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "N/A";
     return `${date.getHours()}:${String(date.getMinutes()).padStart(2, "0")} • ${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
   };
 
@@ -58,7 +63,7 @@ export const SessionItem = ({ session, isCurrent, onRevoke }: SessionItemProps) 
           ]}
         >
           <Icon
-            name={getDeviceIcon(session.os) as any}
+            name={getDeviceIcon(session) as any}
             size={24}
             color={isCurrent ? "#22c55e" : colors.neutrals500}
           />
@@ -67,20 +72,23 @@ export const SessionItem = ({ session, isCurrent, onRevoke }: SessionItemProps) 
         {/* Info Text */}
         <View style={{ flex: 1 }}>
           <AppText style={[styles.deviceName, { color: colors.foreground }]}>
-            {session.deviceName}
+            {session.deviceName || t("SECURITY.DEVICE_UNKNOWN")}
           </AppText>
           <View style={styles.metaRow}>
             {/* Hiển thị OS và IP */}
             <AppText style={{ color: colors.neutrals500, fontSize: 12 }}>
-              {session.os} • {session.ip}
+              {(session.os && session.os !== "Unknown") ? session.os : (session.platform || t("SECURITY.OS_UNKNOWN"))} •{" "}
+              {session.ip || t("SECURITY.IP_UNKNOWN")}
             </AppText>
           </View>
           <AppText
             style={{ color: colors.neutrals400, fontSize: 11, marginTop: 2 }}
           >
             {isCurrent
-              ? "Đang hoạt động ngay bây giờ"
-              : `Hoạt động: ${formatTime(session.lastActiveAt)}`}
+              ? t("SECURITY.STATUS_ONLINE")
+              : t("SECURITY.STATUS_ACTIVE_AT", {
+                  time: formatTime(session.lastActiveAt),
+                })}
           </AppText>
         </View>
 

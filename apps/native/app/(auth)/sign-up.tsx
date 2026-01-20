@@ -20,10 +20,11 @@ import { useColors } from "@/hooks/useColors";
 
 export default function SignUpScreen() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { showError, showSuccess } = useToast();
   const dispatch = useAppDispatch();
-  const language = getDeviceLanguage();
+  const language = i18n.language;
+  const isVietnamese = language?.startsWith('vi');
   const { theme } = useAppSelector((state) => state.app);
   const colors = useColors();
 
@@ -148,21 +149,21 @@ export default function SignUpScreen() {
   );
 
   return (
-    <AuthContainer>
+    <AuthContainer className="pt-2">
       <AuthHeader />
 
       <View className="bg-white dark:bg-neutrals900 rounded-3xl p-6 shadow-xl border border-neutrals200 dark:border-neutrals800 gap-6">
         <View className="gap-4">
           <View className="flex-row gap-3">
-            {language === "en" ? (
+            {isVietnamese ? (
               <>
-                {FirstNameInput}
                 {LastNameInput}
+                {FirstNameInput}
               </>
             ) : (
               <>
-                {LastNameInput}
                 {FirstNameInput}
+                {LastNameInput}
               </>
             )}
           </View>
@@ -179,7 +180,7 @@ export default function SignUpScreen() {
 
           <AppInput
             label={t("AUTH.LABEL_PASSWORD")}
-            placeholder="At least 6 characters"
+            placeholder={t("AUTH.PLACEHOLDER_PASSWORD")}
             value={formData.password}
             onChangeText={(val) => updateForm("password", val)}
             errorText={errors.password}
@@ -197,7 +198,7 @@ export default function SignUpScreen() {
 
           <AppInput
             label={t("AUTH.LABEL_CONFIRM_PASSWORD")}
-            placeholder="Re-enter password"
+            placeholder={t("AUTH.PLACEHOLDER_CONFIRM_PASSWORD")}
             value={formData.confirmPassword}
             onChangeText={(val) => updateForm("confirmPassword", val)}
             errorText={errors.confirmPassword}
@@ -237,7 +238,7 @@ export default function SignUpScreen() {
       </View>
 
       <View className="flex-row justify-center items-center mt-8 gap-1">
-        <AppText className="text-neutrals600 dark:text-neutrals400 text-sm font-sans-regular">
+        <AppText className="text-neutrals600 dark:text-neutrals400 text-lg font-sans-regular">
           {t("AUTH.HINT_HAS_ACCOUNT")}
         </AppText>
         <Pressable onPress={() => {
@@ -245,7 +246,7 @@ export default function SignUpScreen() {
           router.push("/(auth)/sign-in");
         }}>
           <AppText
-            className="text-sm font-sans-bold"
+            className="text-lg font-sans-bold"
             style={{ color: "#2563eb" }}
           >
             {t("AUTH.LINK_LOGIN")}

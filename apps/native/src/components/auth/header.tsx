@@ -1,11 +1,14 @@
 import React from "react";
 import { View, Image } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import { AppText } from "../ui";
 import { expo } from '../../../app.json';
 import AuthHeaderActions from "./AuthHeaderActions";
 
 export default function AuthHeader() {
+  const { t } = useTranslation();
+
   return (
     <View className="mb-8">
       {/* Actions Top Right */}
@@ -26,7 +29,7 @@ export default function AuthHeader() {
           {expo.name}
         </AppText>
         <AppText raw variant="body" color="muted" align="center">
-          Emergency Relief Network
+          {t('COMMON.APP_TAGLINE')}
         </AppText>
       </View>
     </View>

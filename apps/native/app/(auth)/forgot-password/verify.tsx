@@ -21,7 +21,7 @@ export default function VerifyOTPScreen() {
   const colors = useColors();
 
   const handleVerify = async () => {
-    if (!otp || otp.length !== 12) {
+    if (!otp || otp.length !== 8) {
       setError(t('AUTH.DESC_OTP_HINT'));
       return;
     }
@@ -75,7 +75,7 @@ export default function VerifyOTPScreen() {
             if (error) setError('');
           }}
           errorText={error}
-          maxLength={12}
+          maxLength={8}
           keyboardType="number-pad"
           leftIcon={<Icon name="Hash" size={20} color={colors.neutrals100} />}
         />

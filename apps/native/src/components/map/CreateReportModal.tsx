@@ -24,6 +24,10 @@ import { apiService } from "@/services/api.service";
 import { ENUM_REPORT_SEVERITY, ENUM_REPORT_TYPE } from "@repo/shared";
 import { getRegionFromGeoJSON } from "@/utils/geo";
 import { offlineService } from "@/services/OfflineService";
+import { useTranslation } from "react-i18next";
+import { ReportImagePicker } from "../report/ReportImagePicker";
+import { uploadReportImage } from "@/api/upload";
+import { useAppSelector } from "@/store/hooks";
 
 interface Props {
   visible: boolean;
@@ -34,27 +38,30 @@ interface Props {
 }
 
 // Cấu hình hiển thị (Label + Màu + Icon)
+// We will translate these inside the component or use a hook if needed.
+// Since these are static, we can leave them here but mapping label inside Render.
+
 export const REPORT_TYPES_CONFIG = {
   [ENUM_REPORT_TYPE.FOOD]: {
-    label: "Lương thực",
+    // label: "Lương thực", // Will use t()
     icon: Utensils,
     color: "#EA580C",
     bgColor: "#FFEDD5",
   },
   [ENUM_REPORT_TYPE.WATER]: {
-    label: "Nước uống",
+    // label: "Nước uống",
     icon: Droplets,
     color: "#2563EB",
     bgColor: "#DBEAFE",
   },
   [ENUM_REPORT_TYPE.MEDICAL]: {
-    label: "Y tế / Thuốc",
+    // label: "Y tế / Thuốc",
     icon: Stethoscope,
     color: "#16A34A",
     bgColor: "#DCFCE7",
   },
   [ENUM_REPORT_TYPE.EVACUATION]: {
-    label: "Cần sơ tán",
+    // label: "Cần sơ tán",
     icon: LifeBuoy,
     color: "#DC2626",
     bgColor: "#FEE2E2",
@@ -64,22 +71,22 @@ export const REPORT_TYPES_CONFIG = {
 const SEVERITY_CONFIG = [
   {
     id: ENUM_REPORT_SEVERITY.LOW,
-    label: "Thấp",
+    // label: "Thấp",
     color: "bg-gray-200 text-gray-600",
   },
   {
     id: ENUM_REPORT_SEVERITY.MEDIUM,
-    label: "Vừa",
+    // label: "Vừa",
     color: "bg-yellow-100 text-yellow-700",
   },
   {
     id: ENUM_REPORT_SEVERITY.HIGH,
-    label: "Cao",
+    // label: "Cao",
     color: "bg-orange-100 text-orange-700",
   },
   {
     id: ENUM_REPORT_SEVERITY.CRITICAL,
-    label: "Khẩn cấp",
+    // label: "Khẩn cấp",
     color: "bg-red-100 text-red-700 font-bold",
   },
 ];
@@ -91,6 +98,7 @@ export const CreateReportModal = ({
   onSuccess,
   onPickLocation,
 }: Props) => {
+  const { t } = useTranslation();
   const [type, setType] = useState<ENUM_REPORT_TYPE>(ENUM_REPORT_TYPE.FOOD);
   const [severity, setSeverity] = useState<ENUM_REPORT_SEVERITY>(
     ENUM_REPORT_SEVERITY.MEDIUM
@@ -103,21 +111,21 @@ export const CreateReportModal = ({
   const [victimName, setVictimName] = useState("");
   const [victimCount, setVictimCount] = useState(1);
   const [victimNote, setVictimNote] = useState("");
+  const [images, setImages] = useState<string[]>([]);
   
   const [loading, setLoading] = useState(false);
+  const { token } = useAppSelector((state) => state.app);
   const { showToast } = useToast();
-
-
 
   const handleSubmit = async () => {
     if (!location) return;
     if (!description.trim() && !isProxy) { 
-      showToast({ title: "Chưa nhập mô tả", message: "Vui lòng nhập mô tả nhu cầu", type: "warning" });
+      showToast({ title: t('MAP.CREATE.VALIDATION.DESC_MISSING'), message: t('MAP.CREATE.VALIDATION.DESC_REQUIRED'), type: "warning" });
       return;
     }
 
     if (isProxy && !victimName.trim()) {
-         showToast({ title: "Thiếu thông tin", message: "Vui lòng nhập tên người cần giúp", type: "warning" });
+         showToast({ title: t('MAP.CREATE.VALIDATION.NAME_MISSING'), message: t('MAP.CREATE.VALIDATION.NAME_REQUIRED'), type: "warning" });
          return;
     }
 
@@ -131,6 +139,7 @@ export const CreateReportModal = ({
         severity,
         peopleCount: isProxy ? victimCount : peopleCount,
         isProxyReport: isProxy,
+        images: images,
     };
 
     if (isProxy) {
@@ -154,27 +163,29 @@ export const CreateReportModal = ({
           }
       );
 
-      showToast({ title: "Gửi yêu cầu thành công!", message: "Yêu cầu của bạn đã được gửi đi", type: "success" });
+      showToast({ title: t('MAP.CREATE.SUCCESS.TITLE'), message: t('MAP.CREATE.SUCCESS.MSG'), type: "success" });
       setDescription("");
       setType(ENUM_REPORT_TYPE.FOOD);
       setIsProxy(false);
       setVictimName("");
       setVictimNote("");
+      setImages([]);
       onSuccess?.();
       onClose();
     } catch (error: any) {
       if (error.message === 'OFFLINE_SAVED') {
-          showToast({ title: "Đã lưu Offline", message: "Hệ thống sẽ tự động gửi khi có mạng", type: "info" });
+          showToast({ title: t('MAP.CREATE.OFFLINE.TITLE'), message: t('MAP.CREATE.OFFLINE.MSG'), type: "info" });
           setDescription("");
           setType(ENUM_REPORT_TYPE.FOOD);
           setIsProxy(false);
           setVictimName("");
           setVictimNote("");
+          setImages([]);
           onSuccess?.();
           onClose();
       } else {
           console.log("Create report error:", error);
-          showToast({ title: "Gửi thất bại", message: "Đã có lỗi xảy ra, vui lòng thử lại", type: "error" });
+          showToast({ title: t('MAP.CREATE.ERROR.TITLE'), message: t('MAP.CREATE.ERROR.MSG'), type: "error" });
       }
     } finally {
       setLoading(false);
@@ -197,10 +208,10 @@ export const CreateReportModal = ({
           <View className="p-6 border-b border-gray-100 flex-row justify-between items-center">
             <View>
               <Text className="text-xl font-bold text-gray-900">
-                Gửi Yêu Cầu Hỗ Trợ
+                {t('MAP.CREATE.TITLE')}
               </Text>
               <Text className="text-sm text-gray-500">
-                Thông tin chính xác giúp cứu hộ nhanh hơn
+                {t('MAP.CREATE.SUBTITLE')}
               </Text>
             </View>
             <TouchableOpacity
@@ -224,14 +235,14 @@ export const CreateReportModal = ({
             >
                 <View className="flex-row items-center">
                     <View className={`w-10 h-10 rounded-full items-center justify-center mr-3 ${isProxy ? 'bg-indigo-500' : 'bg-gray-300'}`}>
-                         <Text className="text-white font-bold">{isProxy ? 'HO' : 'ME'}</Text> 
+                         <Text className="text-white font-bold">{isProxy ? t('MAP.CREATE.PROXY.AVATAR') : t('MAP.CREATE.SELF.AVATAR')}</Text> 
                     </View>
                     <View>
                         <Text className={`font-bold text-base ${isProxy ? 'text-indigo-700' : 'text-gray-700'}`}>
-                            {isProxy ? 'Báo hộ người khác' : 'Báo cho chính tôi'}
+                            {isProxy ? t('MAP.CREATE.PROXY.TITLE') : t('MAP.CREATE.SELF.TITLE')}
                         </Text>
                         <Text className="text-xs text-gray-500">
-                            {isProxy ? 'Dùng khi nạn nhân không thể tự báo' : 'Dùng khi bạn gặp nạn'}
+                            {isProxy ? t('MAP.CREATE.PROXY.DESC') : t('MAP.CREATE.SELF.DESC')}
                         </Text>
                     </View>
                 </View>
@@ -245,24 +256,24 @@ export const CreateReportModal = ({
             {isProxy && (
                 <View className="mb-6 bg-indigo-50 p-4 rounded-xl border border-indigo-100">
                      <Text className="text-xs font-bold text-indigo-500 mb-3 uppercase tracking-wider">
-                        Thông tin nạn nhân
+                        {t('MAP.CREATE.VICTIM_INFO_TITLE')}
                     </Text>
                     
                     <View className="mb-3">
-                        <Text className="text-sm font-medium text-gray-700 mb-1">Tên nạn nhân / Nhóm *</Text>
+                        <Text className="text-sm font-medium text-gray-700 mb-1">{t('MAP.CREATE.LABEL_VICTIM_NAME')}</Text>
                         <TextInput 
                             className="bg-white border border-gray-200 rounded-lg p-3 text-gray-800"
-                            placeholder="VD: Cụ Ba, Nhóm trẻ em..."
+                            placeholder={t('MAP.CREATE.PLACEHOLDER_VICTIM_NAME')}
                             value={victimName}
                             onChangeText={setVictimName}
                         />
                     </View>
                      
                     <View className="mb-3">
-                         <Text className="text-sm font-medium text-gray-700 mb-1">Ghi chú về nạn nhân</Text>
+                         <Text className="text-sm font-medium text-gray-700 mb-1">{t('MAP.CREATE.LABEL_VICTIM_NOTE')}</Text>
                          <TextInput 
                             className="bg-white border border-gray-200 rounded-lg p-3 text-gray-800"
-                            placeholder="VD: Người già yếu, không có điện thoại..."
+                            placeholder={t('MAP.CREATE.PLACEHOLDER_VICTIM_NOTE')}
                             value={victimNote}
                             onChangeText={setVictimNote}
                         />
@@ -281,11 +292,11 @@ export const CreateReportModal = ({
                         className="flex-row items-center justify-center bg-white border border-indigo-300 p-3 rounded-lg border-dashed"
                     >
                         <View className="mr-2"><PlusIcon size={16} color="#4F46E5" /></View>
-                        <Text className="text-indigo-600 font-bold">Chỉnh sửa vị trí trên bản đồ</Text>
+                        <Text className="text-indigo-600 font-bold">{t('MAP.CREATE.BTN_PICK_LOCATION')}</Text>
                     </TouchableOpacity>
                      {location && (
                         <Text className="text-center text-xs text-indigo-400 mt-2">
-                            Đang chọn: {location.lat.toFixed(5)}, {location.long.toFixed(5)}
+                            {t('MAP.CREATE.PICKED_LOCATION')} {location.lat.toFixed(5)}, {location.long.toFixed(5)}
                         </Text>
                     )}
                 </View>
@@ -293,7 +304,7 @@ export const CreateReportModal = ({
 
             {/* 1. Chọn Loại Report */}
             <Text className="text-xs font-bold text-gray-400 mb-3 uppercase tracking-wider">
-              Loại hỗ trợ
+              {t('MAP.CREATE.LABEL_TYPE')}
             </Text>
             <View className="flex-row flex-wrap justify-between gap-y-3 mb-6">
               {Object.entries(REPORT_TYPES_CONFIG).map(([key, config]) => {
@@ -315,7 +326,7 @@ export const CreateReportModal = ({
                     <Text
                       className={`font-medium text-xs ${isSelected ? "text-primary" : "text-gray-700"}`}
                     >
-                      {config.label}
+                      {t(`REPORT.TYPE.${itemKey}`)}
                     </Text>
                   </TouchableOpacity>
                 );
@@ -327,7 +338,7 @@ export const CreateReportModal = ({
               {/* Cột Trái: Số người */}
               <View className="w-[45%]">
                   <Text className="text-xs font-bold text-gray-400 mb-3 uppercase tracking-wider">
-                    {isProxy ? 'Số nạn nhân' : 'Số người cần giúp'}
+                    {isProxy ? t('MAP.CREATE.LABEL_PEOPLE_COUNT_PROXY') : t('MAP.CREATE.LABEL_PEOPLE_COUNT_SELF')}
                   </Text>
                   <View className="flex-row items-center justify-between bg-gray-50 border border-gray-200 rounded-xl p-2">
                     <TouchableOpacity
@@ -353,7 +364,7 @@ export const CreateReportModal = ({
               {/* Cột Phải: Mức độ */}
               <View className="w-[50%]">
                 <Text className="text-xs font-bold text-gray-400 mb-3 uppercase tracking-wider">
-                  Mức độ khẩn cấp
+                  {t('MAP.CREATE.LABEL_SEVERITY')}
                 </Text>
                 <View className="flex-row flex-wrap gap-2">
                   {SEVERITY_CONFIG.map((item) => (
@@ -373,7 +384,7 @@ export const CreateReportModal = ({
                             : "text-gray-600"
                         }`}
                       >
-                        {item.label}
+                        {t(`REPORT.SEVERITY.${item.id}`)}
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -383,15 +394,22 @@ export const CreateReportModal = ({
 
             {/* 3. Nhập mô tả */}
             <Text className="text-xs font-bold text-gray-400 mb-3 uppercase tracking-wider">
-              Chi tiết tình hình
+              {t('MAP.CREATE.LABEL_DESCRIPTION')}
             </Text>
             <TextInput
               className="bg-gray-50 border border-gray-200 rounded-xl p-4 min-h-[120px] text-base text-gray-800 mb-8"
-              placeholder="VD: Nước ngập sâu 1m, có người già yếu, đã hết lương thực 2 ngày..."
+              placeholder={t('MAP.CREATE.PLACEHOLDER_DESCRIPTION')}
               multiline
               textAlignVertical="top"
               value={description}
               onChangeText={setDescription}
+            />
+
+            {/* 4. Hình ảnh */}
+            <ReportImagePicker 
+              images={images} 
+              onImagesChange={setImages}
+              onUpload={(asset) => uploadReportImage(asset, token!)}
             />
           </ScrollView>
 
@@ -408,7 +426,7 @@ export const CreateReportModal = ({
                 <ActivityIndicator color="white" />
               ) : (
                 <Text className="text-white font-bold text-lg">
-                  {isProxy ? 'Gửi Báo Cáo Hộ' : 'Gửi Báo Cáo Ngay'}
+                  {isProxy ? t('MAP.CREATE.BTN_SUBMIT_PROXY') : t('MAP.CREATE.BTN_SUBMIT_SELF')}
                 </Text>
               )}
             </TouchableOpacity>

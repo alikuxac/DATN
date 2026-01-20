@@ -99,7 +99,7 @@ export default function SignInScreen() {
 
         // ✅ Lấy profile từ server để sync preferences
         try {
-          const profileResponse = await apiService.get<any>("/user/profile");
+          const profileResponse = await apiService.get<any>("/shared/user/profile");
           const userPreferences = profileResponse?.data?.preferences;
 
           if (userPreferences) {
@@ -156,7 +156,7 @@ export default function SignInScreen() {
   };
 
   return (
-    <AuthContainer>
+    <AuthContainer className="pt-2">
       {/* 2. Header: Logo & Titles */}
       <AuthHeader />
 

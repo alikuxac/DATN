@@ -60,7 +60,7 @@ export const uploadReportImages = async (
   apiService.setAuthToken(token);
 
   const response = await apiService.uploadFormData<{ data: { imageUrls: string[] } }>(
-    '/reports/images/upload',
+    '/user/reports/images/upload',
     formData
   );
 
@@ -86,7 +86,7 @@ export const deleteReportImages = async (
   token: string
 ): Promise<void> => {
   apiService.setAuthToken(token);
-  await apiService.delete('/reports/images', {
+  await apiService.delete('/user/reports/images', {
     body: JSON.stringify({ imageUrls }),
     headers: {
       'Content-Type': 'application/json',

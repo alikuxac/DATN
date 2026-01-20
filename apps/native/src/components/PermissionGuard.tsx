@@ -95,7 +95,7 @@ export const PermissionGuard = ({ children }: PermissionGuardProps) => {
                   <AppButton
                     variant="ghost"
                     size="sm"
-                    children={<AppText>Cấp quyền</AppText>}
+                    children="Cấp quyền"
                     onPress={() => {
                       if (item.id === "location") requestLocation();
                     }}
@@ -114,7 +114,7 @@ export const PermissionGuard = ({ children }: PermissionGuardProps) => {
                 * Quyền Vị trí là bắt buộc để sử dụng ứng dụng.
               </AppText>
               <AppButton
-                children={<AppText>Mở Cài đặt hệ thống</AppText>}
+                children="Mở Cài đặt hệ thống"
                 variant="outline"
                 onPress={openSettings}
                 className="mt-2"

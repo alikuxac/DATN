@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Cứu Trợ VN",
-    "slug": "cuu-tro-vn",
+    "slug": "cuu-tro",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -38,12 +38,6 @@
         "googleMaps": {
           "apiKey": "YOUR_GOOGLE_MAPS_API_KEY_HERE"
         }
-      },
-      "keystore": {
-        "keystorePath": "android/keystores/release.keystore",
-        "keystorePassword": "KEYSTORE_PASSWORD",
-        "keyAlias": "KEY_ALIAS",
-        "keyPassword": "KEY_PASSWORD"
       }
     },
     "web": {

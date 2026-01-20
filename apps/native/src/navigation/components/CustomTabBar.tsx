@@ -42,7 +42,7 @@ export default function CustomTabBar({ state, descriptors, navigation }: BottomT
       {state.routes.filter(route => route.name !== 'index').map((route, index) => {
         const { options } = descriptors[route.key];
 
-        const isFocused = state.index === index;
+        const isFocused = state.routes[state.index].key === route.key;
 
         const onPress = () => {
           const event = navigation.emit({
