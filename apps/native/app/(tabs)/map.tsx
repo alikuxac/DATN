@@ -208,46 +208,39 @@ import { calculateDistance } from "@/utils/geo";
         );
         setReports(reportRes.data);
   
-        // 2. Fetch Rescuers (Real Data)
+        // 2. Extract Rescuers from Reports (Optimized: No extra API calls)
+        // Only needed for USER role seeing who is coming
         if (user?.role === ENUM_USER_ROLE.USER) {
             const activeReports = reportRes.data.filter(r => 
                 r.status === ENUM_REPORT_STATUS.IN_PROGRESS && r.rescuer
             );
             
             if (activeReports.length > 0) {
-                const rescuerIds = [...new Set(activeReports.map(r => typeof r.rescuer === 'string' ? r.rescuer : r.rescuer?._id.toString()))].filter(Boolean) as string[];
-                const fetchedRescuers: RescuerData[] = [];
-                
-                // Fetch details for each unique rescuer
-                for (const rescuerId of rescuerIds) {
-                    try {
-                        // Using a public or accessible endpoint to get basic rescuer info
-                        // Assuming GET /users/:id or similar exists and returns location
-                        // If not, we might need a specific endpoint. 
-                        // Trying /users/info/${id} or similar if defined, otherwise falling back
-                        // to waiting for socket or basic info if available.
-                        // Investigating User Controller later if this fails.
-                        // For now, let's try to fetch user info.
-                        const res = await apiService.get<any>(`/shared/user/info/${rescuerId}`); // Corrected endpoint
-                        console.log(res.data.location);
-                        if (res.data) {
-                            const coords = res.data.location?.coordinates;
-                            
-                            fetchedRescuers.push({
-                                _id: res.data._id.toString(),
-                                firstName: res.data.firstName,
-                                lastName: res.data.lastName,
-                                phone: res.data.mobileNumber,
-                                location: coords ? { lat: coords[1], lng: coords[0] } : { lat: 0, lng: 0 },
-                                coordinates: coords,
-                                isOnline: true, 
-                            });
-                        }
-                    } catch (e) {
-                        console.log(`Failed to fetch rescuer ${rescuerId}`, e);
-                    }
-                }
-                setRescuers(fetchedRescuers);
+                 const extractedRescuers: RescuerData[] = [];
+                 
+                 activeReports.forEach((r) => {
+                     const rescuer: any = r.rescuer;
+                     // Ensure rescuer is a populated object
+                     if (rescuer && typeof rescuer === 'object' && rescuer._id) {
+                         const coords = rescuer.location?.coordinates;
+                         extractedRescuers.push({
+                            _id: rescuer._id.toString(),
+                            firstName: rescuer.firstName,
+                            lastName: rescuer.lastName,
+                            phone: rescuer.mobileNumber, // Taken from populated user
+                            location: coords ? { lat: coords[1], lng: coords[0] } : { lat: 0, lng: 0 },
+                            coordinates: coords,
+                            isOnline: true,
+                            lastLocationAt: rescuer.lastLocationAt 
+                        });
+                     }
+                 });
+
+                 // Deduplicate based on ID
+                 const uniqueRescuers = Array.from(new Map(extractedRescuers.map(item => [item._id, item])).values());
+                 setRescuers(uniqueRescuers);
+            } else {
+               setRescuers([]);
             }
         }
       } catch (error) {
@@ -255,45 +248,102 @@ import { calculateDistance } from "@/utils/geo";
       }
     };
   
-    // Removed old useFocusEffect that just fetched data, as we merged it with the mountKey logic above.
-    // Wait, I should not duplicate useFocusEffect.
-    // The previous code had useFocusEffect at line 231.
-    // In this replacement, I am overwriting the top section up to line 445 (before MapView children).
-    // So I need to ensure I don't leave duplicate useFocusEffects if I replace a large chunk.
-  
     // --- SOCKET TRACKING ---
+    
+    // 1. Listener for movement (Stable, depends only on socket)
     useEffect(() => {
       if (!socket) return;
       
-      // Listen for rescuer movement
       const handleRescuerMoved = (data: { rescuerId: string; lat: number; lng: number }) => {
-        setRescuers((prev) => 
-          prev.map((r) => 
-            r._id === data.rescuerId 
-              ? { 
-                  ...r, 
-                  location: { ...r.location, lat: data.lat, lng: data.lng }, 
-                  coordinates: [data.lng, data.lat],
-                  lastLocationAt: new Date().toISOString()
-                } 
-              : r
-          )
-        );
+        // console.log("Rescuer moved:", data);
+        setRescuers((prev) => {
+          const exists = prev.find(r => r._id === data.rescuerId);
+          if (exists) {
+              return prev.map((r) => 
+                r._id === data.rescuerId 
+                  ? { 
+                      ...r, 
+                      location: { ...r.location, lat: data.lat, lng: data.lng }, 
+                      coordinates: [data.lng, data.lat],
+                      lastLocationAt: new Date().toISOString()
+                    } 
+                  : r
+              );
+          } else {
+             // Optional: If we want to add new rescuers dynamically without fetch
+             // But we need name/phone, so maybe better to trigger refetch or ignore
+             return prev; 
+          }
+        });
       };
   
       socket.on('rescuer_moved', handleRescuerMoved);
-      
-      if (user && user.role === ENUM_USER_ROLE.USER) {
-         const myActiveReport = reports.find(r => r.user?._id === user._id && r.status === ENUM_REPORT_STATUS.IN_PROGRESS);
-         if (myActiveReport) {
-             socket.emit('join_report_room', { reportId: myActiveReport._id });
-         }
-      }
+      socket.on('reconnect', () => {
+         // Re-fetching data on reconnect might be good
+         fetchData();
+      });
   
       return () => {
         socket.off('rescuer_moved', handleRescuerMoved);
+        socket.off('reconnect');
       };
-    }, [socket, reports, user]);
+    }, [socket]); // Clean dependency list
+
+    // 2. Join Rooms logic (Depends on reports/user changes)
+    useEffect(() => {
+        if (!socket || !user || user.role !== ENUM_USER_ROLE.USER) return;
+
+        const myActiveReports = reports.filter(r => r.user?._id === user._id && r.status === ENUM_REPORT_STATUS.IN_PROGRESS);
+        
+        myActiveReports.forEach(report => {
+             socket.emit('join_report_room', { reportId: report._id });
+        });
+    }, [socket, reports, user?._id, user?.role]);
+
+    // 3. Listen for Region Updates (New Reports, Status Updates)
+    useEffect(() => {
+        if (!socket || !currentRegion) return;
+
+        // Join Region Room to hear about new reports in this area
+        socket.emit('join_region', { regionId: currentRegion });
+
+        const handleNewReport = (data: { report: IReportListResponse }) => {
+             console.log("New report received via socket:", data.report._id);
+             setReports(prev => {
+                 if (prev.find(r => r._id === data.report._id)) return prev;
+                 return [data.report, ...prev];
+             });
+        };
+        
+        const handleReportUpdate = (data: { reportId: string, status: ENUM_REPORT_STATUS, rescuerId?: string }) => {
+             setReports(prev => prev.map(r => {
+                 if (r._id === data.reportId) {
+                     return { 
+                        ...r, 
+                        status: data.status,
+                        rescuer: data.rescuerId ? data.rescuerId : r.rescuer
+                     };
+                 }
+                 return r;
+             }));
+        };
+
+        socket.on('report_created', handleNewReport);
+        socket.on('report_accepted', handleReportUpdate);
+        socket.on('report_completed', handleReportUpdate);
+        socket.on('report_rejected', handleReportUpdate);
+
+        return () => {
+             // Leave region room when unmounting or changing region
+             socket.emit('leave_room', { room: `region_${currentRegion}` });
+
+             socket.off('report_created', handleNewReport);
+             socket.off('report_accepted', handleReportUpdate);
+             socket.off('report_completed', handleReportUpdate);
+             socket.off('report_rejected', handleReportUpdate);
+        };
+    }, [socket, currentRegion]);
+
   
     const isVolunteerMode = useMemo(() => {
       return user?.role === ENUM_USER_ROLE.VOLUNTEER || user?.isRescueMode;
@@ -420,8 +470,17 @@ import { calculateDistance } from "@/utils/geo";
           setSelectedReport(null);
         }
   
-      } catch (err) {
-        showError("Lỗi", "Không thể thực hiện hành động.");
+      } catch (err: any) {
+        const message = err?.response?.data?.message;
+        if (message === 'report.error.alreadyAccepted' || message === 'report.error.notFound') {
+            showError("Thông báo", "Báo cáo này đã được nhận bởi người khác.");
+            await fetchData();
+            setSelectedReport(null);
+        } else if (message === 'report.error.alreadyHasActiveReport') {
+            showError("Thông báo", "Bạn đang có nhiệm vụ chưa hoàn thành.");
+        } else {
+            showError("Lỗi", message || "Không thể thực hiện hành động.");
+        }
       } finally {
         setIsActionLoading(false);
       }

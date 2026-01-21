@@ -198,6 +198,65 @@ export default function ReportsScreen() {
     return () => task.cancel();
   }, [debouncedSearch, appliedTypeFilter, appliedStatusFilter, appliedSourceFilter]); // Removed fetchReports from dep to avoid loop if not careful, added strict deps
 
+  // --- SOCKET LISTENERS ---
+  const { socket } = useLocationContext();
+
+  useEffect(() => {
+      if (!socket || !currentRegion) return;
+
+      // Join Region Room to hear about new reports in this area
+      socket.emit('join_region', { regionId: currentRegion });
+
+      const handleNewReport = (payload: { report: any }) => {
+           console.log("New report received via socket (List):", payload.report._id);
+           setData(prev => {
+               if (prev.find(r => r._id === payload.report._id)) return prev;
+               
+               // Check if new report matches current filters before adding
+               // Simple client-side check for Type/Source/Status if needed, 
+               // but predominantly we want to show it if it's relevant to the region.
+               // We can re-use the 'filteredReports' logic or just prepend.
+               // For now, prepend and let user filter if they really want strict adherence, 
+               // OR ideally, check against applied filters.
+               
+               const r = payload.report;
+               if (appliedTypeFilter !== 'all' && r.type !== appliedTypeFilter) return prev;
+               if (appliedStatusFilter !== 'all' && r.status !== appliedStatusFilter) return prev;
+               if (appliedSourceFilter !== 'all' && r.source !== appliedSourceFilter) return prev;
+
+               return [r, ...prev];
+           });
+      };
+      
+      const handleReportUpdate = (payload: { reportId: string, status: ENUM_REPORT_STATUS, rescuerId?: string }) => {
+           setData(prev => prev.map(r => {
+               if (r._id === payload.reportId) {
+                   return { 
+                      ...r, 
+                      status: payload.status,
+                      rescuer: payload.rescuerId ? payload.rescuerId : r.rescuer
+                   };
+               }
+               return r;
+           }));
+      };
+
+      socket.on('report_created', handleNewReport);
+      socket.on('report_accepted', handleReportUpdate);
+      socket.on('report_completed', handleReportUpdate);
+      socket.on('report_rejected', handleReportUpdate);
+
+      return () => {
+           // Leave region room when unmounting or changing region
+           socket.emit('leave_room', { room: `region_${currentRegion}` });
+
+           socket.off('report_created', handleNewReport);
+           socket.off('report_accepted', handleReportUpdate);
+           socket.off('report_completed', handleReportUpdate);
+           socket.off('report_rejected', handleReportUpdate);
+      };
+  }, [socket, currentRegion, appliedTypeFilter, appliedStatusFilter, appliedSourceFilter]);
+
   const onRefresh = () => {
     setIsRefreshing(true);
     setHasMore(true);
@@ -264,10 +323,18 @@ export default function ReportsScreen() {
       Alert.alert("Success", "You have accepted this rescue mission!");
       fetchReports();
     } catch (error: any) {
-      Alert.alert(
-        "Error",
-        error?.response?.data?.message || "Cannot accept report"
-      );
+      const message = error?.response?.data?.message;
+      if (message === 'report.error.alreadyAccepted' || message === 'report.error.notFound') {
+         Alert.alert(t('COMMON.NOTICE'), t('REPORT.ERROR.ALREADY_TAKEN') || "This report has been taken by someone else.");
+         fetchReports();
+      } else if (message === 'report.error.alreadyHasActiveReport') {
+         Alert.alert(t('COMMON.NOTICE'), t('REPORT.ERROR.ALREADY_ACTIVE') || "You already have an active mission.");
+      } else {
+        Alert.alert(
+          "Error",
+          message || "Cannot accept report"
+        );
+      }
     } finally {
       setIsSubmitting(false);
     }

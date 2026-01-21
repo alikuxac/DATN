@@ -9,9 +9,11 @@ export interface SessionData {
   deviceName: string;
   os: string;
   ip: string;
+  xForwardedForIP?: string;
   lastActiveAt: string;
   isCurrent: boolean;
   platform: string;
+  status?: string; // "ACTIVE" | "REVOKED"
 }
 
 interface SessionItemProps {
@@ -24,6 +26,10 @@ export const SessionItem = ({ session, isCurrent, onRevoke }: SessionItemProps) 
   const { t } = useTranslation();
   const colors = useColors();
 
+  const isRevoked = session.status === "REVOKED";
+  // Ưu tiên xForwardedForIP
+  const displayIP = session.xForwardedForIP || session.ip || t("SECURITY.IP_UNKNOWN");
+
   const getDeviceIcon = (session: SessionData) => {
     const platform = session.platform?.toUpperCase();
     
@@ -31,7 +37,8 @@ export const SessionItem = ({ session, isCurrent, onRevoke }: SessionItemProps) 
     if (platform === "WEB") return "Monitor";
     return "Globe";
   };
-
+//...
+// (No changes to formatTime are needed, but ensuring context matches for replace)
   const formatTime = (dateString: string) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
@@ -47,6 +54,7 @@ export const SessionItem = ({ session, isCurrent, onRevoke }: SessionItemProps) 
           backgroundColor: colors.card,
           borderColor: isCurrent ? colors.primary : colors.border,
           borderWidth: 1,
+          opacity: isRevoked ? 0.6 : 1,
         },
       ]}
     >
@@ -65,20 +73,28 @@ export const SessionItem = ({ session, isCurrent, onRevoke }: SessionItemProps) 
           <Icon
             name={getDeviceIcon(session) as any}
             size={24}
-            color={isCurrent ? "#22c55e" : colors.neutrals500}
+            color={isCurrent ? "#22c55e" : isRevoked ? colors.neutrals400 : colors.neutrals500}
           />
         </View>
 
         {/* Info Text */}
         <View style={{ flex: 1 }}>
-          <AppText style={[styles.deviceName, { color: colors.foreground }]}>
-            {session.deviceName || t("SECURITY.DEVICE_UNKNOWN")}
-          </AppText>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <AppText style={[styles.deviceName, { color: colors.foreground }]}>
+              {session.deviceName || t("SECURITY.DEVICE_UNKNOWN")}
+            </AppText>
+            {isRevoked && (
+              <View style={styles.revokedBadge}>
+                <AppText style={styles.revokedText}>REVOKED</AppText>
+              </View>
+            )}
+          </View>
+          
           <View style={styles.metaRow}>
             {/* Hiển thị OS và IP */}
             <AppText style={{ color: colors.neutrals500, fontSize: 12 }}>
               {(session.os && session.os !== "Unknown") ? session.os : (session.platform || t("SECURITY.OS_UNKNOWN"))} •{" "}
-              {session.ip || t("SECURITY.IP_UNKNOWN")}
+              {displayIP}
             </AppText>
           </View>
           <AppText
@@ -86,9 +102,11 @@ export const SessionItem = ({ session, isCurrent, onRevoke }: SessionItemProps) 
           >
             {isCurrent
               ? t("SECURITY.STATUS_ONLINE")
-              : t("SECURITY.STATUS_ACTIVE_AT", {
-                  time: formatTime(session.lastActiveAt),
-                })}
+              : isRevoked 
+                ? t("SECURITY.STATUS_REVOKED", "Đã đăng xuất")
+                : t("SECURITY.STATUS_ACTIVE_AT", {
+                    time: formatTime(session.lastActiveAt),
+                  })}
           </AppText>
         </View>
 
@@ -98,14 +116,14 @@ export const SessionItem = ({ session, isCurrent, onRevoke }: SessionItemProps) 
             <View style={styles.activeDot} />
             <AppText style={styles.badgeText}>Online</AppText>
           </View>
-        ) : (
+        ) : !isRevoked ? (
           <TouchableOpacity
             onPress={() => onRevoke(session._id, session.deviceName)}
             style={styles.revokeBtn}
           >
             <Icon name="LogOut" size={18} color={colors.error} />
           </TouchableOpacity>
-        )}
+        ) : null}
       </View>
     </View>
   );
@@ -143,5 +161,16 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 12,
     backgroundColor: "rgba(239, 68, 68, 0.08)",
+  },
+  revokedBadge: {
+    backgroundColor: "rgba(107, 114, 128, 0.1)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  revokedText: {
+    color: "#6b7280",
+    fontSize: 10,
+    fontWeight: "600",
   },
 });

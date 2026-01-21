@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { View, ScrollView, Alert, Platform, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import * as Location from "expo-location";
@@ -11,6 +12,7 @@ import { useTranslation } from "react-i18next";
 import { useColors } from "@/hooks/useColors";
 import AuthHeaderActions from "@/components/auth/AuthHeaderActions";
 import { Utensils, Droplet, Stethoscope, LifeBuoy, CircleHelp } from "lucide-react-native";
+import { getRegionFromGeoJSON } from "@/utils/geo";
 
 const REPORT_TYPES = [
   { label: "Cần sơ tán", value: ENUM_REPORT_TYPE.EVACUATION, icon: LifeBuoy },
@@ -33,6 +35,7 @@ export default function GuestSOS() {
   const [notes, setNotes] = useState("");
   const [phone, setPhone] = useState("");
   const [errors, setErrors] = useState<{ phone?: string }>({});
+  const [regionId, setRegionId] = useState<string>("");
 
   useEffect(() => {
     (async () => {
@@ -45,6 +48,8 @@ export default function GuestSOS() {
       try {
         let location = await Location.getCurrentPositionAsync({});
         setLocation(location);
+        const regionId = getRegionFromGeoJSON(location.coords.latitude, location.coords.longitude);
+        setRegionId(regionId);
       } catch (error) {
         console.warn('Failed to get location in Guest SOS:', error);
       }
@@ -77,7 +82,7 @@ export default function GuestSOS() {
         phone,
         coordinates: [location.coords.longitude, location.coords.latitude],
         severity: ENUM_REPORT_SEVERITY.HIGH, // Default strict high severity for SOS
-        regionId: "VN", // Default or detect region
+        regionId: regionId, // Default or detect region
         deviceId: deviceId, // Ensure device Id is sent in body too
       }, {
         headers: {
@@ -101,29 +106,35 @@ export default function GuestSOS() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-neutrals900">
+    <SafeAreaView className="flex-1 bg-white dark:bg-neutrals900 relative">
+      {/* Decorative Background Elements */}
+      <View className="absolute top-[-100px] right-[-100px] w-64 h-64 bg-red-500/10 rounded-full blur-3xl z-[-1]" />
+      <View className="absolute bottom-[-50px] left-[-50px] w-80 h-80 bg-orange-500/10 rounded-full blur-3xl z-[-1]" />
+
       <ScrollView contentContainerStyle={{ padding: 20 }}>
         
         {/* Header Actions for Theme Toggle */}
-        <View className="items-end mb-2">
-            <AuthHeaderActions />
-        </View>
+        <Animated.View entering={FadeInDown.delay(200).duration(1000).springify()}>
+          <View className="items-end mb-2">
+              <AuthHeaderActions />
+          </View>
 
-        <AppText raw className="text-3xl font-bold text-red-600 dark:text-red-500 text-center mb-2">
-            SOS KHẨN CẤP
-        </AppText>
-        <AppText raw className="text-base text-neutrals400 dark:text-neutrals400 text-center mb-3 font-sans-medium">
-            Báo cáo khẩn cấp không cần đăng nhập
-        </AppText>
-        
-        <View className="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg mb-6 border border-red-100 dark:border-red-900/50">
-            <AppText raw className="text-sm text-red-600 dark:text-red-400 italic text-center">
-                Lưu ý: Chỉ sử dụng trong trường hợp thực sự khẩn cấp. Lạm dụng sẽ bị chặn thiết bị.
-            </AppText>
-        </View>
+          <AppText raw className="text-3xl font-bold text-red-600 dark:text-red-500 text-center mb-2">
+              SOS KHẨN CẤP
+          </AppText>
+          <AppText raw className="text-base text-neutrals400 dark:text-neutrals400 text-center mb-3 font-sans-medium">
+              Báo cáo khẩn cấp không cần đăng nhập
+          </AppText>
+          
+          <View className="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg mb-6 border border-red-100 dark:border-red-900/50">
+              <AppText raw className="text-sm text-red-600 dark:text-red-400 italic text-center">
+                  Lưu ý: Chỉ sử dụng trong trường hợp thực sự khẩn cấp. Lạm dụng sẽ bị chặn thiết bị.
+              </AppText>
+          </View>
+        </Animated.View>
 
 
-
+        <Animated.View entering={FadeInUp.delay(500).duration(1000).springify()}>
           <View className="mb-6">
               <AppText raw className="text-base font-bold mb-3 ml-1 text-foreground">
                 Loại hỗ trợ cần thiết:
@@ -159,52 +170,55 @@ export default function GuestSOS() {
                     </TouchableOpacity>
                   )})}
               </View>
-        </View>
+          </View>
 
-        <AppInput
-            label="Số điện thoại liên hệ *"
-            placeholder="Nhập số điện thoại của bạn"
-            value={phone}
-            onChangeText={setPhone}
-            keyboardType="phone-pad"
-            errorText={errors.phone}
-            containerClassName="mb-4"
-        />
+          <AppInput
+              label="Số điện thoại liên hệ *"
+              placeholder="Nhập số điện thoại của bạn"
+              value={phone}
+              onChangeText={setPhone}
+              keyboardType="phone-pad"
+              errorText={errors.phone}
+              containerClassName="mb-4"
+              labelClassName="font-sans-bold"
+          />
 
-        <AppInput
-            label="Ghi chú thêm"
-            placeholder="Mô tả tình trạng, số lượng người gặp nạn..."
-            value={notes}
-            onChangeText={setNotes}
-            variant="textarea"
-            numberOfLines={3}
-            containerClassName="mb-4"
-        />
+          <AppInput
+              label="Ghi chú thêm"
+              placeholder="Mô tả tình trạng, số lượng người gặp nạn..."
+              value={notes}
+              onChangeText={setNotes}
+              variant="textarea"
+              numberOfLines={3}
+              containerClassName="mb-4"
+              labelClassName="font-sans-bold"
+          />
 
-        {location && (
-            <AppText className="text-center mb-6 text-green-600 dark:text-green-400 font-sans-medium">
-                Vị trí của bạn: {location.coords.latitude.toFixed(5)}, {location.coords.longitude.toFixed(5)}
-            </AppText>
-        )}
+          {location && (
+              <AppText className="text-center mb-6 text-green-600 dark:text-green-400 font-sans-medium">
+                  Vị trí của bạn: {location.coords.latitude.toFixed(5)}, {location.coords.longitude.toFixed(5)}
+              </AppText>
+          )}
 
-        <AppButton
-          onPress={onSubmit}
-          loading={loading}
-          disabled={!location}
-          className="w-full bg-red-600 dark:bg-red-700 rounded-full py-4 shadow-lg"
-          textClassname="text-white font-bold text-lg"
-        >
-            GỬI YÊU CẦU CỨU HỘ
-        </AppButton>
-        
-        <AppButton
-            variant="ghost"
-            onPress={() => router.back()}
-            className="mt-4"
-            textClassname="text-neutrals600 dark:text-neutrals400 font-sans-medium"
-        >
-            Quay lại Đăng nhập
-        </AppButton>
+          <AppButton
+            onPress={onSubmit}
+            loading={loading}
+            disabled={!location}
+            className="w-full bg-red-600 dark:bg-red-700 rounded-full py-4 shadow-lg"
+            textClassname="text-white font-bold text-lg"
+          >
+              GỬI YÊU CẦU CỨU HỘ
+          </AppButton>
+          
+          <AppButton
+              variant="ghost"
+              onPress={() => router.back()}
+              className="mt-4"
+              textClassname="text-neutrals600 dark:text-neutrals400 font-sans-medium"
+          >
+              Quay lại Đăng nhập
+          </AppButton>
+        </Animated.View>
 
       </ScrollView>
     </SafeAreaView>

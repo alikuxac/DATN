@@ -196,12 +196,29 @@ export const ReportCard = ({
       {/* Phone Numbers / Victim Info */}
       <View className="mb-4 gap-2">
          {/* Reporter Info */}
-         {item.by && typeof item.by === 'object' && (item.by as any).mobileNumber && (
-             <View className="flex-row items-center">
-                 <Icon name="Phone" className="w-3.5 h-3.5 text-neutrals400 dark:text-neutrals100 mr-2" />
-                 <AppText className="text-xs text-neutrals500 dark:text-neutrals200">
-                     {t('REPORT.REPORTER')}: <AppText className="text-foreground font-sans-medium">{(item.by as any).mobileNumber}</AppText>
-                 </AppText>
+         {item.by && typeof item.by === 'object' && (
+             <View className="flex-col gap-1">
+                 {/* Name */}
+                 {((item.by as any).firstName || (item.by as any).lastName) && (
+                    <View className="flex-row items-center">
+                      <Icon name="User" className="w-3.5 h-3.5 text-neutrals400 dark:text-neutrals100 mr-2" />
+                      <AppText className="text-xs text-neutrals500 dark:text-neutrals200">
+                          {t('REPORT.REPORTER')}: <AppText className="text-foreground font-sans-medium">
+                              {`${(item.by as any).lastName || ''} ${(item.by as any).firstName || ''}`.trim()}
+                          </AppText>
+                      </AppText>
+                  </View>
+                 )}
+
+                 {/* Phone */}
+                 {(item.by as any).mobileNumber && (
+                    <View className="flex-row items-center">
+                        <Icon name="Phone" className="w-3.5 h-3.5 text-neutrals400 dark:text-neutrals100 mr-2" />
+                        <AppText className="text-xs text-neutrals500 dark:text-neutrals200">
+                            {t('COMMON.PHONE')}: <AppText className="text-foreground font-sans-medium">{(item.by as any).mobileNumber}</AppText>
+                        </AppText>
+                    </View>
+                 )}
              </View>
          )}
 

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { View, Pressable } from "react-native";
+import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
+import { View, Pressable, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 
@@ -132,6 +133,7 @@ export default function SignUpScreen() {
         value={formData.firstName}
         onChangeText={(val) => updateForm("firstName", val)}
         errorText={errors.firstName}
+        labelClassName="font-sans-bold"
       />
     </View>
   );
@@ -144,115 +146,125 @@ export default function SignUpScreen() {
         value={formData.lastName}
         onChangeText={(val) => updateForm("lastName", val)}
         errorText={errors.lastName}
+        labelClassName="font-sans-bold"
       />
     </View>
   );
 
   return (
     <AuthContainer className="pt-2">
-      <AuthHeader />
+      <Animated.View entering={FadeInDown.delay(200).duration(1000).springify()}>
+        <AuthHeader />
+      </Animated.View>
 
-      <View className="bg-white dark:bg-neutrals900 rounded-3xl p-6 shadow-xl border border-neutrals200 dark:border-neutrals800 gap-6">
-        <View className="gap-4">
-          <View className="flex-row gap-3">
-            {isVietnamese ? (
-              <>
-                {LastNameInput}
-                {FirstNameInput}
-              </>
-            ) : (
-              <>
-                {FirstNameInput}
-                {LastNameInput}
-              </>
-            )}
+      <Animated.View entering={FadeInUp.delay(400).duration(1000).springify()}>
+        <View className="bg-white dark:bg-neutrals900 rounded-3xl p-6 shadow-xl border border-neutrals200 dark:border-neutrals800 gap-6">
+          <View className="gap-4">
+            <View className="flex-row gap-3">
+              {isVietnamese ? (
+                <>
+                  {LastNameInput}
+                  {FirstNameInput}
+                </>
+              ) : (
+                <>
+                  {FirstNameInput}
+                  {LastNameInput}
+                </>
+              )}
+            </View>
+
+            <AppInput
+              label={t("AUTH.LABEL_EMAIL")}
+              placeholder="you@example.com"
+              value={formData.email}
+              onChangeText={(val) => updateForm("email", val)}
+              errorText={errors.email}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              labelClassName="font-sans-bold"
+            />
+
+            <AppInput
+              label={t("AUTH.LABEL_PASSWORD")}
+              placeholder={t("AUTH.PLACEHOLDER_PASSWORD")}
+              value={formData.password}
+              onChangeText={(val) => updateForm("password", val)}
+              errorText={errors.password}
+              secureTextEntry={!showPassword}
+              labelClassName="font-sans-bold"
+              rightIcon={
+                <Pressable onPress={() => setShowPassword(!showPassword)}>
+                  <Icon
+                    name={showPassword ? "EyeOff" : "Eye"}
+                    size={20}
+                    color={colors.neutrals100}
+                  />
+                </Pressable>
+              }
+            />
+
+            <AppInput
+              label={t("AUTH.LABEL_CONFIRM_PASSWORD")}
+              placeholder={t("AUTH.PLACEHOLDER_CONFIRM_PASSWORD")}
+              value={formData.confirmPassword}
+              onChangeText={(val) => updateForm("confirmPassword", val)}
+              errorText={errors.confirmPassword}
+              secureTextEntry={!showConfirmPassword}
+              labelClassName="font-sans-bold"
+              rightIcon={
+                <Pressable
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  <Icon
+                    name={showConfirmPassword ? "EyeOff" : "Eye"}
+                    size={20}
+                    color={colors.neutrals100}
+                  />
+                </Pressable>
+              }
+            />
           </View>
 
-          <AppInput
-            label={t("AUTH.LABEL_EMAIL")}
-            placeholder="you@example.com"
-            value={formData.email}
-            onChangeText={(val) => updateForm("email", val)}
-            errorText={errors.email}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-
-          <AppInput
-            label={t("AUTH.LABEL_PASSWORD")}
-            placeholder={t("AUTH.PLACEHOLDER_PASSWORD")}
-            value={formData.password}
-            onChangeText={(val) => updateForm("password", val)}
-            errorText={errors.password}
-            secureTextEntry={!showPassword}
-            rightIcon={
-              <Pressable onPress={() => setShowPassword(!showPassword)}>
-                <Icon
-                  name={showPassword ? "EyeOff" : "Eye"}
-                  size={20}
-                  color={colors.neutrals100}
-                />
-              </Pressable>
-            }
-          />
-
-          <AppInput
-            label={t("AUTH.LABEL_CONFIRM_PASSWORD")}
-            placeholder={t("AUTH.PLACEHOLDER_CONFIRM_PASSWORD")}
-            value={formData.confirmPassword}
-            onChangeText={(val) => updateForm("confirmPassword", val)}
-            errorText={errors.confirmPassword}
-            secureTextEntry={!showConfirmPassword}
-            rightIcon={
-              <Pressable
-                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-              >
-                <Icon
-                  name={showConfirmPassword ? "EyeOff" : "Eye"}
-                  size={20}
-                  color={colors.neutrals100}
-                />
-              </Pressable>
-            }
-          />
-        </View>
-
-        <AppButton
-          variant="ghost"
-          size="lg"
-          onPress={handleRegister}
-          loading={loading}
-          className="w-full shadow-md"
-          style={{
-            backgroundColor: "#2563eb",
-            height: 56,
-            borderRadius: 100,
-            justifyContent: "center",
-            alignItems: "center",
-            marginTop: 10,
-          }}
-          textClassname="text-white font-sans-bold text-lg"
-        >
-          {t("AUTH.BTN_REGISTER")}
-        </AppButton>
-      </View>
-
-      <View className="flex-row justify-center items-center mt-8 gap-1">
-        <AppText className="text-neutrals600 dark:text-neutrals400 text-lg font-sans-regular">
-          {t("AUTH.HINT_HAS_ACCOUNT")}
-        </AppText>
-        <Pressable onPress={() => {
-          dispatch(setIsFirstLaunch(false)); // Đánh dấu đã không còn lần đầu
-          router.push("/(auth)/sign-in");
-        }}>
-          <AppText
-            className="text-lg font-sans-bold"
-            style={{ color: "#2563eb" }}
+          <AppButton
+            variant="ghost"
+            size="lg"
+            onPress={handleRegister}
+            loading={loading}
+            className="w-full shadow-md"
+            style={{
+              backgroundColor: "#2563eb",
+              height: 56,
+              borderRadius: 100,
+              justifyContent: "center",
+              alignItems: "center",
+              marginTop: 10,
+            }}
+            textClassname="text-white font-sans-bold text-lg"
           >
-            {t("AUTH.LINK_LOGIN")}
+            {t("AUTH.BTN_REGISTER")}
+          </AppButton>
+        </View>
+      </Animated.View>
+
+      <Animated.View entering={FadeInUp.delay(600).duration(1000).springify()}>
+        <View className="flex-row justify-center items-center mt-8 gap-1">
+          <AppText className="text-neutrals600 dark:text-neutrals400 text-lg font-sans-regular">
+            {t("AUTH.HINT_HAS_ACCOUNT")}
           </AppText>
-        </Pressable>
-      </View>
+          <Pressable onPress={() => {
+            dispatch(setIsFirstLaunch(false)); // Đánh dấu đã không còn lần đầu
+            router.push("/(auth)/sign-in");
+          }}>
+            <AppText
+              className="text-lg font-sans-bold"
+              style={{ color: "#2563eb" }}
+            >
+              {t("AUTH.LINK_LOGIN")}
+            </AppText>
+          </Pressable>
+        </View>
+      </Animated.View>
     </AuthContainer>
   );
 }

@@ -5,10 +5,9 @@ import { SessionModule } from '@modules/session/session.module';
 import { ActivityModule } from '@modules/activity/activity.module';
 import { ActivityProcessor } from '@modules/activity/processors/activity.processor';
 import { NotificationModule } from '@modules/notifications/notification.module';
-import { NotificationProcessor } from '@modules/notifications/processors/notification.processor';
 
 @Module({
     imports: [EmailModule, SessionModule, ActivityModule, NotificationModule],
-    providers: [EmailProcessor, ActivityProcessor, NotificationProcessor],
+    providers: [EmailProcessor, ActivityProcessor],
 })
 export class WorkerModule { }

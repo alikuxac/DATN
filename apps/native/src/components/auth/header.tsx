@@ -10,26 +10,24 @@ export default function AuthHeader() {
   const { t } = useTranslation();
 
   return (
-    <View className="mb-8">
+    <View className="mb-6">
       {/* Actions Top Right */}
-      <View className="items-end mb-4">
+      <View className="items-end mb-2">
         <AuthHeaderActions />
       </View>
 
-      {/* Logo & Title Center */}
+      {/* Hero Image & Title Center */}
       <View className="items-center">
-        <View className="w-24 h-24 bg-white dark:bg-neutrals900 rounded-3xl items-center justify-center mb-6 shadow-sm border border-neutrals100 dark:border-neutrals800">
-          <Image 
-            source={require('../../../assets/icon.png')} 
-            className="w-20 h-20"
-            resizeMode="contain"
-          />
-        </View>
-        <AppText raw variant="heading1" weight="bold" className="mb-1 text-center">
-          {expo.name}
+        <Image 
+          source={require('../../../assets/flood_relief_hero.png')} 
+          className="w-full h-40 rounded-2xl mb-4"
+          resizeMode="cover"
+        />
+        <AppText raw variant="heading2" weight="bold" className="text-center text-primary dark:text-blue-400">
+          Hệ thống Cứu trợ Lũ lụt
         </AppText>
-        <AppText raw variant="body" color="muted" align="center">
-          {t('COMMON.APP_TAGLINE')}
+        <AppText raw variant="body" color="muted" align="center" className="mt-1">
+          Kết nối cộng đồng - Hỗ trợ kịp thời
         </AppText>
       </View>
     </View>

@@ -13,7 +13,10 @@ interface SocketContextType {
   isConnected: boolean;
   alertData: any;
   setAlertData: (data: any) => void;
+  sendLocationUpdate: (lat: number, lng: number, reportId?: string) => void;
 }
+
+
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
 
@@ -24,7 +27,7 @@ export const useSocketContext = () => {
 };
 
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { token } = useAppSelector((state) => state.app);
+  const { token, user } = useAppSelector((state) => state.app);
   const dispatch = useAppDispatch();
   const { showInfo, showError } = useToast();
   
@@ -49,6 +52,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const newSocket = io(SOCKET_URL, {
       transports: ['websocket'],
       auth: { token },
+      query: { userId: user?._id },
       reconnection: true,
       reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
@@ -68,10 +72,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     // --- SOS (Background update for Map) ---
     newSocket.on('new_sos', (data: any) => {
       console.log('📍 [Map Update] NEW SOS RECEIVED:', data);
-      
-      // Ở đây chúng ta CHỈ nên cập nhật state bản đồ (nếu có Redux slice cho reports)
-      // KHÔNG gọi handleCriticalAlert hay addNotification ở đây vì sẽ bị trùng với 'new_notification'
-      // đã được server gửi đích danh cho tình nguyện viên.
+      // Logic xử lý map update
     });
 
     // --- Generic & System Notifications (Main UI Alert source) ---
@@ -81,7 +82,6 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const isSos = data.type === 'SOS';
       const severity = data.data?.severity || 'high';
 
-      // Nếu là SOS, chúng ta xử lý Alert khẩn cấp (Modal, Siren)
       if (isSos) {
         const sosAlert = {
           _id: data._id,
@@ -93,11 +93,9 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         };
         handleCriticalAlert(sosAlert);
       } else {
-        // Thông báo thường -> Hiện Toast
         showInfo(data.title || 'Thông báo', data.body || data.message);
       }
       
-      // Luôn luôn thêm vào danh sách thông báo để tab Notifications hiển thị
       dispatch(addNotification({
         _id: data._id || Date.now().toString(),
         title: data.title,
@@ -120,7 +118,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return () => {
       newSocket.disconnect();
     };
-  }, [token, dispatch]);
+  }, [token, user?._id, dispatch]); // Re-connect if user ID changes (login success)
 
   const handleCriticalAlert = (data: any) => {
     if (data.level === 'CRITICAL') {
@@ -137,8 +135,14 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
+  const sendLocationUpdate = (lat: number, lng: number, reportId?: string) => {
+    if (socketRef.current && isConnected) {
+      socketRef.current.emit('update_location', { lat, lng, reportId });
+    }
+  };
+
   return (
-    <SocketContext.Provider value={{ socket, isConnected, alertData, setAlertData }}>
+    <SocketContext.Provider value={{ socket, isConnected, alertData, setAlertData, sendLocationUpdate }}>
       {children}
     </SocketContext.Provider>
   );

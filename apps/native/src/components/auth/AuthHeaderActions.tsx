@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import { Icon } from "@/components/ui";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { toggleTheme, setLanguage } from "@/store/slices/appSlice";
+import { toggleTheme, setLanguage, syncUserPreferences } from "@/store/slices/appSlice";
 import { LanguageCode } from "@/config/i18n";
 import { AppColors } from "@/config/colors";
 
@@ -22,12 +22,17 @@ export default function AuthHeaderActions() {
 
   const handleToggleTheme = () => {
     dispatch(toggleTheme());
+    // Sync with DB
+    const newTheme = theme === 'light' ? 'dark' : 'light'; // Value *after* toggle
+    dispatch(syncUserPreferences({ theme: newTheme }));
   };
 
   const handleToggleLanguage = () => {
     const newLanguage: LanguageCode = language === "en" ? "vi" : "en";
     dispatch(setLanguage(newLanguage));
     i18n.changeLanguage(newLanguage);
+    // Sync with DB
+    dispatch(syncUserPreferences({ language: newLanguage }));
   };
 
   const iconColor = theme === 'dark' ? colors.foreground : '#000000';

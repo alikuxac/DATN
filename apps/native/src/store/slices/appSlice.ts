@@ -1,8 +1,9 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { colorScheme } from "nativewind";
 import { LanguageCode } from '@/config/i18n';
-import { getDeviceLanguage } from "@/utils/getDeviceLanguage.ts";
 import { IUserGetResponse } from '@repo/shared';
+// Use require to avoid circular dependency with apiService -> store -> appSlice
+// import { apiService } from "@/services/api.service"; 
 
 export type Theme = 'light' | 'dark';
 
@@ -12,8 +13,6 @@ export interface Insets {
   right: number;
   bottom: number;
 }
-
-// Get device language
 
 interface AppState {
   theme: Theme;
@@ -43,6 +42,44 @@ const initialState: AppState = {
   user: null,
   regionId: 'unknown',
 };
+
+// Async Thunks
+export const fetchUserPreferences = createAsyncThunk(
+  'app/fetchUserPreferences',
+  async (_, { dispatch }) => {
+    const { apiService } = await import('@/services/api.service');
+    try {
+      const response = await apiService.get<any>("/shared/user/profile");
+      const prefs = response?.data?.preferences;
+      if (prefs) {
+        if (prefs.theme) dispatch(setTheme(prefs.theme));
+        if (prefs.language) dispatch(setLanguage(prefs.language));
+        return prefs;
+      }
+    } catch (error) {
+      console.warn("Failed to fetch preferences:", error);
+    }
+  }
+);
+
+export const syncUserPreferences = createAsyncThunk(
+  'app/syncUserPreferences',
+  async (prefs: { theme?: Theme; language?: LanguageCode }, { getState }) => {
+    const { apiService } = await import('@/services/api.service');
+    const state = getState() as any;
+    if (state.app.token) {
+      try {
+        // Get current preferences to merge? Or backend handles merge?
+        // Usually PATCH merges.
+        await apiService.patch('/shared/user/profile', {
+          preferences: prefs
+        });
+      } catch (error) {
+        console.warn("Failed to sync preferences:", error);
+      }
+    }
+  }
+);
 
 const appSlice = createSlice({
   name: 'app',
@@ -78,8 +115,11 @@ const appSlice = createSlice({
       state.token = null;
       state.refreshToken = null;
       state.user = null;
-      state.theme = 'light';
-      state.language = 'vi';
+      // Reset defaults or keep? Usually keep local prefs is better UX, but requirement says "sync". 
+      // If we logout, maybe we should reset to system default or keep last used?
+      // Staying with last used is safer.
+      // state.theme = 'light'; 
+      // state.language = 'vi';
       state.regionId = 'unknown';
     },
     setUser: (state, action: PayloadAction<IUserGetResponse | null>) => {

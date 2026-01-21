@@ -5,5 +5,9 @@ import { useSocketContext } from '@/context/SocketContext';
  * CENTRALIZED in SocketProvider to prevent duplicate connections.
  */
 export const useSocketNotification = () => {
-  return useSocketContext();
+  const context = useSocketContext();
+  return {
+    ...context,
+    sendLocationUpdate: context.sendLocationUpdate,
+  };
 };

@@ -29,7 +29,7 @@ const LocationContext = createContext<LocationContextType>({
 export const useLocationContext = () => useContext(LocationContext);
 
 export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { token } = useAppSelector((state) => state.app);
+  const { token, user } = useAppSelector((state) => state.app);
   const [currentRegion, setCurrentRegion] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const regionRef = useRef<string | null>(null);
@@ -49,6 +49,7 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     // 1. Connect Socket
     socketRef.current = io(SOCKET_URL, {
       auth: { token },
+      query: { userId: user?._id },
       transports: ['websocket'],
     });
 
@@ -122,7 +123,7 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       sub?.remove();
       socketRef.current?.disconnect();
     };
-  }, [token, dispatch]);
+  }, [token, user?._id, dispatch]);
 
   return (
     <LocationContext.Provider value={{ userLocation, currentRegion, socket: socketRef.current, setActiveReportId }}>
