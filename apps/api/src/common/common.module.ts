@@ -140,7 +140,9 @@ import { ScheduleModule } from "@nestjs/schedule";
         }
       })
     }),
-    EventEmitterModule.forRoot(),
+    EventEmitterModule.forRoot({
+      global: true,
+    }),
     ScheduleModule.forRoot(),
     MessageModule.forRoot(),
     HelperModule.forRoot(),

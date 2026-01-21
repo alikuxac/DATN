@@ -29,6 +29,8 @@ export default function MapPage() {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<vietmapgl.Map | null>(null);
   const markersRef = useRef<vietmapgl.Marker[]>([]);
+  // Store selected entity to track interactions
+  const [selectedEntity, setSelectedEntity] = useState<{ id: string; type: 'report' | 'user' | 'volunteer' } | null>(null);
 
   // Filter & Search State
   const [searchQuery, setSearchQuery] = useState("");
@@ -72,17 +74,37 @@ export default function MapPage() {
     enabled: mapMode !== "reports", // Fetch if asking for users, volunteers or all
   });
 
+  // Filter & Search State
+  // Helper to safely get rescuer ID
+  const getRescuerId = (r: Report) => typeof r.rescuer === 'string' ? r.rescuer : (r.rescuer as any)?._id || (r.rescuer as any)?.id;
+
   // Filter Data for Display
   const displayData = useMemo(() => {
     const items: { type: 'report' | 'user' | 'volunteer'; data: any, coords: [number, number] }[] = [];
 
+    // Identify Related ID based on Selected Entity
+    let relatedId: string | null = null;
+    if (selectedEntity && reportsData) {
+        if (selectedEntity.type === 'report') {
+            const report = reportsData.find(r => r._id === selectedEntity.id);
+            if (report?.status === ReportStatus.IN_PROGRESS) relatedId = getRescuerId(report);
+        } else if (selectedEntity.type === 'volunteer') {
+             const report = reportsData.find(r => getRescuerId(r) === selectedEntity.id && r.status === ReportStatus.IN_PROGRESS);
+             if (report) relatedId = report._id;
+        }
+    }
+
     // Process Reports
-    if ((mapMode === "reports" || mapMode === "all") && reportsData) {
+    if (reportsData) {
       reportsData.forEach(r => {
-        // Filter out RESOLVED and REJECTED as per user request
+        // Filter out RESOLVED and REJECTED
         if (r.status === ReportStatus.RESOLVED || r.status === ReportStatus.REJECTED) return;
 
-        if (r.location?.coordinates?.length === 2) {
+        const isModeMatch = mapMode === "reports" || mapMode === "all";
+        const isRelated = r._id === relatedId;
+        const isSelected = selectedEntity?.id === r._id;
+
+        if ((isModeMatch || isRelated || isSelected) && r.location?.coordinates?.length === 2) {
           items.push({ type: 'report', data: r, coords: r.location.coordinates as [number, number] });
         }
       });
@@ -93,7 +115,13 @@ export default function MapPage() {
        usersData.forEach(u => {
           if (u.location?.coordinates?.length === 2) {
               const role = u.role === UserRole.VOLUNTEER ? 'volunteer' : 'user';
-              if (mapMode === "all" || (mapMode === "users" && role === "user") || (mapMode === "volunteers" && role === "volunteer")) {
+              const uId = (u as any)._id || (u as any).id;
+              
+              const isModeMatch = mapMode === "all" || (mapMode === "users" && role === "user") || (mapMode === "volunteers" && role === "volunteer");
+              const isRelated = uId === relatedId;
+              const isSelected = selectedEntity?.id === uId;
+
+              if (isModeMatch || isRelated || isSelected) {
                   items.push({ type: role as 'user' | 'volunteer', data: u, coords: u.location.coordinates as [number, number] });
               }
           }
@@ -101,11 +129,14 @@ export default function MapPage() {
     }
 
     return items;
-  }, [mapMode, reportsData, usersData]);
+  }, [mapMode, reportsData, usersData, selectedEntity]);
 
   // Initialize Map
   useEffect(() => {
     if (!mapContainerRef.current) return;
+    
+    // Prevent double initialization (React Strict Mode or fast re-renders)
+    if (mapRef.current || mapContainerRef.current.childNodes.length > 0) return;
 
     const map = new vietmapgl.Map({
       container: mapContainerRef.current,
@@ -160,31 +191,30 @@ export default function MapPage() {
 
     displayData.forEach((item) => {
       const el = document.createElement('div');
-      el.className = 'w-6 h-6 rounded-full border-2 border-white shadow-lg cursor-pointer flex items-center justify-center text-[10px] font-bold text-white';
+      el.className = 'w-6 h-6 rounded-full border-2 border-white shadow-lg cursor-pointer flex items-center justify-center text-[10px] font-bold text-white transition-transform hover:scale-110';
       
       let color = '#6b7280';
       let popupContent = '';
+      let itemId = '';
 
       if (item.type === 'report') {
           const report = item.data as Report;
+          itemId = report._id;
           const isGuest = (report as any).source === 'GUEST';
           
-          // Color Logic
           if (isGuest) {
-             color = '#9333ea'; // Purple for Guest
+             color = '#9333ea'; 
           } else {
-             if (report.status === ReportStatus.PENDING) color = '#ef4444'; // Red
-             else if (report.status === ReportStatus.IN_PROGRESS) color = '#f59e0b'; // Orange
+             if (report.status === ReportStatus.PENDING) color = '#ef4444'; 
+             else if (report.status === ReportStatus.IN_PROGRESS) color = '#f59e0b'; 
           }
 
-          // Guest Details parsing
           let guestPhone = 'N/A';
           if (isGuest && report.notes) {
               const match = report.notes.match(/Guest Phone: ([\d+]+)/);
               if (match) guestPhone = match[1];
           }
 
-          // Popup Content
           popupContent = `
             <div class="p-3 w-48">
                 <div class="flex items-center justify-between mb-2">
@@ -208,13 +238,19 @@ export default function MapPage() {
                          <p class="text-gray-500 text-[10px]">${report.user?.email || ''}</p>
                     </div>
                 `}
-
+                
                 <div class="flex items-center gap-1 text-xs mb-1">
                     <span class="font-semibold">Severity:</span>
                     <span class="${report.severity === 'critical' ? 'text-red-600 font-bold' : report.severity === 'high' ? 'text-orange-600 font-bold' : 'text-gray-600'} capitalize">
                         ${report.severity || 'low'}
                     </span>
                 </div>
+
+                ${report.status === ReportStatus.IN_PROGRESS && report.rescuer ? `
+                     <div class="mt-2 pt-2 border-t text-xs">
+                        <p class="font-semibold text-orange-600">🛠 Processing by Rescuer</p>
+                     </div>
+                ` : ''}
 
                 ${report.notes ? `
                     <div class="mt-2 pt-2 border-t text-xs text-gray-500 italic">
@@ -230,13 +266,12 @@ export default function MapPage() {
             </div>
           `;
       } else if (item.type === 'volunteer') {
-          // ... (keep existing volunteer logic)
           const user = item.data as MapUser;
-          // Support both _id and id
           const userId = (user as any)._id || (user as any).id;
+          itemId = userId;
           const isBusy = userId ? busyVolunteerIds.has(userId) : false;
           
-          color = isBusy ? '#f97316' : '#8b5cf6'; // Orange (Busy) vs Purple (Idle)
+          color = isBusy ? '#f97316' : '#8b5cf6';
           const statusText = isBusy ? 'ON DUTY' : 'IDLE';
           const statusColor = isBusy ? 'text-orange-600' : 'text-purple-600';
 
@@ -248,6 +283,7 @@ export default function MapPage() {
                     <p class="text-xs font-bold ${statusColor}">${statusText}</p>
                     <span class="text-[10px] text-gray-400">Volunteer</span>
                 </div>
+                ${isBusy ? `<p class="text-[10px] text-gray-500 italic mt-0.5">Assigned to a report</p>` : ''}
                 <div class="text-xs mt-1 text-gray-500">
                     Active: ${user.lastLocationAt ? formatDistanceToNow(new Date(user.lastLocationAt)) + ' ago' : 'Unknown'}
                 </div>
@@ -257,9 +293,11 @@ export default function MapPage() {
             </div>
           `;
       } else {
-           // ... (keep existing user logic)
-          color = '#06b6d4'; // Cyan
+          color = '#06b6d4';
           const user = item.data as MapUser;
+          const userId = (user as any)._id || (user as any).id;
+          itemId = userId;
+
           el.innerHTML = 'U';
           popupContent = `
              <div class="p-2">
@@ -273,10 +311,36 @@ export default function MapPage() {
       }
       
       el.style.backgroundColor = color;
+      
+      // Highlight selected
+      if (selectedEntity?.id === itemId) {
+          el.style.borderColor = '#ffffff';
+          el.style.borderWidth = '3px';
+          el.style.boxShadow = '0 0 15px currentColor';
+          el.style.transform = 'scale(1.2)';
+          el.style.zIndex = '10';
+      }
+
+      // Add Click Listener to set selected entity
+      el.addEventListener('click', (e) => {
+          e.stopPropagation(); // prevent map click
+          setSelectedEntity({ id: itemId, type: item.type as any });
+      });
+
+      const popup = new vietmapgl.Popup({ offset: 25 }).setHTML(popupContent);
+      
+      // Clear selection on popup close
+      popup.on('close', () => {
+          // Optional: we might not want to clear immediately to allow viewing the line
+          // But usually closing logic implies deselection.
+          // setSelectedEntity(null); 
+          // Let's NOT clear it automatically on close, allows user to pan around and keep line.
+          // User can click on map or another marker to switch.
+      });
 
       const marker = new vietmapgl.Marker(el)
         .setLngLat(item.coords)
-        .setPopup(new vietmapgl.Popup({ offset: 25 }).setHTML(popupContent))
+        .setPopup(popup)
         .addTo(mapRef.current!);
       
       markersRef.current.push(marker);
@@ -284,7 +348,83 @@ export default function MapPage() {
 
     // Optional: Fit bounds logic (skipped for brevity, can reuse previous logic if needed)
 
-  }, [displayData]);
+
+    // Draw Connection Line Logic
+    if (mapRef.current) {
+        const map = mapRef.current;
+        const lineSourceId = 'related-connection-line';
+        const lineLayerId = 'related-connection-layer';
+
+        // Find coords
+        let startCoords: [number, number] | null = null;
+        let endCoords: [number, number] | null = null;
+
+        if (selectedEntity && displayData) {
+            const selectedItem = displayData.find(i => {
+                const id = (i.data as any)._id || (i.data as any).id;
+                return id === selectedEntity.id;
+            });
+            if (selectedItem) startCoords = selectedItem.coords;
+
+            // Find related item in displayData
+            // Logic: if selected is report, find rescuer. If selected is volunteer, find report.
+            let relatedId: string | null = null;
+            if (selectedEntity.type === 'report') {
+                const r = selectedItem?.data as Report;
+                if (r?.status === ReportStatus.IN_PROGRESS) relatedId = typeof r.rescuer === 'string' ? r.rescuer : (r.rescuer as any)?._id;
+            } else if (selectedEntity.type === 'volunteer') {
+                 // The displayData logic already ensured the pair is present if connected
+                 // We just need to find the IN_PROGRESS report assigned to this volunteer
+                 const volId = selectedEntity.id;
+                 const linkedReport = displayData.find(d => 
+                    d.type === 'report' && 
+                    (d.data as Report).status === ReportStatus.IN_PROGRESS && 
+                    (typeof (d.data as Report).rescuer === 'string' ? (d.data as Report).rescuer === volId : ((d.data as Report).rescuer as any)?._id === volId)
+                 );
+                 if (linkedReport) relatedId = linkedReport.data._id;
+            }
+            
+            if (relatedId) {
+                const relatedItem = displayData.find(i => {
+                     const id = (i.data as any)._id || (i.data as any).id;
+                     return id === relatedId;
+                });
+                if (relatedItem) endCoords = relatedItem.coords;
+            }
+        }
+
+        const geojson: any = {
+            type: 'Feature',
+            properties: {},
+            geometry: {
+                type: 'LineString',
+                coordinates: startCoords && endCoords ? [startCoords, endCoords] : []
+            }
+        };
+
+        if (map.getSource(lineSourceId)) {
+            (map.getSource(lineSourceId) as any).setData(geojson);
+        } else {
+            // Wait for style load if needed, but usually map is loaded here
+            if (map.isStyleLoaded()) {
+                map.addSource(lineSourceId, { type: 'geojson', data: geojson });
+                map.addLayer({
+                    id: lineLayerId,
+                    type: 'line',
+                    source: lineSourceId,
+                    layout: { 'line-join': 'round', 'line-cap': 'round' },
+                    paint: { 
+                        'line-color': '#3b82f6', // blue-500
+                        'line-width': 4, 
+                        'line-dasharray': [2, 2],
+                        'line-opacity': 0.8 
+                    }
+                });
+            }
+        }
+    }
+
+  }, [displayData, selectedEntity]);
 
   const isLoading = isLoadingReports || isLoadingUsers;
 

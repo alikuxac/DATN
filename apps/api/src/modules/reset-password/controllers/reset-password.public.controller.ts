@@ -12,6 +12,10 @@ import {
 import { ClientSession } from 'mongoose';
 import { UsersService } from '@modules/users/services/users.service';
 import { ApiTags } from '@nestjs/swagger';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { MessageService } from '@common/message/services/message.service';
+import { ActivityCreateEvent } from '@modules/activity/events/activity.create.event';
+import { ENUM_ACTIVITY_TYPE } from '@repo/shared';
 import { IResponse } from '@common/response/interfaces/response.interface';
 import { ResetPasswordCreateRequestDto } from '@modules/reset-password/dtos/request/reset-password.create.request.dto';
 import { UserDocument } from '@modules/users/repository/entities/user.entity';
@@ -50,7 +54,9 @@ export class ResetPasswordPublicController {
         private readonly userService: UsersService,
         private readonly passwordHistoryService: PasswordHistoryService,
         private readonly authService: AuthService,
-        private readonly resetPasswordService: ResetPasswordService
+        private readonly resetPasswordService: ResetPasswordService,
+        private readonly messageService: MessageService,
+        private readonly eventEmitter: EventEmitter2
     ) { }
 
     @Response('resetPassword.request')
@@ -114,6 +120,17 @@ export class ResetPasswordPublicController {
                 }
             );
 
+            this.eventEmitter.emit(
+                'activity.create',
+                new ActivityCreateEvent({
+                    user,
+                    type: ENUM_ACTIVITY_TYPE.USER_RESET_PASSWORD_REQUEST,
+                    description: this.messageService.setMessage(
+                        'activity.user.resetPasswordRequest'
+                    ),
+                    session
+                })
+            );
 
             await this.databaseService.commitTransaction(session);
 
@@ -200,6 +217,17 @@ export class ResetPasswordPublicController {
 
         await this.resetPasswordService.verify(resetPassword);
 
+        this.eventEmitter.emit(
+            'activity.create',
+            new ActivityCreateEvent({
+                user,
+                type: ENUM_ACTIVITY_TYPE.USER_RESET_PASSWORD_VERIFY,
+                description: this.messageService.setMessage(
+                    'activity.user.resetPasswordVerify'
+                ),
+            })
+        );
+
         return;
     }
 
@@ -255,6 +283,18 @@ export class ResetPasswordPublicController {
                         ttl: 1000,
                     },
                 }
+            );
+
+            this.eventEmitter.emit(
+                'activity.create',
+                new ActivityCreateEvent({
+                    user,
+                    type: ENUM_ACTIVITY_TYPE.USER_RESET_PASSWORD, // Using generic reset password type or specific? Enum has USER_RESET_PASSWORD.
+                    description: this.messageService.setMessage(
+                        'activity.user.resetPassword'
+                    ),
+                    session
+                })
             );
 
             await this.databaseService.commitTransaction(session);

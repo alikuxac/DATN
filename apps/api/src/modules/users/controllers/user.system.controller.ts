@@ -42,7 +42,10 @@ import { ENUM_USER_STATUS } from '@repo/shared';
 import { UserEntity } from '../repository/entities/user.entity';
 import { UsersService } from '@modules/users/services/users.service';
 
-import { ActivityService } from '@modules/activity/services/activity.service';
+// import { ActivityService } from '@modules/activity/services/activity.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { ActivityCreateEvent } from '@modules/activity/events/activity.create.event';
+import { MessageService } from '@common/message/services/message.service';
 import {
     AuthJwtAccessProtected,
     AuthJwtPayload,
@@ -54,6 +57,7 @@ import {
 import {
     ENUM_POLICY_ACTION,
     ENUM_POLICY_SUBJECT,
+    ENUM_ACTIVITY_TYPE,
 } from '@repo/shared';
 
 @ApiTags('modules.system.user')
@@ -65,7 +69,9 @@ export class UserSystemController {
     constructor(
         private readonly paginationService: PaginationService,
         private readonly userService: UsersService,
-        private readonly activityService: ActivityService,
+        // private readonly activityService: ActivityService,
+        private readonly eventEmitter: EventEmitter2,
+        private readonly messageService: MessageService,
     ) { }
 
     @ResponsePaging('user.list')
@@ -185,12 +191,18 @@ export class UserSystemController {
     ): Promise<void> {
         const user = await this.userService.restore(id, { actionBy: restoredBy });
 
-        await this.activityService.createByAdmin(
-            user,
-            {
-                by: restoredBy,
-                description: 'activity.user.restoreByAdmin',
-            }
+        this.eventEmitter.emit(
+            'activity.create',
+            new ActivityCreateEvent({
+                user,
+                by: restoredBy, // Assuming restoredBy is user ID string or UserDocument. Controller signature says string currently via AuthJwtPayload('user')? No, AuthJwtPayload without pipe returns UserDocument if strictly typed but typically it's the payload. However, previously passed to createByAdmin by.
+                // Looking at other controllers, @AuthJwtPayload('user') usually returns UserDocument if piped or payload object.
+                // Assuming restoredBy is actually UserDocument based on how it was used in createByAdmin logic before?
+                // Wait, UserSystemController has @AuthJwtPayload('user') restoredBy: string.
+                // If createByAdmin accepted string for 'by', then ActivityCreateEvent matches.
+                type: ENUM_ACTIVITY_TYPE.USER_RESTORE,
+                description: this.messageService.setMessage('activity.user.restoreByAdmin'),
+            })
         );
     }
 }

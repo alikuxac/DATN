@@ -8,12 +8,13 @@ import {
     NotFoundException
 } from '@nestjs/common';
 import { ClientSession } from 'mongoose';
-import { ENUM_STATUS_CODE_ERROR } from '@repo/shared';
+import { ENUM_STATUS_CODE_ERROR, ENUM_ACTIVITY_TYPE } from '@repo/shared';
 import { DatabaseService } from '@common/database/services/database.service';
 import { MessageService } from '@common/message/services/message.service';
 import { Response } from '@common/response/decorators/response.decorator';
 import { IResponse } from '@common/response/interfaces/response.interface';
-import { ActivityService } from '@modules/activity/services/activity.service';
+// import { ActivityService } from '@modules/activity/services/activity.service';
+import { ActivityCreateEvent } from '@modules/activity/events/activity.create.event';
 import {
     AuthJwtAccessProtected,
     AuthJwtPayload,
@@ -39,7 +40,7 @@ export class UserSharedController {
     constructor(
         private readonly databaseService: DatabaseService,
         private readonly userService: UsersService,
-        private readonly activityService: ActivityService,
+        // private readonly activityService: ActivityService,
         private readonly messageService: MessageService,
         private readonly eventEmitter: EventEmitter2
     ) { }
@@ -78,14 +79,16 @@ export class UserSharedController {
                 { session }
             );
 
-            await this.activityService.createByUser(
-                user,
-                {
+            this.eventEmitter.emit(
+                'activity.create',
+                new ActivityCreateEvent({
+                    user,
                     description: this.messageService.setMessage(
                         'activity.user.updateProfile'
                     ),
-                },
-                { session }
+                    type: ENUM_ACTIVITY_TYPE.USER_UPDATE_PROFILE,
+                    session,
+                })
             );
 
             await this.databaseService.commitTransaction(session);
@@ -133,14 +136,16 @@ export class UserSharedController {
                 { session }
             );
 
-            await this.activityService.createByUser(
-                user,
-                {
+            this.eventEmitter.emit(
+                'activity.create',
+                new ActivityCreateEvent({
+                    user,
                     description: this.messageService.setMessage(
                         'activity.user.updatePreferences'
                     ),
-                },
-                { session }
+                    type: ENUM_ACTIVITY_TYPE.USER_UPDATE_PREFERENCES,
+                    session,
+                })
             );
 
             await this.databaseService.commitTransaction(session);
@@ -185,14 +190,16 @@ export class UserSharedController {
                 session,
             });
 
-            await this.activityService.createByUser(
-                user,
-                {
+            this.eventEmitter.emit(
+                'activity.create',
+                new ActivityCreateEvent({
+                    user,
                     description: this.messageService.setMessage(
                         'activity.user.updateLocation'
                     ),
-                },
-                { session }
+                    type: ENUM_ACTIVITY_TYPE.USER_UPDATE_LOCATION,
+                    session,
+                })
             );
 
             await this.databaseService.commitTransaction(session);
@@ -278,14 +285,16 @@ export class UserSharedController {
                 session,
             });
 
-            await this.activityService.createByUser(
-                user,
-                {
+            this.eventEmitter.emit(
+                'activity.create',
+                new ActivityCreateEvent({
+                    user,
                     description: this.messageService.setMessage(
                         'activity.user.updateVolunteer'
                     ),
-                },
-                { session }
+                    type: ENUM_ACTIVITY_TYPE.USER_UPDATE_VOLUNTEER,
+                    session,
+                })
             );
 
             await this.databaseService.commitTransaction(session);

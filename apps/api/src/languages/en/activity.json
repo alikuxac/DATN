@@ -12,6 +12,20 @@
         "changePassword": "Great! Your password has been successfully updated.",
         "uploadProfile": "Perfect! Your new profile picture has been uploaded.",
         "updatePreferences": "Great! Your preferences have been successfully updated.",
-        "updateLocation": "Your location has been successfully updated."
+        "updateLocation": "Your location has been successfully updated.",
+        "resetPasswordRequest": "You have requested a password reset.",
+        "resetPasswordVerify": "You have verified your password reset request.",
+        "resetPassword": "Your password has been successfully reset.",
+        "resetPasswordByAdmin": "Your password has been reset by an administrator."
+    },
+    "report": {
+        "create": "You have created a new relief report (ID: {id}).",
+        "createByAdmin": "An administrator has created a relief report for you (ID: {id}).",
+        "update": "You have updated the relief report (ID: {id}).",
+        "accept": "You have accepted the relief report (ID: {id}).",
+        "reject": "You have rejected the relief report (ID: {id}).",
+        "complete": "You have completed the relief report (ID: {id}).",
+        "cancel": "You have cancelled the relief report (ID: {id}).",
+        "delete": "You have deleted the relief report (ID: {id})."
     }
 }

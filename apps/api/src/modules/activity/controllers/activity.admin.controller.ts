@@ -26,6 +26,11 @@ import {
 import { UserProtected } from '@modules/users/decorators/user.decorator';
 import { UserParsePipe } from '@modules/users/pipes/user.parse.pipe';
 import { UserDocument } from '@modules/users/repository/entities/user.entity';
+import { UsersService } from '@modules/users/services/users.service';
+import {
+    PaginationQueryFilterInEnum,
+} from '@common/pagination/decorators/pagination.decorator';
+import { ENUM_ACTIVITY_TYPE } from '@repo/shared';
 
 @ApiTags('modules.admin.activity')
 @Controller({
@@ -35,7 +40,8 @@ import { UserDocument } from '@modules/users/repository/entities/user.entity';
 export class ActivityAdminController {
     constructor(
         private readonly paginationService: PaginationService,
-        private readonly activityService: ActivityService
+        private readonly activityService: ActivityService,
+        private readonly userService: UsersService
     ) { }
 
     @ResponsePaging('activity.list')
@@ -48,8 +54,16 @@ export class ActivityAdminController {
     @Get('/list')
     async list(
         @Param('user', RequestRequiredPipe, UserParsePipe) user: UserDocument,
-        @PaginationQuery()
-        { _limit, _offset, _order }: PaginationListDto,
+        @PaginationQuery({
+            availableSearch: ['description'],
+        })
+        { _limit, _offset, _order, _search, search }: PaginationListDto,
+        @PaginationQueryFilterInEnum(
+            'type',
+            ENUM_ACTIVITY_TYPE.SYSTEM,
+            ENUM_ACTIVITY_TYPE
+        )
+        type: ENUM_ACTIVITY_TYPE[],
         @PaginationQueryFilterDateTimeRange('timeRange') timeRange: Date,
         @Query('dateField') rawDateField: string,
         @PaginationQueryFilterDate(
@@ -72,9 +86,25 @@ export class ActivityAdminController {
             { dateField: rawDateField, timeRange, fromDate, toDate, exactDate },
             ['createdAt']
         );
-        const find: Record<string, any> = {
+        let find: Record<string, any> = {
             ...dateQuery,
+            ..._search,
         };
+
+        if (search) {
+            const userIds = await this.userService.findAllIdsByName(search);
+            find = {
+                ...find,
+                $or: [
+                    ...(_search?.$or || []),
+                    { by: { $in: userIds } },
+                ]
+            }
+        }
+
+        if (type?.length) {
+            find.type = { $in: type };
+        }
 
         const userHistories: IActivityDoc[] =
             await this.activityService.findAllByUser(

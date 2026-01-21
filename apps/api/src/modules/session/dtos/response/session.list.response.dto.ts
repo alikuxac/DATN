@@ -79,8 +79,17 @@ export class SessionListResponseDto extends DatabaseUUIDDto implements ISessionL
     @Expose()
     platform: string;
 
+    @Expose()
+    get xForwardedForIP(): string | undefined {
+        return this.xForwardedFor;
+    }
+
     @Expose({ name: 'ip' })
     get ipAddress(): string {
-        return this.xForwardedFor || this['ip'];
+        if (this.xForwardedFor) {
+            const ips = this.xForwardedFor.split(',');
+            return ips[0].trim();
+        }
+        return this['ip'];
     }
 }

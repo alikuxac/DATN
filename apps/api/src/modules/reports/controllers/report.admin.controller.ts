@@ -28,6 +28,10 @@ import { PolicyAbilityProtected } from '@modules/policy/decorators/policy.decora
 import { ENUM_POLICY_SUBJECT, ENUM_POLICY_ACTION } from '@repo/shared';
 
 import { UserProtected } from '@modules/users/decorators/user.decorator';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { MessageService } from '@common/message/services/message.service';
+import { ActivityCreateEvent } from '@modules/activity/events/activity.create.event';
+import { ENUM_ACTIVITY_TYPE } from '@repo/shared';
 
 @Controller({
   version: '1',
@@ -38,7 +42,9 @@ export class ReportAdminController {
     private readonly reportService: ReportService,
     private readonly paginationService: PaginationService,
     private readonly paginationFilterService: PaginationService,
-    private readonly userService: UsersService
+    private readonly userService: UsersService,
+    private readonly messageService: MessageService,
+    private readonly eventEmitter: EventEmitter2
   ) { }
 
   // 1. API List All Reports
@@ -139,6 +145,21 @@ export class ReportAdminController {
     @Body() body: ReportCreateByAdminRequestDto
   ) {
     const created = await this.reportService.createByAdmin(body.userId, user._id.toString(), body);
+
+    this.eventEmitter.emit(
+      'activity.create',
+      new ActivityCreateEvent({
+        user: body.userId,
+        by: user,
+        type: ENUM_ACTIVITY_TYPE.REPORT_CREATE,
+        description: this.messageService.setMessage(
+          'activity.report.createByAdmin',
+          { properties: { id: created._id.toString() } }
+        ),
+        properties: { reportId: created._id.toString() }
+      })
+    );
+
     return created;
   }
 

@@ -161,10 +161,15 @@ export class SessionService {
         );
 
         if (platform === ENUM_SESSION_PLATFORM.MOBILE) {
-            await this.sessionRepository.deleteMany({
+            const oldSessions = await this.sessionRepository.findAll<SessionDoc>({
                 user,
                 platform: ENUM_SESSION_PLATFORM.MOBILE,
-            }, options);
+                status: ENUM_SESSION_STATUS.ACTIVE,
+            });
+
+            for (const session of oldSessions) {
+                await this.updateRevoke(session, options);
+            }
         }
 
         const create = new SessionEntity();

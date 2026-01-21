@@ -20,6 +20,7 @@ export class ReportRepository extends DatabaseObjectIdRepositoryBase<
         foreignField: '_id',
         model: UserEntity.name,
         justOne: true,
+        select: '_id firstName lastName mobileNumber location avatar isRescueMode'
       },
       {
         path: 'by',
@@ -27,6 +28,7 @@ export class ReportRepository extends DatabaseObjectIdRepositoryBase<
         foreignField: '_id',
         model: UserEntity.name,
         justOne: true,
+        select: '_id firstName lastName mobileNumber location avatar'
       },
       {
         path: 'rescuer',
@@ -34,6 +36,7 @@ export class ReportRepository extends DatabaseObjectIdRepositoryBase<
         foreignField: '_id',
         model: UserEntity.name,
         justOne: true,
+        select: '_id firstName lastName mobileNumber location avatar isRescueMode lastLocationAt' // lastLocationAt needed for map
       }
     ]);
   }

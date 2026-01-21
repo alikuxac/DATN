@@ -17,3 +17,4 @@ export * from "./session.enum";
 export * from "./status-code.enum";
 export * from "./user.enum";
 export * from "./verification.enum";
+export * from "./activity.enum";

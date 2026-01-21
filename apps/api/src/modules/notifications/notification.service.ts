@@ -9,6 +9,10 @@ import { ENUM_NOTIFICATION_TYPE, ENUM_REPORT_SOURCE } from "@repo/shared";
 import { Expo, ExpoPushMessage } from 'expo-server-sdk';
 import { UserEntity } from "@modules/users/repository/entities/user.entity";
 import { HelperGeoService } from "@common/helper/services/helper.geo.service";
+import { HelperDateService } from "@common/helper/services/helper.date.service";
+import { Queue } from 'bullmq';
+import { InjectQueue } from '@nestjs/bullmq';
+import { ENUM_WORKER_QUEUES } from '@workers/enums/worker.enum';
 
 @Injectable()
 export class NotificationService {
@@ -19,7 +23,10 @@ export class NotificationService {
     private readonly notificationGateway: NotificationGateway,
     private readonly userService: UsersService,
     private readonly notificationRepository: NotificationRepository,
-    private readonly helperGeoService: HelperGeoService
+    private readonly helperGeoService: HelperGeoService,
+    private readonly helperDateService: HelperDateService,
+    @InjectQueue(ENUM_WORKER_QUEUES.NOTIFICATION_QUEUE)
+    private readonly notificationQueue: Queue
   ) {
     this.expo = new Expo();
   }
@@ -57,7 +64,7 @@ export class NotificationService {
       {
         $set: {
           isRead: true,
-          readAt: new Date(),
+          readAt: this.helperDateService.create(),
         },
       }
     );
@@ -74,59 +81,26 @@ export class NotificationService {
     return updated;
   }
 
-  // Hàm gửi thông báo thông minh
+  // Hàm gửi thông báo thông minh (Refactored to use Queue)
   async sendToUser(userId: string, type: ENUM_NOTIFICATION_TYPE, title: string, body: string, payload: any) {
-    // 1. Lấy thông tin user (nên cache lại để đỡ query DB nhiều lần)
-    const user = await this.userService.findOneById(userId);
-    if (!user) return;
-
-    // 2. CHECK SETTINGS (WORKFLOW CHẶN)
-
-    // Cấp 1: Master Switch
-    if (user.settings?.pushEnabled === false) {
-      console.log(`User ${userId} đã tắt toàn bộ thông báo.`);
-      return;
-    }
-
-    // Cấp 2: Từng loại cụ thể
-    if (type === ENUM_NOTIFICATION_TYPE.SOS && user.settings?.sosAlerts === false) return;
-    if (type === ENUM_NOTIFICATION_TYPE.ACTIVITY && user.settings?.activityUpdates === false) return;
-    if (type === ENUM_NOTIFICATION_TYPE.SYSTEM && user.settings?.newsLetters === false) return;
-
-    // 3. Persistence: Lưu vào DB
-    const savedNotification = await this.create(userId, type, title, body, payload);
-
-    // 4. Gửi Socket (Foreground)
-    this.notificationGateway.server.to(`user_${userId}`).emit('new_notification', {
-      _id: savedNotification._id.toString(),
-      type,
-      title,
-      body,
-      isRead: false,
-      createdAt: savedNotification.createdAt || new Date().toISOString(),
-      data: payload,
-    });
-
-    // 5. Gửi Push Notification (Background)
-    if (user.expoPushToken && Expo.isExpoPushToken(user.expoPushToken)) {
-      const messages: ExpoPushMessage[] = [];
-      const isSos = type === ENUM_NOTIFICATION_TYPE.SOS;
-
-      messages.push({
-        to: user.expoPushToken,
-        sound: 'default', // Or specific sound name if configured in app
-        title: title,
-        body: body,
-        data: payload,
-        priority: isSos ? 'high' : 'default',
-        channelId: isSos ? 'sos' : 'default',
+    try {
+      await this.notificationQueue.add('send_notification', {
+        userId,
+        type,
+        title,
+        body,
+        payload
+      }, {
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 1000,
+        },
+        removeOnComplete: true,
       });
-
-      try {
-        await this.expo.sendPushNotificationsAsync(messages);
-      } catch (error) {
-        console.error('Error sending push notification', error);
-      }
+    } catch (error) {
+      console.error('Failed to queue notification', error);
+      // Fallback: If queue fails, we could try to send it synchronously or just log
     }
   }
 

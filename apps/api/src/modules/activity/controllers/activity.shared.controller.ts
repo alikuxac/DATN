@@ -4,7 +4,9 @@ import {
     PaginationQuery,
     PaginationQueryFilterDate,
     PaginationQueryFilterDateTimeRange,
+    PaginationQueryFilterInEnum,
 } from '@common/pagination/decorators/pagination.decorator';
+import { ENUM_ACTIVITY_TYPE } from '@repo/shared';
 import { PaginationListDto } from '@common/pagination/dtos/pagination.list.dto';
 import { PaginationService } from '@common/pagination/services/pagination.service';
 import { RequestRequiredPipe } from '@common/request/pipes/request.required.pipe';
@@ -43,6 +45,12 @@ export class ActivitySharedController {
         user: UserDocument,
         @PaginationQuery()
         { _search, _limit, _offset, _order }: PaginationListDto,
+        @PaginationQueryFilterInEnum(
+            'type',
+            ENUM_ACTIVITY_TYPE.SYSTEM,
+            ENUM_ACTIVITY_TYPE
+        )
+        type: ENUM_ACTIVITY_TYPE[],
         @PaginationQueryFilterDateTimeRange('timeRange') timeRange: Date,
         @Query('dateField') rawDateField: string,
         @PaginationQueryFilterDate(
@@ -70,6 +78,10 @@ export class ActivitySharedController {
             ..._search,
             ...dateQuery,
         };
+
+        if (type?.length) {
+            find.type = { $in: type };
+        }
 
         const userHistories: IActivityDoc[] =
             await this.activityService.findAllByUser(user._id.toString(), find, {

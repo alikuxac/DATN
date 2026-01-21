@@ -12,6 +12,20 @@
     "changePassword": "Tuyệt vời! Mật khẩu của bạn đã được cập nhật thành công.",
     "uploadProfile": "Tuyệt vời! Ảnh đại diện mới của bạn đã được tải lên.",
     "updatePreferences": "Tuyệt vời! Tùy chọn của bạn đã được cập nhật thành công.",
-    "updateLocation": "Vị trí của bạn đã được cập nhật thành công."
+    "updateLocation": "Vị trí của bạn đã được cập nhật thành công.",
+    "resetPasswordRequest": "Bạn đã yêu cầu đặt lại mật khẩu.",
+    "resetPasswordVerify": "Bạn đã xác thực yêu cầu đặt lại mật khẩu.",
+    "resetPassword": "Mật khẩu của bạn đã được đặt lại thành công.",
+    "resetPasswordByAdmin": "Mật khẩu của bạn đã được quản trị viên đặt lại."
+  },
+  "report": {
+    "create": "Bạn đã tạo báo cáo cứu trợ mới (ID: {id}).",
+    "createByAdmin": "Quản trị viên đã tạo báo cáo cứu trợ cho bạn (ID: {id}).",
+    "update": "Bạn đã cập nhật báo cáo cứu trợ (ID: {id}).",
+    "accept": "Bạn đã tiếp nhận báo cáo cứu trợ (ID: {id}).",
+    "reject": "Bạn đã từ chối báo cáo cứu trợ (ID: {id}).",
+    "complete": "Bạn đã hoàn thành báo cáo cứu trợ (ID: {id}).",
+    "cancel": "Bạn đã hủy báo cáo cứu trợ (ID: {id}).",
+    "delete": "Bạn đã xóa báo cáo cứu trợ (ID: {id})."
   }
 }

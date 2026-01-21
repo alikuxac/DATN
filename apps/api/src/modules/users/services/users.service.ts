@@ -1,4 +1,6 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Inject } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { Document, Types } from 'mongoose';
 
 import { UserDocument, UserEntity } from '@modules/users/repository/entities/user.entity';
@@ -28,7 +30,8 @@ export class UsersService {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly helperDateService: HelperDateService,
-    private readonly helperStringService: HelperStringService
+    private readonly helperStringService: HelperStringService,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache
   ) { }
 
   async create(
@@ -111,7 +114,23 @@ export class UsersService {
   }
 
   async findOneById(id: string, options?: IDatabaseFindOneOptions) {
-    return this.userRepository.findOneById<UserDocument>(id, options);
+    // If there are options (like session or populate), don't cache or handle carefully
+    if (options) {
+      return this.userRepository.findOneById<UserDocument>(id, options);
+    }
+
+    const cacheKey = `user:info:${id}`;
+    const cachedUser = await this.cacheManager.get<UserDocument>(cacheKey);
+    if (cachedUser) {
+      return cachedUser;
+    }
+
+    const user = await this.userRepository.findOneById<UserDocument>(id);
+    if (user) {
+      await this.cacheManager.set(cacheKey, user, 60000); // 1 minute cache
+    }
+
+    return user;
   }
 
   async findOne(find: Record<string, any>, options?: IDatabaseFindOneOptions) {
@@ -163,7 +182,9 @@ export class UsersService {
     repository.gender = updateUserDto.gender;
     repository.mobileNumber = updateUserDto.mobileNumber;
 
-    return this.userRepository.save(repository, options);
+    const updated = await this.userRepository.save(repository, options);
+    await this.cacheManager.del(`user:info:${repository._id}`);
+    return updated;
   }
 
   async remove(id: string, options?: IDatabaseSaveOptions) {
@@ -180,7 +201,9 @@ export class UsersService {
     repository: UserDocument,
     options?: IDatabaseSoftDeleteOptions
   ): Promise<UserDocument> {
-    return this.userRepository.softDelete(repository, options);
+    const deleted = await this.userRepository.softDelete(repository, options);
+    await this.cacheManager.del(`user:info:${repository._id}`);
+    return deleted;
   }
 
   async restore(
@@ -233,7 +256,9 @@ export class UsersService {
     user.passwordExpiredAt = data.passwordExpired;
     user.passwordAttempts = 0;
 
-    return this.userRepository.save(user, options);
+    const updated = await this.userRepository.save(user, options);
+    await this.cacheManager.del(`user:info:${user._id}`);
+    return updated;
   }
 
   async resetPasswordAttempt(
@@ -242,7 +267,9 @@ export class UsersService {
   ) {
     user.passwordAttempts = 0;
 
-    return this.userRepository.save(user, options);
+    const updated = await this.userRepository.save(user, options);
+    await this.cacheManager.del(`user:info:${user._id}`);
+    return updated;
   }
 
   async increasePasswordAttempt(
@@ -251,7 +278,9 @@ export class UsersService {
   ) {
     user.passwordAttempts += 1;
 
-    return this.userRepository.save(user, options);
+    const updated = await this.userRepository.save(user, options);
+    await this.cacheManager.del(`user:info:${user._id}`);
+    return updated;
   }
 
   async existByEmail(
@@ -272,7 +301,9 @@ export class UsersService {
     repository.verification.emailVerfiedAt =
       this.helperDateService.create();
 
-    return this.userRepository.save(repository, options);
+    const updated = await this.userRepository.save(repository, options);
+    await this.cacheManager.del(`user:info:${repository._id}`);
+    return updated;
   }
 
   async updateVerificationMobileNumber(
@@ -283,7 +314,9 @@ export class UsersService {
     repository.verification.mobileNumberVerifiedAt =
       this.helperDateService.create();
 
-    return this.userRepository.save(repository, options);
+    const updated = await this.userRepository.save(repository, options);
+    await this.cacheManager.del(`user:info:${repository._id}`);
+    return updated;
   }
 
   async updateMobileNumber(
@@ -295,7 +328,9 @@ export class UsersService {
     repository.verification.mobileNumber = false;
     repository.verification.mobileNumberVerifiedAt = null;
 
-    return this.userRepository.save(repository, options);
+    const updated = await this.userRepository.save(repository, options);
+    await this.cacheManager.del(`user:info:${repository._id}`);
+    return updated;
   }
 
 
@@ -306,7 +341,9 @@ export class UsersService {
   ) {
     repository.status = status;
 
-    return this.userRepository.save(repository, options);
+    const updated = await this.userRepository.save(repository, options);
+    await this.cacheManager.del(`user:info:${repository._id}`);
+    return updated;
   }
 
   async updateRole(
@@ -316,7 +353,9 @@ export class UsersService {
   ) {
     repository.role = role;
 
-    return this.userRepository.save(repository, options);
+    const updated = await this.userRepository.save(repository, options);
+    await this.cacheManager.del(`user:info:${repository._id}`);
+    return updated;
   }
 
   async updateProfile(
@@ -329,7 +368,9 @@ export class UsersService {
     repository.gender = gender;
     repository.mobileNumber = mobileNumber;
 
-    return this.userRepository.save(repository, options);
+    const updated = await this.userRepository.save(repository, options);
+    await this.cacheManager.del(`user:info:${repository._id}`);
+    return updated;
   }
 
   async updatePreferences(
@@ -340,7 +381,9 @@ export class UsersService {
     repository.preferences.language = language;
     repository.preferences.theme = theme;
 
-    return this.userRepository.save(repository, options);
+    const updated = await this.userRepository.save(repository, options);
+    await this.cacheManager.del(`user:info:${repository._id}`);
+    return updated;
   }
 
   async updateLocation(
@@ -356,7 +399,9 @@ export class UsersService {
 
     repository.lastLocationAt = this.helperDateService.create();
 
-    return this.userRepository.save(repository, options);
+    const updated = await this.userRepository.save(repository, options);
+    await this.cacheManager.del(`user:info:${repository._id}`);
+    return updated;
   }
 
   async updateExpoPushToken(
@@ -366,7 +411,9 @@ export class UsersService {
   ) {
     repository.expoPushToken = expoPushToken;
 
-    return this.userRepository.save(repository, options);
+    const updated = await this.userRepository.save(repository, options);
+    await this.cacheManager.del(`user:info:${repository._id}`);
+    return updated;
   }
 
   async updateNotificationSettings(
@@ -379,7 +426,9 @@ export class UsersService {
     repository.settings.activityUpdates = activityUpdates;
     repository.settings.newsLetters = newsLetters;
 
-    return this.userRepository.save(repository, options);
+    const updated = await this.userRepository.save(repository, options);
+    await this.cacheManager.del(`user:info:${repository._id}`);
+    return updated;
   }
 
   async updateVolunteerStatus(
@@ -400,7 +449,9 @@ export class UsersService {
       repository.isRescueMode = true;
     }
 
-    return this.userRepository.save(repository, options);
+    const updated = await this.userRepository.save(repository, options);
+    await this.cacheManager.del(`user:info:${repository._id}`);
+    return updated;
   }
 
   async updateAvatar(
@@ -409,7 +460,9 @@ export class UsersService {
     options?: IDatabaseSaveOptions
   ): Promise<UserDocument> {
     repository.avatar = avatarUrl;
-    return this.userRepository.save(repository, options);
+    const updated = await this.userRepository.save(repository, options);
+    await this.cacheManager.del(`user:info:${repository._id}`);
+    return updated;
   }
 
   async signUp(

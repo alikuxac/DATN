@@ -138,6 +138,16 @@ export class NotificationGateway implements OnGatewayConnection {
     // this.logger.debug(`Client ${client.id} joined region: ${roomName}`);
   }
 
+  @SubscribeMessage('leave_room')
+  async handleLeaveRoom(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { room: string }
+  ) {
+    if (!payload.room) return;
+    await client.leave(payload.room);
+    // this.logger.debug(`Client ${client.id} left room: ${payload.room}`);
+  }
+
   sendToUser(userId: string, event: string, data: any) {
     this.server.to(`user_${userId}`).emit(event, data);
   }
@@ -148,32 +158,52 @@ export class NotificationGateway implements OnGatewayConnection {
 
   // --- REPORT STATUS EVENTS ---
 
+  @OnEvent('report.created')
+  handleReportCreated(payload: { reportId: string; regionId: string; data: any }) {
+    const { reportId, regionId, data } = payload;
+    this.logger.log(`Report created ${reportId} in region ${regionId}`);
+
+    // Broadcast to users in this region (Rescuers/Volunteers usually)
+    if (regionId) {
+      this.server.to(`region_${regionId}`).emit('report_created', {
+        report: data
+      });
+    }
+
+    // Always notify Admins
+    this.server.to('admin_room').emit('report_created', {
+      report: data
+    });
+  }
+
   @OnEvent('report.accepted')
-  handleReportAccepted(payload: { reportId: string; rescuerId: string; report: any }) {
-    const { reportId, rescuerId, report } = payload;
+  handleReportAccepted(payload: { reportId: string; rescuerId: string; regionId?: string; report: any }) {
+    const { reportId, rescuerId, regionId, report } = payload;
     this.logger.log(`Report ${reportId} accepted by ${rescuerId}. Source: ${report?.source}`);
 
-    // Logic phân chia người nhận dựa trên Source
+    // Broadcast to Region (So map users see status change)
+    if (regionId) {
+      this.server.to(`region_${regionId}`).emit('report_accepted', {
+        reportId,
+        rescuerId,
+        status: 'IN_PROGRESS'
+      });
+    }
+
+    // ... existing logic ...
     if (report?.source === 'app') {
-      // APP: Reporter, Admin, Rescuer đều cần nghe (đã join room report_ID)
       this.server.to(`report_${reportId}`).emit('report_accepted', {
         reportId,
         rescuerId,
         status: 'IN_PROGRESS'
       });
     } else {
-      // GUEST: Chỉ Admin và Volunteer cần biết
-      // Guest không có socket connection -> Không gửi vào user room
-      // Nhưng Admin thì luôn cần -> Gửi Admin Room
       this.server.to('admin_room').emit('report_accepted', {
         reportId,
         rescuerId,
         status: 'IN_PROGRESS',
         isGuest: true
       });
-
-      // Với Volunteer/Rescuer: Họ cũng đã join room report_ID khi bấm xem chi tiết/nhận đơn
-      // Nên vẫn gửi vào room report_ID để cập nhật UI cho Volunteer
       this.server.to(`report_${reportId}`).emit('report_accepted', {
         reportId,
         rescuerId,
@@ -187,6 +217,15 @@ export class NotificationGateway implements OnGatewayConnection {
     const { reportId, report } = payload;
     this.logger.log(`Report ${reportId} resolved.`);
 
+    // Broadcast to Region
+    if (report && report.regionId) {
+      this.server.to(`region_${report.regionId}`).emit('report_completed', {
+        reportId,
+        status: 'RESOLVED',
+        message: 'Nhiệm vụ hoàn thành!'
+      });
+    }
+
     if (report?.source === 'app') {
       this.server.to(`report_${reportId}`).emit('report_completed', {
         reportId,
@@ -194,7 +233,6 @@ export class NotificationGateway implements OnGatewayConnection {
         message: 'Nhiệm vụ hoàn thành!'
       });
     } else {
-      // Guest: Send to Admin & Rescuer (in report room)
       this.server.to('admin_room').emit('report_completed', {
         reportId,
         status: 'RESOLVED',

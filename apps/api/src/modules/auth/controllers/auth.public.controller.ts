@@ -26,7 +26,9 @@ import { Queue } from 'bullmq';
 import { PasswordHistoryService } from '@modules/password-history/services/password-history.service';
 import { SessionService } from '@modules/session/services/session.service';
 import { IRequestApp } from '@common/request/interfaces/request.interface';
-import { ActivityService } from '@modules/activity/services/activity.service';
+// import { ActivityService } from '@modules/activity/services/activity.service';
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { ActivityCreateEvent } from '@modules/activity/events/activity.create.event';
 import { InjectQueue } from '@nestjs/bullmq';
 import { VerificationService } from '@modules/verification/services/verification.service';
 import { DatabaseService } from '@common/database/services/database.service';
@@ -36,7 +38,8 @@ import {
   ENUM_PASSWORD_HISTORY_TYPE,
   ENUM_USER_SIGN_UP_FROM,
   ENUM_USER_STATUS,
-  ENUM_SESSION_PLATFORM
+  ENUM_SESSION_PLATFORM,
+  ENUM_ACTIVITY_TYPE
 } from '@repo/shared';
 // import {
 //   IAuthSocialGooglePayload,
@@ -55,7 +58,8 @@ export class AuthPublicController {
     private readonly passwordHistoryService: PasswordHistoryService,
     private readonly verificationService: VerificationService,
     private readonly sessionService: SessionService,
-    private readonly activityService: ActivityService,
+    // private readonly activityService: ActivityService,
+    private readonly eventEmitter: EventEmitter2,
     private readonly messageService: MessageService
   ) { }
 
@@ -225,12 +229,14 @@ export class AuthPublicController {
         { session }
       );
 
-      await this.activityService.createByUser(
-        user,
-        {
+      this.eventEmitter.emit(
+        'activity.create',
+        new ActivityCreateEvent({
+          user,
           description: this.messageService.setMessage('activity.user.create'),
-        },
-        { session }
+          type: ENUM_ACTIVITY_TYPE.USER_CREATE,
+          session,
+        })
       );
 
       await Promise.all([

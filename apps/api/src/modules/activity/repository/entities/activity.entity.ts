@@ -6,6 +6,7 @@ import {
 } from '@common/database/decorators/database.decorator';
 import { IDatabaseDocument } from '@common/database/interfaces/database.interface';
 import { UserEntity } from '@modules/users/repository/entities/user.entity';
+import { ENUM_ACTIVITY_TYPE } from '@repo/shared';
 
 export const ActivityTableName = 'Activities';
 
@@ -23,6 +24,14 @@ export class ActivityEntity extends DatabaseUUIDEntityBase {
     @DatabaseProp({
         required: true,
         type: String,
+        enum: ENUM_ACTIVITY_TYPE,
+        index: true,
+    })
+    type: ENUM_ACTIVITY_TYPE;
+
+    @DatabaseProp({
+        required: true,
+        type: String,
     })
     description: string;
 
@@ -33,6 +42,12 @@ export class ActivityEntity extends DatabaseUUIDEntityBase {
         ref: UserEntity.name,
     })
     by: string;
+
+    @DatabaseProp({
+        required: false,
+        type: Object,
+    })
+    properties?: Record<string, any>;
 }
 
 export const ActivitySchema = DatabaseSchema(ActivityEntity);

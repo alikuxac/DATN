@@ -26,10 +26,12 @@ import { AuthRefreshResponseDto } from '@modules/auth/dtos/response/auth.refresh
 import { AuthChangePasswordRequestDto } from '@modules/auth/dtos/request/auth.change-password.request.dto';
 import { ENUM_WORKER_QUEUES } from '@workers/enums/worker.enum';
 import { Queue } from 'bullmq';
-import { ENUM_PASSWORD_HISTORY_TYPE, ENUM_STATUS_CODE_ERROR } from '@repo/shared';
+import { ENUM_PASSWORD_HISTORY_TYPE, ENUM_STATUS_CODE_ERROR, ENUM_ACTIVITY_TYPE } from '@repo/shared';
 import { PasswordHistoryService } from '@modules/password-history/services/password-history.service';
 import { SessionService } from '@modules/session/services/session.service';
-import { ActivityService } from '@modules/activity/services/activity.service';
+// import { ActivityService } from '@modules/activity/services/activity.service';
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { ActivityCreateEvent } from '@modules/activity/events/activity.create.event';
 import { MessageService } from '@common/message/services/message.service';
 import { ENUM_SEND_EMAIL_PROCESS } from '@modules/email/enums/email.enum';
 import { InjectQueue } from '@nestjs/bullmq';
@@ -54,7 +56,8 @@ export class AuthSharedController {
     private readonly authService: AuthService,
     private readonly passwordHistoryService: PasswordHistoryService,
     private readonly sessionService: SessionService,
-    private readonly activityService: ActivityService,
+    // private readonly activityService: ActivityService,
+    private readonly eventEmitter: EventEmitter2,
     private readonly messageService: MessageService
   ) { }
 
@@ -158,14 +161,16 @@ export class AuthSharedController {
         },
         { session }
       );
-      await this.activityService.createByUser(
-        user,
-        {
+      this.eventEmitter.emit(
+        'activity.create',
+        new ActivityCreateEvent({
+          user,
           description: this.messageService.setMessage(
             'activity.user.changePassword'
           ),
-        },
-        { session }
+          type: ENUM_ACTIVITY_TYPE.USER_CHANGE_PASSWORD,
+          session,
+        })
       );
       await this.sessionService.updateManyRevokeByUser(user._id.toString(), {
         session,

@@ -17,6 +17,10 @@ import { PaginationService } from '@common/pagination/services/pagination.servic
 import { PolicyAbilityProtected } from '@modules/policy/decorators/policy.decorator';
 import { ENUM_POLICY_SUBJECT, ENUM_POLICY_ACTION } from '@repo/shared';
 import { UserProtected } from '@modules/users/decorators/user.decorator';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { MessageService } from '@common/message/services/message.service';
+import { ActivityCreateEvent } from '@modules/activity/events/activity.create.event';
+import { ENUM_ACTIVITY_TYPE } from '@repo/shared';
 
 @Controller({
   version: '1',
@@ -26,7 +30,9 @@ export class ReportUserController {
   constructor(
     private readonly reportService: ReportService,
     private readonly databaseService: DatabaseService,
-    private readonly paginationService: PaginationService
+    private readonly paginationService: PaginationService,
+    private readonly messageService: MessageService,
+    private readonly eventEmitter: EventEmitter2
   ) { }
 
   @ResponsePaging('report.list')
@@ -116,7 +122,21 @@ export class ReportUserController {
         throw new BadRequestException('report.error.tooClose');
       }
 
-      await this.reportService.createByUser(user._id.toString(), user._id.toString(), body, { session });
+      const created = await this.reportService.createByUser(user._id.toString(), user._id.toString(), body, { session });
+
+      this.eventEmitter.emit(
+        'activity.create',
+        new ActivityCreateEvent({
+          user,
+          type: ENUM_ACTIVITY_TYPE.REPORT_CREATE,
+          description: this.messageService.setMessage(
+            'activity.report.create',
+            { properties: { id: created._id.toString() } }
+          ),
+          session,
+          properties: { reportId: created._id.toString() }
+        })
+      );
 
       await this.databaseService.commitTransaction(session);
     } catch (err: unknown) {
@@ -168,6 +188,21 @@ export class ReportUserController {
       }
 
       const result = await this.reportService.updateByUser(user, report._id.toString(), body, { session });
+
+      this.eventEmitter.emit(
+        'activity.create',
+        new ActivityCreateEvent({
+          user,
+          type: ENUM_ACTIVITY_TYPE.REPORT_UPDATE,
+          description: this.messageService.setMessage(
+            'activity.report.update',
+            { properties: { id: report._id.toString() } }
+          ),
+          session,
+          properties: { reportId: report._id.toString() }
+        })
+      );
+
       await this.databaseService.commitTransaction(session);
       return result;
     } catch (err: unknown) {
@@ -210,7 +245,20 @@ export class ReportUserController {
   @Delete(':id')
   async delete(@AuthJwtPayload('user', UserParsePipe) user: UserDocument, @Param('id') id: string) {
     if (user.role !== ENUM_USER_ROLE.USER) {
-      return this.reportService.delete(id);
+      await this.reportService.delete(id);
+      this.eventEmitter.emit(
+        'activity.create',
+        new ActivityCreateEvent({
+          user,
+          type: ENUM_ACTIVITY_TYPE.REPORT_DELETE,
+          description: this.messageService.setMessage(
+            'activity.report.delete',
+            { properties: { id } }
+          ),
+          properties: { reportId: id }
+        })
+      );
+      return;
     }
 
     const report = await this.reportService.findOneById(id);
@@ -222,7 +270,20 @@ export class ReportUserController {
       throw new BadRequestException('report.error.cannotDelOther');
     }
 
-    return this.reportService.delete(id);
+    await this.reportService.delete(id);
+
+    this.eventEmitter.emit(
+      'activity.create',
+      new ActivityCreateEvent({
+        user,
+        type: ENUM_ACTIVITY_TYPE.REPORT_DELETE,
+        description: this.messageService.setMessage(
+          'activity.report.delete',
+          { properties: { id } }
+        ),
+        properties: { reportId: id }
+      })
+    );
   }
 
   @Response('report.accept')
@@ -259,6 +320,20 @@ export class ReportUserController {
       }
 
       await this.databaseService.commitTransaction(session);
+
+      this.eventEmitter.emit(
+        'activity.create',
+        new ActivityCreateEvent({
+          user,
+          type: ENUM_ACTIVITY_TYPE.REPORT_ACCEPT,
+          description: this.messageService.setMessage(
+            'activity.report.accept',
+            { properties: { id: report._id.toString() } }
+          ),
+          properties: { reportId: report._id.toString() }
+        })
+      );
+
       return { data: report };
     } catch (err: unknown) {
       await this.databaseService.abortTransaction(session);
@@ -304,6 +379,20 @@ export class ReportUserController {
 
       await this.reportService.rejectReport(report, reason, { session });
 
+      this.eventEmitter.emit(
+        'activity.create',
+        new ActivityCreateEvent({
+          user,
+          type: ENUM_ACTIVITY_TYPE.REPORT_REJECT,
+          description: this.messageService.setMessage(
+            'activity.report.reject',
+            { properties: { id: report._id.toString() } }
+          ),
+          session,
+          properties: { reportId: report._id.toString() }
+        })
+      );
+
       await this.databaseService.commitTransaction(session);
       return { data: report };
     } catch (err) {
@@ -335,6 +424,20 @@ export class ReportUserController {
       }
 
       await this.reportService.completeReport(report, { session });
+
+      this.eventEmitter.emit(
+        'activity.create',
+        new ActivityCreateEvent({
+          user,
+          type: ENUM_ACTIVITY_TYPE.REPORT_COMPLETE,
+          description: this.messageService.setMessage(
+            'activity.report.complete',
+            { properties: { id: report._id.toString() } }
+          ),
+          session,
+          properties: { reportId: report._id.toString() }
+        })
+      );
 
       await this.databaseService.commitTransaction(session);
     } catch (err) {
@@ -369,6 +472,20 @@ export class ReportUserController {
       }
 
       await this.reportService.cancelReport(report, { session });
+
+      this.eventEmitter.emit(
+        'activity.create',
+        new ActivityCreateEvent({
+          user,
+          type: ENUM_ACTIVITY_TYPE.REPORT_CANCEL,
+          description: this.messageService.setMessage(
+            'activity.report.cancel',
+            { properties: { id: report._id.toString() } }
+          ),
+          session,
+          properties: { reportId: report._id.toString() }
+        })
+      );
 
       await this.databaseService.commitTransaction(session);
     } catch (err) {

@@ -1,4 +1,6 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Inject } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { ReportRepository } from '@modules/reports/repository/repositories/report.repository';
 import { ReportCreateRequestDto } from '@modules/reports/dtos/request/report.create.request.dto';
 import { ReportDocument, ReportEntity } from '@modules/reports/repository/entities/report.entity';
@@ -25,6 +27,7 @@ export class ReportService {
     private readonly helperdateService: HelperDateService,
     private readonly helperGeoService: HelperGeoService,
     private readonly s3Service: S3Service,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) { }
 
   private buildLogicFilter(
@@ -179,10 +182,15 @@ export class ReportService {
 
     const report = await this.reportRepository.create<ReportEntity>(create, options);
 
+    // Fetch populated data for realtime UI
+    const populatedReport = await this.reportRepository.findOneById<IReportDocument>(report._id, { join: true });
+
+    await this.cacheManager.set(`report:details:${report._id.toString()}`, (populatedReport || report), 60000);
+
     this.eventEmitter.emit('report.created', {
       reportId: report._id.toString(),
-      regionId: dto.regionId, // Quan trọng: Để Gateway biết bắn vào room nào
-      data: report
+      regionId: dto.regionId,
+      data: populatedReport || report // Fallback to raw if logic fails
     });
 
     return report;
@@ -238,6 +246,8 @@ export class ReportService {
     }
 
     const report = await this.reportRepository.create<ReportEntity>(create, options);
+
+    await this.cacheManager.set(`report:details:${report._id.toString()}`, report, 60000);
 
     this.eventEmitter.emit('report.created', {
       reportId: report._id.toString(),
@@ -337,10 +347,26 @@ export class ReportService {
     _id: string,
     options?: IDatabaseFindOneOptions
   ): Promise<IReportDocument> {
-    return this.reportRepository.findOneById<IReportDocument>(_id, {
-      ...options,
+    if (options) {
+      return this.reportRepository.findOneById<IReportDocument>(_id, {
+        ...options,
+        join: true,
+      });
+    }
+
+    const cacheKey = `report:detail:${_id}`;
+    const cached = await this.cacheManager.get<IReportDocument>(cacheKey);
+    if (cached) return cached;
+
+    const report = await this.reportRepository.findOneById<IReportDocument>(_id, {
       join: true,
     });
+
+    if (report) {
+      await this.cacheManager.set(cacheKey, report, 30000); // 30s cache for details
+    }
+
+    return report;
   }
 
   // 4. Find One (General)
@@ -392,9 +418,14 @@ export class ReportService {
       await Promise.all(deletePromises);
     }
 
-    return this.reportRepository.delete({
+    const deleted = await this.reportRepository.delete({
       _id
     }, options);
+
+    await this.cacheManager.del(`report:detail:${_id}`);
+
+
+    return deleted;
   }
 
   // 7. Delete Many
@@ -515,6 +546,9 @@ export class ReportService {
     );
 
     if (updated) {
+      await this.cacheManager.del(`report:detail:${reportId}`);
+
+
       this.eventEmitter.emit('report.accepted', {
         reportId: updated._id.toString(),
         rescuerId: rescuer._id.toString(),
@@ -533,6 +567,9 @@ export class ReportService {
     report.resolvedAt = new Date();
     const saved = await this.reportRepository.save(report, options);
 
+    await this.cacheManager.del(`report:detail:${report._id}`);
+
+
     this.eventEmitter.emit('report.resolved', {
       reportId: saved._id.toString(),
       report: saved
@@ -543,7 +580,10 @@ export class ReportService {
 
   async cancelReport(report: ReportDocument, options?: IDatabaseUpdateOptions) {
     report.status = ENUM_REPORT_STATUS.PENDING;
-    return this.reportRepository.save(report, options);
+    const saved = await this.reportRepository.save(report, options);
+    await this.cacheManager.del(`report:detail:${report._id}`);
+
+    return saved;
   }
 
   async updateByUser(
@@ -552,12 +592,19 @@ export class ReportService {
     dto: ReportUpdateRequestDto,
     options?: IDatabaseUpdateOptions
   ) {
-    return this.reportRepository.updateRaw({
+    const updated = await this.reportRepository.updateRaw({
       _id: reportId,
       by: user._id.toString(),
     }, {
       ...dto
     }, options);
+
+    if (updated) {
+      await this.cacheManager.del(`report:detail:${reportId}`);
+
+    }
+
+    return updated;
   }
 
   async rejectReport(
@@ -570,6 +617,9 @@ export class ReportService {
     report.rejectedAt = this.helperdateService.create();
 
     const saved = await this.reportRepository.save(report, options);
+
+    await this.cacheManager.del(`report:detail:${report._id}`);
+
 
     this.eventEmitter.emit('report.rejected', {
       reportId: saved._id.toString(),

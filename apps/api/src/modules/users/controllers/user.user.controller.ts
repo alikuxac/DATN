@@ -22,9 +22,11 @@ import { UsersService } from '@modules/users/services/users.service';
 import { UserParsePipe } from '@modules/users/pipes/user.parse.pipe';
 import { UserDocument } from '@modules/users/repository/entities/user.entity';
 import { ClientSession } from 'mongoose';
-import { ActivityService } from '@modules/activity/services/activity.service';
+// import { ActivityService } from '@modules/activity/services/activity.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { ActivityCreateEvent } from '@modules/activity/events/activity.create.event';
 import { MessageService } from '@common/message/services/message.service';
-import { ENUM_STATUS_CODE_ERROR } from '@repo/shared';
+import { ENUM_STATUS_CODE_ERROR, ENUM_ACTIVITY_TYPE } from '@repo/shared';
 import { SessionService } from '@modules/session/services/session.service';
 import { UserProtected } from '@modules/users/decorators/user.decorator';
 import { DatabaseService } from '@common/database/services/database.service';
@@ -45,7 +47,8 @@ export class UserUserController {
     constructor(
         private readonly databaseService: DatabaseService,
         private readonly userService: UsersService,
-        private readonly activityService: ActivityService,
+        // private readonly activityService: ActivityService,
+        private readonly eventEmitter: EventEmitter2,
         private readonly messageService: MessageService,
         private readonly sessionService: SessionService,
         private readonly telegramService: TelegramService,
@@ -70,13 +73,15 @@ export class UserUserController {
                 actionBy: user._id.toString(),
             });
 
-            await this.activityService.createByUser(
-                user,
-                {
+            this.eventEmitter.emit(
+                'activity.create',
+                new ActivityCreateEvent({
+                    user,
                     description:
                         this.messageService.setMessage('activity.delete'),
-                },
-                { session }
+                    type: ENUM_ACTIVITY_TYPE.USER_DELETE,
+                    session,
+                })
             );
 
             await this.sessionService.updateManyRevokeByUser(user._id.toString(), {
@@ -183,14 +188,16 @@ export class UserUserController {
             await this.telegramService.sendOtp(formattedNumber, otp);
 
             // Create Activity
-            await this.activityService.createByUser(
-                user,
-                {
+            this.eventEmitter.emit(
+                'activity.create',
+                new ActivityCreateEvent({
+                    user,
                     description: this.messageService.setMessage(
                         'activity.user.updateMobileNumber'
                     ),
-                },
-                { session }
+                    type: ENUM_ACTIVITY_TYPE.USER_UPDATE_MOBILE,
+                    session,
+                })
             );
 
             await this.databaseService.commitTransaction(session);

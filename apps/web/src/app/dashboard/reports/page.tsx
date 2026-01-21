@@ -73,7 +73,8 @@ export default function ReportsPage() {
   const onTabChange = (val: string) => {
     setActiveTab(val);
     if (val === 'all') setStatus("ALL");
-    if (val === 'history') setStatus(ReportStatus.RESOLVED);
+    if (val === 'active') setStatus([ReportStatus.PENDING, ReportStatus.IN_PROGRESS].join(',') as any);
+    if (val === 'history') setStatus([ReportStatus.RESOLVED, ReportStatus.REJECTED].join(',') as any);
   };
   
   const { t } = useLanguage();

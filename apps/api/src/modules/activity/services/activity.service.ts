@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'; 
+import { Injectable } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { Document } from 'mongoose';
 import {
@@ -24,7 +24,7 @@ import { UserDocument } from '@modules/users/repository/entities/user.entity';
 
 @Injectable()
 export class ActivityService {
-    constructor(private readonly activityRepository: ActivityRepository) {}
+    constructor(private readonly activityRepository: ActivityRepository) { }
 
     async findAll(
         find?: Record<string, any>,
@@ -78,26 +78,30 @@ export class ActivityService {
 
     async createByUser(
         user: UserDocument,
-        { description }: ActivityCreateResponse,
+        { description, type, properties }: ActivityCreateResponse,
         options?: IDatabaseCreateOptions
     ): Promise<ActivityDoc> {
         const create: ActivityEntity = new ActivityEntity();
         create.description = description;
+        create.type = type;
         create.user = user._id.toString();
         create.by = user._id.toString();
+        create.properties = properties;
 
         return this.activityRepository.create<ActivityEntity>(create, options);
     }
 
     async createByAdmin(
         user: UserDocument,
-        { by, description }: ActivityCreateByAdminResponse,
+        { by, description, type, properties }: ActivityCreateByAdminResponse,
         options?: IDatabaseCreateOptions
     ): Promise<ActivityDoc> {
         const create: ActivityEntity = new ActivityEntity();
         create.description = description;
+        create.type = type;
         create.user = user._id.toString();
         create.by = by;
+        create.properties = properties;
 
         return this.activityRepository.create<ActivityEntity>(create, options);
     }

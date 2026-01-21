@@ -39,7 +39,8 @@ import {
     ENUM_USER_SIGN_UP_FROM,
     ENUM_USER_STATUS,
     IAuthJwtAccessTokenPayload,
-    ENUM_NOTIFICATION_TYPE
+    ENUM_NOTIFICATION_TYPE,
+    ENUM_ACTIVITY_TYPE
 } from '@repo/shared';
 import { NotificationService } from '@modules/notifications/notification.service';
 import {
@@ -68,7 +69,8 @@ import { ENUM_SEND_EMAIL_PROCESS } from '@modules/email/enums/email.enum';
 import { Queue } from 'bullmq';
 import { ENUM_WORKER_QUEUES } from '@workers/enums/worker.enum';
 import { PasswordHistoryService } from '@modules/password-history/services/password-history.service';
-import { ActivityService } from '@modules/activity/services/activity.service';
+// import { ActivityService } from '@modules/activity/services/activity.service';
+import { ActivityCreateEvent } from '@modules/activity/events/activity.create.event';
 import { MessageService } from '@common/message/services/message.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { UserUpdateStatusRequestDto } from '@modules/users/dto/request/user.update-status.request.dto';
@@ -93,7 +95,7 @@ export class UserAdminController {
         private readonly authService: AuthService,
         private readonly userService: UsersService,
         private readonly passwordHistoryService: PasswordHistoryService,
-        private readonly activityService: ActivityService,
+        // private readonly activityService: ActivityService,
         private readonly messageService: MessageService,
         private readonly verificationService: VerificationService,
         private readonly notificationService: NotificationService,
@@ -262,15 +264,17 @@ export class UserAdminController {
                 },
                 { session }
             );
-            await this.activityService.createByAdmin(
-                created,
-                {
+            this.eventEmitter.emit(
+                'activity.create',
+                new ActivityCreateEvent({
+                    user: created,
                     by: createBy,
                     description: this.messageService.setMessage(
                         'activity.user.createByAdmin'
                     ),
-                },
-                { session }
+                    type: ENUM_ACTIVITY_TYPE.USER_CREATE,
+                    session,
+                })
             );
 
             const fullName = lang === 'vi' ? `${created.firstName} ${created.lastName}` : `${created.lastName} ${created.firstName}`
@@ -352,15 +356,17 @@ export class UserAdminController {
                 { session }
             );
 
-            await this.activityService.createByAdmin(
-                user,
-                {
-                    by: requestUser._id.toString(),
+            this.eventEmitter.emit(
+                'activity.create',
+                new ActivityCreateEvent({
+                    user,
+                    by: requestUser,
                     description: this.messageService.setMessage(
                         'activity.user.updateByAdmin'
                     ),
-                },
-                { session }
+                    type: ENUM_ACTIVITY_TYPE.USER_UPDATE,
+                    session,
+                })
             );
 
             await this.databaseService.commitTransaction(session);
@@ -420,15 +426,17 @@ export class UserAdminController {
             await this.userService.updatePassword(user, password, { session });
             await this.userService.resetPasswordAttempt(user, { session });
 
-            await this.activityService.createByAdmin(
-                user,
-                {
+            this.eventEmitter.emit(
+                'activity.create',
+                new ActivityCreateEvent({
+                    user,
                     by: createBy,
                     description: this.messageService.setMessage(
                         'activity.user.resetPasswordByAdmin'
                     ),
-                },
-                { session }
+                    type: ENUM_ACTIVITY_TYPE.USER_RESET_PASSWORD,
+                    session,
+                })
             );
 
             const fullName = lang === 'vi' ? `${user.firstName} ${user.lastName}` : `${user.lastName} ${user.firstName}`
@@ -509,15 +517,17 @@ export class UserAdminController {
         try {
             await this.userService.updateRole(user, { role }, { session });
 
-            await this.activityService.createByAdmin(
-                user,
-                {
-                    by: requestUser._id.toString(),
+            this.eventEmitter.emit(
+                'activity.create',
+                new ActivityCreateEvent({
+                    user,
+                    by: requestUser,
                     description: this.messageService.setMessage(
                         'activity.user.updateRoleByAdmin'
                     ),
-                },
-                { session }
+                    type: ENUM_ACTIVITY_TYPE.USER_UPDATE_ROLE,
+                    session,
+                })
             );
 
             await this.databaseService.commitTransaction(session);
@@ -583,15 +593,17 @@ export class UserAdminController {
         try {
             await this.userService.updateStatus(user, { status }, { session });
 
-            await this.activityService.createByAdmin(
-                user,
-                {
-                    by: requestUser._id.toString(),
+            this.eventEmitter.emit(
+                'activity.create',
+                new ActivityCreateEvent({
+                    user,
+                    by: requestUser,
                     description: this.messageService.setMessage(
                         `activity.user.${status.toLowerCase()}ByAdmin`
                     ),
-                },
-                { session }
+                    type: ENUM_ACTIVITY_TYPE.USER_UPDATE_STATUS,
+                    session,
+                })
             );
 
             await this.databaseService.commitTransaction(session);
@@ -659,15 +671,17 @@ export class UserAdminController {
 
             // await this.userService.updateVerificationMobileNumber(user, { session });
 
-            await this.activityService.createByAdmin(
-                user,
-                {
-                    by: requestUser._id.toString(),
+            this.eventEmitter.emit(
+                'activity.create',
+                new ActivityCreateEvent({
+                    user,
+                    by: requestUser,
                     description: this.messageService.setMessage(
                         'activity.user.updateMobileNumberByAdmin'
                     ),
-                },
-                { session }
+                    type: ENUM_ACTIVITY_TYPE.USER_UPDATE_MOBILE,
+                    session,
+                })
             );
 
             // Notify User
@@ -772,15 +786,17 @@ export class UserAdminController {
                 actionBy: requestUser._id.toString()
             });
 
-            await this.activityService.createByAdmin(
-                user,
-                {
-                    by: requestUser._id.toString(),
+            this.eventEmitter.emit(
+                'activity.create',
+                new ActivityCreateEvent({
+                    user,
+                    by: requestUser,
                     description: this.messageService.setMessage(
                         'activity.user.deleteByAdmin'
                     ),
-                },
-                { session }
+                    type: ENUM_ACTIVITY_TYPE.USER_DELETE,
+                    session,
+                })
             );
 
             await this.databaseService.commitTransaction(session);
