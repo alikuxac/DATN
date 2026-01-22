@@ -44,12 +44,20 @@ export class PolicyAbilityFactory {
             case ENUM_USER_ROLE.SUPER_ADMIN:
                 can(ENUM_POLICY_ACTION.MANAGE, 'all');
                 can(ENUM_POLICY_ACTION.READ, ENUM_POLICY_SUBJECT.USER);
+                can(ENUM_POLICY_ACTION.READ, ENUM_POLICY_SUBJECT.REPORT);
+                can(ENUM_POLICY_ACTION.READ, ENUM_POLICY_SUBJECT.ACTIVITY);
+                can(ENUM_POLICY_ACTION.READ, ENUM_POLICY_SUBJECT.SESSION);
                 break;
             case ENUM_USER_ROLE.ADMIN:
                 can(ENUM_POLICY_ACTION.MANAGE, ENUM_POLICY_SUBJECT.USER);
-                can(ENUM_POLICY_ACTION.READ, ENUM_POLICY_SUBJECT.USER); // Explicitly allow READ
+
+                // Allow managing Users, but protect Super Admin modifications
                 cannot(ENUM_POLICY_ACTION.MANAGE, ENUM_POLICY_SUBJECT.USER, { role: ENUM_USER_ROLE.SUPER_ADMIN });
 
+                // Explicitly allow READ User (Wins over cannot MANAGE if placed after)
+                can(ENUM_POLICY_ACTION.READ, ENUM_POLICY_SUBJECT.USER);
+
+                // Reports & Others
                 can(ENUM_POLICY_ACTION.MANAGE, ENUM_POLICY_SUBJECT.REPORT);
                 can(ENUM_POLICY_ACTION.READ, ENUM_POLICY_SUBJECT.REPORT);
 

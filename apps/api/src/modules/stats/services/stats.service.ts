@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { UsersService } from '@modules/users/services/users.service';
 import { ReportService } from '@modules/reports/services/reports.service';
 import { ENUM_USER_STATUS, ENUM_REPORT_STATUS } from '@repo/shared';
@@ -8,16 +9,27 @@ import { StatsDashboardResponseDto } from '../dtos/response/stats.dashboard.resp
 @Injectable()
 export class StatsService {
   constructor(
-    private readonly helperDateService: HelperDateService
+    private readonly helperDateService: HelperDateService,
+    private readonly configService: ConfigService
   ) { }
 
   async getDashboardStats(
     usersService: UsersService,
     reportService: ReportService
   ): Promise<StatsDashboardResponseDto> {
-    const timezone = '+07:00'; // Hardcoded for now, or match app config
-    const todayStart = this.helperDateService.startOfDay(new Date());
-    const date30DaysAgo = this.helperDateService.backwardInDays(30);
+    const timezone = this.configService.get<string>('app.timezone') || '+07:00';
+    const now = this.helperDateService.create();
+
+    // Define exact boundaries for "Last 30 Days"
+    // End: End of today
+    const endDate = this.helperDateService.endOfDay(now);
+    // Start: Start of day, 30 days ago (so we cover a full 30-day window inclusive)
+    const startDate = this.helperDateService.startOfDay(
+      this.helperDateService.backwardInDays(29, { fromDate: now })
+    );
+
+    // Today Start for "Today's Diff" (comparing to end of yesterday)
+    const todayStart = this.helperDateService.startOfDay(now);
 
     // 1. Summary Counts & Diffs
     // Current Totals
@@ -38,28 +50,27 @@ export class StatsService {
     const userDiff = totalUsers - usersBeforeToday;
     const reportDiff = totalReports - reportsBeforeToday;
 
-    // 2. Cumulative Charts (Last 30 days)
-    // We need the "Base Total" before the 30-day window starts
+    // 2. Cumulative Charts
+    // Base Total: Everything STRICTLY BEFORE the chart window starts
     const [userBaseTotal, reportBaseTotal] = await Promise.all([
-      usersService.getTotal({ createdAt: { $lt: date30DaysAgo } }),
-      reportService.getTotal({ createdAt: { $lt: date30DaysAgo } })
+      usersService.getTotal({ createdAt: { $lt: startDate } }),
+      reportService.getTotal({ createdAt: { $lt: startDate } })
     ]);
 
     // Daily Growth (New items per day)
-    const dateNow = this.helperDateService.create();
     const [
       userCreated, userDeleted,
       reportCreated, reportDeleted
     ] = await Promise.all([
-      usersService.getGrowthStats(date30DaysAgo, dateNow, timezone),
-      usersService.getDeletedStats(date30DaysAgo, dateNow, timezone),
-      reportService.getGrowthStats(date30DaysAgo, dateNow, timezone),
-      reportService.getDeletedStats(date30DaysAgo, dateNow, timezone)
+      usersService.getGrowthStats(startDate, endDate, timezone),
+      usersService.getDeletedStats(startDate, endDate, timezone),
+      reportService.getGrowthStats(startDate, endDate, timezone),
+      reportService.getDeletedStats(startDate, endDate, timezone)
     ]);
 
     // Calculate Cumulative
-    const users = this.fillCumulativeDates(userCreated, userDeleted, date30DaysAgo, dateNow, userBaseTotal);
-    const reports = this.fillCumulativeDates(reportCreated, reportDeleted, date30DaysAgo, dateNow, reportBaseTotal);
+    const users = this.fillCumulativeDates(userCreated, userDeleted, startDate, endDate, userBaseTotal);
+    const reports = this.fillCumulativeDates(reportCreated, reportDeleted, startDate, endDate, reportBaseTotal);
 
     return {
       users: {
@@ -87,14 +98,15 @@ export class StatsService {
     baseTotal: number
   ) {
     const result = [];
-    let currentDate = new Date(startDate);
-    const end = new Date(endDate);
+    let currentDate = new Date(startDate); // Start at 00:00 of first day
+    const end = new Date(endDate); // End at 23:59 of last day
 
     const createdMap = new Map(createdData.map(item => [item._id, item.count]));
     const deletedMap = new Map(deletedData.map(item => [item._id, item.count]));
 
     let currentTotal = baseTotal;
 
+    // Iterate day by day
     while (currentDate <= end) {
       const dateStr = this.helperDateService.format(currentDate, { format: 'yyyy-MM-dd' });
       const dailyCreated = createdMap.get(dateStr) || 0;
@@ -106,6 +118,8 @@ export class StatsService {
         date: dateStr,
         count: currentTotal
       });
+
+      // Move to next day
       currentDate = this.helperDateService.forwardInDays(1, { fromDate: currentDate });
     }
     return result;

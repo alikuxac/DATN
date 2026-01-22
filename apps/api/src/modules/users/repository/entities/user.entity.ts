@@ -97,6 +97,9 @@ export class UserEntity extends DatabaseObjectIdEntityBase {
   @DatabaseProp({ type: String, trim: true })
   avatar?: string;
 
+  @DatabaseProp({ type: Date })
+  lastOnlineAt?: Date;
+
 
   @DatabaseProp({ required: true, schema: UserVerificationSchema })
   verification: UserVerificationEntity;

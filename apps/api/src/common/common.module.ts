@@ -23,6 +23,7 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
 import { TelegramModule } from "./telegram/telegram.module";
 import { S3Module } from "./s3/s3.module";
 import { ScheduleModule } from "@nestjs/schedule";
+import { RedisModule } from "./redis/redis.module";
 
 
 @Global()
@@ -152,7 +153,8 @@ import { ScheduleModule } from "@nestjs/schedule";
     TelegramModule,
     S3Module,
     DatabaseModule.forRoot(),
-    PaginationModule
+    PaginationModule,
+    RedisModule
   ]
 })
 export class CommonModule { }

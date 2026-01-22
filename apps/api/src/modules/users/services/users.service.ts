@@ -15,7 +15,8 @@ import { DatabaseHelperQueryContain } from '@common/database/decorators/database
 import { ENUM_MESSAGE_LANGUAGE, ENUM_USER_ROLE, ENUM_USER_SIGN_UP_FROM, ENUM_USER_STATUS, ENUM_USER_THEME, ENUM_STATUS_CODE_ERROR } from '@repo/shared';
 import { HelperDateService } from '@common/helper/services/helper.date.service';
 import { plainToInstance } from 'class-transformer';
-import { HelperStringService } from '@common/helper/services/helper.string.service';
+import { UserUpdateSettingsDto } from '../dto/request/user.update-settings.request.dto';
+import { RedisService } from '@common/redis/services/redis.service';
 import { UserProfileResponseDto } from '@modules/users/dto/response/user.profile.response.dto';
 import { UserCensorResponseDto } from '@modules/users/dto/response/user.censor.response.dto';
 import { UserListResponseDto } from '@modules/users/dto/response/user.list.response.dto';
@@ -24,15 +25,93 @@ import { UserGetResponseDto } from '@modules/users/dto/response/user.get.respons
 import { UserUpdateStatusRequestDto } from '@modules/users/dto/request/user.update-status.request.dto';
 import { UserUpdateProfileRequestDto } from '@modules/users/dto/request/user.update-profile.request.dto';
 import { UserUpdatePreferencesRequestDto } from '../dto/request/user.update-preferences.request.dto';
-import { UserUpdateSettingsDto } from '../dto/request/user.update-settings.request.dto';
+import { HelperStringService } from '@common/helper/services/helper.string.service';
 @Injectable()
 export class UsersService {
+  private readonly ONLINE_USERS_SET = 'users:online:set';
+  private readonly ONLINE_USERS_COUNTS = 'users:online:counts';
+
   constructor(
     private readonly userRepository: UserRepository,
     private readonly helperDateService: HelperDateService,
     private readonly helperStringService: HelperStringService,
-    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly redisService: RedisService
   ) { }
+
+  async onModuleInit() {
+    // Strategy 1: Reset Data on Start (Prevent Ghost Users from previous crash)
+    const client = this.redisService.client;
+    if (client) {
+      await client.del(this.ONLINE_USERS_SET, this.ONLINE_USERS_COUNTS);
+    }
+  }
+
+  async userConnected(userId: string) {
+    try {
+      const client = this.redisService.client;
+      const count = await client.hincrby(this.ONLINE_USERS_COUNTS, userId, 1);
+      if (count === 1) {
+        await client.sadd(this.ONLINE_USERS_SET, userId);
+      }
+    } catch (e) {
+      console.error('Redis error tracking user connection', e);
+    }
+  }
+
+  async userDisconnected(userId: string) {
+    try {
+      const client = this.redisService.client;
+      const count = await client.hincrby(this.ONLINE_USERS_COUNTS, userId, -1);
+      if (count <= 0) {
+        await client.srem(this.ONLINE_USERS_SET, userId);
+        await client.hdel(this.ONLINE_USERS_COUNTS, userId);
+      }
+    } catch (e) {
+      console.error('Redis error tracking user disconnection', e);
+    }
+  }
+
+  async getOnlineCount(): Promise<number> {
+    try {
+      return await this.redisService.client.scard(this.ONLINE_USERS_SET);
+    } catch (e) {
+      console.error('Redis error getting online count', e);
+      return 0;
+    }
+  }
+
+  async updateLastOnline(userId: string) {
+    // 1. Update Redis (Fast path) for Online Status
+    // We can also use this to throttle DB updates if needed
+    // But since `lastOnlineAt` is important, we might want to persist it.
+
+    // OPTIMIZATION: Only update MongoDB if last update was > 1-2 minutes ago?
+    // OR: Just fire and forget update to DB (allow background processing).
+
+    // For now, straight update to DB is safest for "Last Seen" feature accuracy.
+    // However, if `update_location` calls this every 5s, we will kill the DB.
+
+    // Strategy: Use Redis Key `user:last_online_update:${userId}` with TTL 60s.
+    // If key exists, skip DB update. If not, update DB and set key.
+
+    try {
+      const key = `user:last_online_update:${userId}`;
+      const exists = await this.redisService.client.get(key);
+
+      if (!exists) {
+        // Update MongoDB
+        await this.userRepository.updateRaw({ _id: userId }, {
+          lastOnlineAt: this.helperDateService.create()
+        });
+
+        // Set throttle key for 60 seconds
+        await this.redisService.client.set(key, '1', 'EX', 60);
+      }
+    } catch (error) {
+      console.error('Error updating lastOnlineAt', error);
+    }
+  }
 
   async create(
     { email, password, firstName, lastName }: UserCreateRequestDto,
@@ -398,6 +477,8 @@ export class UsersService {
     }
 
     repository.lastLocationAt = this.helperDateService.create();
+    // Also update online status
+    repository.lastOnlineAt = repository.lastLocationAt;
 
     const updated = await this.userRepository.save(repository, options);
     await this.cacheManager.del(`user:info:${repository._id}`);

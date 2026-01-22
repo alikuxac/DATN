@@ -8,6 +8,7 @@ export interface SocketEvents {
   new_sos: (data: any) => void;
   location_updated: (data: { userId: string; lat: number; lng: number }) => void;
   region_alert: (data: unknown) => void;
+  'stats.online_users': (data: { count: number }) => void;
 
   // Client -> Server events
   update_location: (data: { lat: number; lng: number }) => void;

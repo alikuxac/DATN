@@ -1,5 +1,6 @@
 import {
   OnGatewayConnection,
+  OnGatewayDisconnect,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
@@ -18,7 +19,7 @@ import { AuthService } from '@modules/auth/services/auth.service';
   cors: { origin: '*' },
   namespace: '/notifications',
 })
-export class NotificationGateway implements OnGatewayConnection {
+export class NotificationGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
   private logger = new Logger('NotificationGateway');
 
@@ -48,11 +49,19 @@ export class NotificationGateway implements OnGatewayConnection {
         await client.join(`user_${userId}`);
         client.data.userId = userId;
 
+        // Track Online User
+        await this.usersService.userConnected(userId);
+        await this.broadcastOnlineCount();
+
         // Fetch user to check role
         const user = await this.usersService.findOneById(userId);
         if (user && (user.role === ENUM_USER_ROLE.ADMIN || user.role === ENUM_USER_ROLE.SUPER_ADMIN)) {
           await client.join('admin_room');
           this.logger.log(`Admin joined admin_room: ${userId}`);
+
+          // Send immediate count to admin upon join
+          const count = await this.usersService.getOnlineCount();
+          client.emit('stats.online_users', { count });
         }
 
         this.logger.log(`User connected: ${userId}`);
@@ -64,6 +73,22 @@ export class NotificationGateway implements OnGatewayConnection {
       this.logger.error('Connection error', error);
       client.disconnect();
     }
+  }
+
+  async handleDisconnect(client: Socket) {
+    const userId = client.data.userId;
+    if (userId) {
+      await this.usersService.userDisconnected(userId);
+      // Update last seen one last time on disconnect
+      await this.usersService.updateLastOnline(userId);
+      await this.broadcastOnlineCount();
+      this.logger.log(`User disconnected: ${userId}`);
+    }
+  }
+
+  private async broadcastOnlineCount() {
+    const count = await this.usersService.getOnlineCount();
+    this.server.to('admin_room').emit('stats.online_users', { count });
   }
 
   @SubscribeMessage('update_location')
@@ -79,6 +104,11 @@ export class NotificationGateway implements OnGatewayConnection {
       const user = await this.usersService.findOneById(userId);
       if (user) {
         await this.usersService.updateLocation(user, payload.lat, payload.lng);
+        // updateLocation already handles lastOnlineAt if implemented in service
+        // But if we just want lightweight ping?
+      } else {
+        // If for some reason user not found (rare if guarded), but still valid token
+        await this.usersService.updateLastOnline(userId);
       }
 
       // 2. Realtime Tracking (Like Grab)

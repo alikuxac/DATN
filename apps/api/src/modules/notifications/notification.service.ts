@@ -129,9 +129,9 @@ export class NotificationService {
         await this.sendToUser(
           user._id.toString(),
           ENUM_NOTIFICATION_TYPE.SOS,
-          'Có SOS mới gần bạn!',
-          `Một báo cáo khẩn cấp vừa được tạo cách bạn ${this.helperGeoService.calculateDistance(lat, lng, user.location.coordinates[1], user.location.coordinates[0]) | 0}m.`,
-          { reportId: payload.reportId }
+          'SOS: Cần hỗ trợ khẩn cấp!', // Title ngắn gọn, gây chú ý
+          `Cách bạn ~${this.helperGeoService.calculateDistance(lat, lng, user.location.coordinates[1], user.location.coordinates[0]) | 0}m. Nhấn để xem chi tiết.`,
+          { reportId: payload.reportId, type: 'SOS_NEARBY' }
         );
       }
     }
