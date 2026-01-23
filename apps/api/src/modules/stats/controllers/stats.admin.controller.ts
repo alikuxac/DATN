@@ -3,12 +3,8 @@ import { ApiTags } from '@nestjs/swagger';
 import { StatsService } from '../services/stats.service';
 import { StatsDashboardResponseDto } from '../dtos/response/stats.dashboard.response.dto';
 import { AuthJwtAccessProtected } from '@modules/auth/decorators/auth.jwt.decorator';
-import { PolicyAbilityProtected } from '@modules/policy/decorators/policy.decorator';
-import { ENUM_POLICY_ACTION, ENUM_POLICY_SUBJECT } from '@repo/shared';
 import { UserProtected } from '@modules/users/decorators/user.decorator';
 import { Response } from '@common/response/decorators/response.decorator';
-import { UsersService } from '@modules/users/services/users.service';
-import { ReportService } from '@modules/reports/services/reports.service';
 import { IResponse } from '@common/response/interfaces/response.interface';
 
 @ApiTags('modules.admin.stats')
@@ -18,9 +14,7 @@ import { IResponse } from '@common/response/interfaces/response.interface';
 })
 export class StatsAdminController {
   constructor(
-    private readonly statsService: StatsService,
-    private readonly usersService: UsersService,
-    private readonly reportService: ReportService
+    private readonly statsService: StatsService
   ) { }
 
   @Response('stats.dashboard')
@@ -28,7 +22,7 @@ export class StatsAdminController {
   @AuthJwtAccessProtected()
   @Get('/dashboard')
   async getDashboardStats(): Promise<IResponse<StatsDashboardResponseDto>> {
-    const stats = await this.statsService.getDashboardStats(this.usersService, this.reportService);
+    const stats = await this.statsService.getDashboardStats();
     return {
       data: stats
     };

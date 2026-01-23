@@ -10,13 +10,12 @@ import { StatsDashboardResponseDto } from '../dtos/response/stats.dashboard.resp
 export class StatsService {
   constructor(
     private readonly helperDateService: HelperDateService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private readonly usersService: UsersService,
+    private readonly reportService: ReportService
   ) { }
 
-  async getDashboardStats(
-    usersService: UsersService,
-    reportService: ReportService
-  ): Promise<StatsDashboardResponseDto> {
+  async getDashboardStats(): Promise<StatsDashboardResponseDto> {
     const timezone = this.configService.get<string>('app.timezone') || '+07:00';
     const now = this.helperDateService.create();
 
@@ -34,16 +33,16 @@ export class StatsService {
     // 1. Summary Counts & Diffs
     // Current Totals
     const [totalUsers, activeUsers, totalReports, resolvedReports] = await Promise.all([
-      usersService.getTotal({}), // Total ever
-      usersService.getTotal({ status: ENUM_USER_STATUS.ACTIVE }),
-      reportService.getTotal({}),
-      reportService.getTotal({ status: ENUM_REPORT_STATUS.RESOLVED })
+      this.usersService.getTotal({}), // Total ever
+      this.usersService.getTotal({ status: ENUM_USER_STATUS.ACTIVE }),
+      this.reportService.getTotal({}),
+      this.reportService.getTotal({ status: ENUM_REPORT_STATUS.RESOLVED })
     ]);
 
     // Totals at end of yesterday (effectively < todayStart)
     const [usersBeforeToday, reportsBeforeToday] = await Promise.all([
-      usersService.getTotal({ createdAt: { $lt: todayStart } }),
-      reportService.getTotal({ createdAt: { $lt: todayStart } })
+      this.usersService.getTotal({ createdAt: { $lt: todayStart } }),
+      this.reportService.getTotal({ createdAt: { $lt: todayStart } })
     ]);
 
     // Diffs
@@ -53,8 +52,8 @@ export class StatsService {
     // 2. Cumulative Charts
     // Base Total: Everything STRICTLY BEFORE the chart window starts
     const [userBaseTotal, reportBaseTotal] = await Promise.all([
-      usersService.getTotal({ createdAt: { $lt: startDate } }),
-      reportService.getTotal({ createdAt: { $lt: startDate } })
+      this.usersService.getTotal({ createdAt: { $lt: startDate } }),
+      this.reportService.getTotal({ createdAt: { $lt: startDate } })
     ]);
 
     // Daily Growth (New items per day)
@@ -62,10 +61,10 @@ export class StatsService {
       userCreated, userDeleted,
       reportCreated, reportDeleted
     ] = await Promise.all([
-      usersService.getGrowthStats(startDate, endDate, timezone),
-      usersService.getDeletedStats(startDate, endDate, timezone),
-      reportService.getGrowthStats(startDate, endDate, timezone),
-      reportService.getDeletedStats(startDate, endDate, timezone)
+      this.usersService.getGrowthStats(startDate, endDate, timezone),
+      this.usersService.getDeletedStats(startDate, endDate, timezone),
+      this.reportService.getGrowthStats(startDate, endDate, timezone),
+      this.reportService.getDeletedStats(startDate, endDate, timezone)
     ]);
 
     // Calculate Cumulative
