@@ -24,14 +24,8 @@ export class StatsAdminController {
   ) { }
 
   @Response('stats.dashboard')
-  // Decorators execution order: Top-Down for Method Decorators in NestJS?
-  // Actually, usually it is Top-Down for execution.
   @AuthJwtAccessProtected()
   @UserProtected()
-  @PolicyAbilityProtected({
-    subject: ENUM_POLICY_SUBJECT.USER,
-    action: [ENUM_POLICY_ACTION.READ],
-  })
   @Get('/dashboard')
   async getDashboardStats(): Promise<IResponse<StatsDashboardResponseDto>> {
     const stats = await this.statsService.getDashboardStats(this.usersService, this.reportService);

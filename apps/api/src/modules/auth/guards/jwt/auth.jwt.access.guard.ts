@@ -5,11 +5,6 @@ import { IAuthJwtAccessTokenPayload } from '@modules/auth/interfaces/auth.interf
 
 @Injectable()
 export class AuthJwtAccessGuard extends AuthGuard('jwtAccess') {
-    async canActivate(context: any): Promise<boolean> {
-        console.log('1. AuthJwtAccessGuard Running');
-        return super.canActivate(context) as Promise<boolean>;
-    }
-
     handleRequest<T = IAuthJwtAccessTokenPayload>(
         err: Error,
         user: T,

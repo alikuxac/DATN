@@ -20,7 +20,6 @@ export class PolicyAbilityGuard implements CanActivate {
     ) { }
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
-        console.log('3. PolicyAbilityGuard Running');
         const policies =
             this.reflector.get<IPolicyAbility[]>(
                 POLICY_ABILITY_META_KEY,
@@ -39,16 +38,6 @@ export class PolicyAbilityGuard implements CanActivate {
         }
 
         const { role } = user;
-
-        // Use NestJS Logger
-        const logger = new Logger(PolicyAbilityGuard.name);
-        logger.warn('PolicyGuard Debug Check:', {
-            jwtRole: role,
-            dbRole: __user?.role,
-            userEntityId: __user?._id,
-            jwtId: user.user,
-            policies
-        });
 
         if (
             role === ENUM_USER_ROLE.SUPER_ADMIN ||

@@ -19,7 +19,6 @@ export class UserSystemGuard implements CanActivate {
     ) { }
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
-        console.log('2. UserSystemGuard Running');
         const emailVerified =
             this.reflector.get<boolean[]>(
                 USER_GUARD_EMAIL_VERIFIED_META_KEY,
