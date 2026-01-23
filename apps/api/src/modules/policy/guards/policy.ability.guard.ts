@@ -16,7 +16,7 @@ export class PolicyAbilityGuard implements CanActivate {
     constructor(
         private readonly reflector: Reflector,
         private readonly policyAbilityFactory: PolicyAbilityFactory
-    ) {}
+    ) { }
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const policies =
@@ -37,10 +37,20 @@ export class PolicyAbilityGuard implements CanActivate {
         }
 
         const { role } = user;
+        // console.log('PolicyGuard Debug:', { 
+        //     jwtRole: role, 
+        //     dbRole: __user?.role,
+        //     userEntityId: __user?._id,
+        //     jwtId: user._id ?? user.user
+        // });
 
-        if (role === ENUM_USER_ROLE.SUPER_ADMIN) {
+        if (
+            role === ENUM_USER_ROLE.SUPER_ADMIN ||
+            __user?.role === ENUM_USER_ROLE.SUPER_ADMIN
+        ) {
             return true;
-        } 
+        }
+
         if (policies.length === 0) {
             throw new ForbiddenException({
                 statusCode:
@@ -50,10 +60,15 @@ export class PolicyAbilityGuard implements CanActivate {
         }
 
         const userAbilities = this.policyAbilityFactory.createForUser(
-            __user
+            (__user || user) as any
         );
         const handler = this.policyAbilityFactory.handlerAbilities(userAbilities, policies);
         if (!handler) {
+            // console.log('PolicyGuard Failed:', {
+            //     policies,
+            //     rules: userAbilities.rules,
+            //     userRole: __user?.role || role
+            // });
             throw new ForbiddenException({
                 statusCode: ENUM_STATUS_CODE_ERROR.POLICY_ABILITY_FORBIDDEN,
                 message: 'policy.error.abilityForbidden',
