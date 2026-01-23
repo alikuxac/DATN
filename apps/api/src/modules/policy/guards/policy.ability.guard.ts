@@ -3,6 +3,7 @@ import {
     ExecutionContext,
     ForbiddenException,
     Injectable,
+    Logger,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { IRequestApp } from '@common/request/interfaces/request.interface';
@@ -37,11 +38,15 @@ export class PolicyAbilityGuard implements CanActivate {
         }
 
         const { role } = user;
-        console.log('PolicyGuard Debug:', {
+
+        // Use NestJS Logger
+        const logger = new Logger(PolicyAbilityGuard.name);
+        logger.warn('PolicyGuard Debug Check:', {
             jwtRole: role,
             dbRole: __user?.role,
             userEntityId: __user?._id,
-            jwtId: user.user
+            jwtId: user.user,
+            policies
         });
 
         if (
