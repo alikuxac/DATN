@@ -24,8 +24,8 @@ export class StatsAdminController {
   ) { }
 
   @Response('stats.dashboard')
-  @AuthJwtAccessProtected()
   @UserProtected()
+  @AuthJwtAccessProtected()
   @Get('/dashboard')
   async getDashboardStats(): Promise<IResponse<StatsDashboardResponseDto>> {
     const stats = await this.statsService.getDashboardStats(this.usersService, this.reportService);
