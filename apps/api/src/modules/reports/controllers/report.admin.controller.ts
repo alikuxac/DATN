@@ -49,12 +49,12 @@ export class ReportAdminController {
 
   // 1. API List All Reports
   @ResponsePaging('report.list')
+  @AuthJwtAccessProtected()
+  @UserProtected()
   @PolicyAbilityProtected({
     subject: ENUM_POLICY_SUBJECT.REPORT,
     action: [ENUM_POLICY_ACTION.READ],
   })
-  @UserProtected()
-  @AuthJwtAccessProtected()
   @Throttle({ default: { limit: 100, ttl: 60000 } })
   @Get('/list')
   async list(
@@ -132,14 +132,14 @@ export class ReportAdminController {
 
   // 2. API Create By Admin
   @Response('report.create')
+  @AuthJwtAccessProtected()
+  @UserProtected()
   @PolicyAbilityProtected({
     subject: ENUM_POLICY_SUBJECT.REPORT,
     action: [ENUM_POLICY_ACTION.CREATE],
   })
   @Throttle({ default: { limit: 100, ttl: 60000 } })
   @Post('/create')
-  @UserProtected()
-  @AuthJwtAccessProtected()
   async createByAdmin(
     @AuthJwtPayload('user', UserParsePipe) user: UserDocument,
     @Body() body: ReportCreateByAdminRequestDto
@@ -163,12 +163,12 @@ export class ReportAdminController {
     return created;
   }
 
+  @AuthJwtAccessProtected()
+  @UserProtected()
   @PolicyAbilityProtected({
     subject: ENUM_POLICY_SUBJECT.REPORT,
     action: [ENUM_POLICY_ACTION.READ],
   })
-  @UserProtected()
-  @AuthJwtAccessProtected()
   @Get('/stats')
   async getStats() {
     return this.reportService.getStatistics();

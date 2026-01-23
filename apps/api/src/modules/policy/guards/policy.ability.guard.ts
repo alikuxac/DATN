@@ -20,6 +20,7 @@ export class PolicyAbilityGuard implements CanActivate {
     ) { }
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
+        console.log('3. PolicyAbilityGuard Running');
         const policies =
             this.reflector.get<IPolicyAbility[]>(
                 POLICY_ABILITY_META_KEY,
