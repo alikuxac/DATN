@@ -80,12 +80,12 @@ export class UserEntity extends DatabaseObjectIdEntityBase {
     type: {
       type: String,
       enum: ['Point'],
-      default: 'Point',
-      required: true
+      // default: 'Point', // Removed to avoid auto-creating partial object
+      // required: true
     },
     coordinates: {
       type: [Number],
-      required: true
+      // required: true
     },
     _id: false
   })
