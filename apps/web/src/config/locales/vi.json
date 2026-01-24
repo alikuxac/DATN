@@ -158,7 +158,8 @@
     },
     "CHARTS": {
       "USER_GROWTH": "Tăng trưởng người dùng (30 ngày)",
-      "REPORT_ACTIVITY": "Hoạt động báo cáo (30 ngày)"
+      "REPORT_ACTIVITY": "Hoạt động báo cáo (30 ngày)",
+      "ONLINE_USERS": "Người dùng trực tuyến"
     }
   },
 

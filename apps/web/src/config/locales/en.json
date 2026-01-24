@@ -186,7 +186,8 @@
     },
     "CHARTS": {
       "USER_GROWTH": "User Growth (30 Days)",
-      "REPORT_ACTIVITY": "Report Activity (30 Days)"
+      "REPORT_ACTIVITY": "Report Activity (30 Days)",
+      "ONLINE_USERS": "Online Users"
     }
   },
 
