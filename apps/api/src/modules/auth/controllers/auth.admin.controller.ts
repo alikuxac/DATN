@@ -33,6 +33,7 @@ import { UserParsePipe } from '@modules/users/pipes/user.parse.pipe';
 import { UserDocument } from '@modules/users/repository/entities/user.entity';
 import { UsersService } from '@modules/users/services/users.service';
 import { ENUM_WORKER_QUEUES } from '@workers/enums/worker.enum';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('modules.admin.auth')
 @Controller({
@@ -56,6 +57,7 @@ export class AuthAdminController {
   })
   @UserProtected()
   @AuthJwtAccessProtected()
+  @Throttle({ default: { limit: 100, ttl: 60000 } })
   @Put('/update/:user/password')
   async updatePassword(
     @AuthJwtPayload('user') updatedBy: string,

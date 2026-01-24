@@ -75,12 +75,12 @@ export class UserSystemController {
     ) { }
 
     @ResponsePaging('user.list')
-    @UserProtected()
-    @AuthJwtAccessProtected()
     @PolicyAbilityProtected({
         subject: ENUM_POLICY_SUBJECT.USER,
         action: [ENUM_POLICY_ACTION.READ],
     })
+    @UserProtected()
+    @AuthJwtAccessProtected()
     @Get('/list')
     async list(
         @PaginationQuery({ availableSearch: USER_DEFAULT_AVAILABLE_SEARCH })

@@ -38,8 +38,8 @@ export class UserUploadController {
   @UserProtected([false])
   @AuthJwtAccessProtected()
   @ApiBearerAuth('accessToken')
-  @Post('/avatar/upload')
   @HttpCode(HttpStatus.OK)
+  @Post('/avatar/upload')
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -110,8 +110,8 @@ export class UserUploadController {
   @UserProtected([false])
   @AuthJwtAccessProtected()
   @ApiBearerAuth('accessToken')
-  @Delete('/avatar')
   @HttpCode(HttpStatus.OK)
+  @Delete('/avatar')
   async deleteAvatar(@AuthJwtPayload('user', UserParsePipe) user: UserDocument): Promise<IResponse<{ message: string }>> {
     if (!user.avatar) {
       throw new BadRequestException('No avatar to delete');

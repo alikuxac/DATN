@@ -64,9 +64,10 @@ export class AuthPublicController {
   ) { }
 
   @Response('auth.loginWithCredential')
-  @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @HttpCode(HttpStatus.OK)
   @Post('/login/credential')
+
   async loginWithCredential(
     @Body() { email, password }: AuthLoginRequestDto,
     @Req() request: IRequestApp

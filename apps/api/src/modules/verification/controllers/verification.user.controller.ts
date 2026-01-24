@@ -242,8 +242,8 @@ export class VerificationUserController {
     @Response('verification.verifyEmail')
     @UserProtected([false])
     @AuthJwtAccessProtected()
-    @HttpCode(HttpStatus.OK)
     @Throttle({ default: { limit: 10, ttl: 60000 } })
+    @HttpCode(HttpStatus.OK)
     @Post('/verify/email')
     async verifyEmail(
         @HeaderLang() lang: string,
@@ -321,8 +321,8 @@ export class VerificationUserController {
     @Response('verification.verifyMobileNumber')
     @UserProtected([false])
     @AuthJwtAccessProtected()
-    @HttpCode(HttpStatus.OK)
     @Throttle({ default: { limit: 10, ttl: 60000 } })
+    @HttpCode(HttpStatus.OK)
     @Post('/verify/mobile-number')
     async verifyMobileNumber(
         @AuthJwtPayload<IAuthJwtAccessTokenPayload>(

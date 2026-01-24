@@ -122,12 +122,12 @@ export class SessionAdminController {
     }
 
     @Response('session.revoke')
-    @UserProtected()
-    @AuthJwtAccessProtected()
     @PolicyAbilityProtected({
         subject: ENUM_POLICY_SUBJECT.SESSION,
         action: [ENUM_POLICY_ACTION.UPDATE],
     })
+    @UserProtected()
+    @AuthJwtAccessProtected()
     @Throttle({ default: { limit: 100, ttl: 60000 } })
     @Delete('/revoke/:session')
     async revoke(
@@ -146,22 +146,24 @@ export class SessionAdminController {
         await this.sessionService.updateRevoke(session);
     }
     @Response('session.cleanup')
-    @AuthJwtAccessProtected()
     @PolicyAbilityProtected({
         subject: ENUM_POLICY_SUBJECT.SESSION,
         action: [ENUM_POLICY_ACTION.DELETE],
     })
+    @AuthJwtAccessProtected()
+    @Throttle({ default: { limit: 100, ttl: 60000 } })
     @Delete('/cleanup')
     async cleanup(): Promise<void> {
         await this.sessionService.deleteExpired();
     }
 
     @Response('session.revokeAll')
-    @AuthJwtAccessProtected()
     @PolicyAbilityProtected({
         subject: ENUM_POLICY_SUBJECT.SESSION,
         action: [ENUM_POLICY_ACTION.UPDATE],
     })
+    @AuthJwtAccessProtected()
+    @Throttle({ default: { limit: 100, ttl: 60000 } })
     @Delete('/revoke-all/:user')
     async revokeAll(
         @Param('user', RequestRequiredPipe, UserParsePipe)

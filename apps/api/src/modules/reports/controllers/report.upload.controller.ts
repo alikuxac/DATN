@@ -27,8 +27,8 @@ export class ReportUploadController {
 
   @Response('report.upload.images')
   @AuthJwtAccessProtected()
-  @Post('/images/upload')
   @HttpCode(HttpStatus.OK)
+  @Post('/images/upload')
   @UseInterceptors(FilesInterceptor('files', MAX_REPORT_IMAGES))
   async uploadImages(
     @UploadedFiles() files: Multer.File[],
@@ -76,8 +76,8 @@ export class ReportUploadController {
 
   @Response('report.delete.images')
   @AuthJwtAccessProtected()
-  @Delete('/images')
   @HttpCode(HttpStatus.OK)
+  @Delete('/images')
   async deleteImages(
     @Body() body: { imageUrls: string[] },
   ): Promise<IResponse<{ message: string }>> {

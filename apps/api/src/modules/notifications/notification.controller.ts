@@ -19,9 +19,9 @@ export class NotificationController {
     private readonly paginationService: PaginationService
   ) { }
 
-  @Get('/')
-  @AuthJwtAccessProtected()
   @ResponsePaging('notification.list')
+  @AuthJwtAccessProtected()
+  @Get('/')
   async findAll(
     @AuthJwtPayload('user', UserParsePipe) user: UserDocument,
     @PaginationQuery({
@@ -53,9 +53,9 @@ export class NotificationController {
     };
   }
 
-  @Get('unread-count')
-  @AuthJwtAccessProtected()
   @Response('notification.unreadCount')
+  @AuthJwtAccessProtected()
+  @Get('unread-count')
   async getUnreadCount(
     @AuthJwtPayload('user', UserParsePipe) user: UserDocument
   ) {
@@ -63,9 +63,9 @@ export class NotificationController {
     return { data: { count } };
   }
 
-  @Patch(':id/read')
-  @AuthJwtAccessProtected()
   @Response('notification.markRead')
+  @AuthJwtAccessProtected()
+  @Patch(':id/read')
   async markAsRead(@Param('id') id: string) {
     // TODO: check user ownership if strict security needed, but currently service just updates by ID. 
     // Ideally pass user to markAsRead for ownership check.
