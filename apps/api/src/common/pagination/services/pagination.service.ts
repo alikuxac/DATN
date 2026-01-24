@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
   PAGINATION_AVAILABLE_ORDER_BY,
-  PAGINATION_MAX_PAGE,
   PAGINATION_MAX_PER_PAGE,
   PAGINATION_ORDER_BY,
   PAGINATION_ORDER_DIRECTION,
@@ -13,9 +12,8 @@ import { DatabaseService } from '@common/database/services/database.service';
 
 @Injectable()
 export class PaginationService {
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(private readonly databaseService: DatabaseService) { }
   offset(page: number, perPage: number): number {
-    page = page > PAGINATION_MAX_PAGE ? PAGINATION_MAX_PAGE : page;
     perPage =
       perPage > PAGINATION_MAX_PER_PAGE ? PAGINATION_MAX_PER_PAGE : perPage;
     const offset: number = (page - 1) * perPage;
@@ -26,7 +24,7 @@ export class PaginationService {
   totalPage(totalData: number, perPage: number): number {
     let totalPage = Math.ceil(totalData / perPage);
     totalPage = totalPage === 0 ? 1 : totalPage;
-    return totalPage > PAGINATION_MAX_PAGE ? PAGINATION_MAX_PAGE : totalPage;
+    return totalPage;
   }
 
   offsetWithoutMax(page: number, perPage: number): number {
@@ -41,11 +39,7 @@ export class PaginationService {
   }
 
   page(page?: number): number {
-    return page
-      ? page > PAGINATION_MAX_PAGE
-        ? PAGINATION_MAX_PAGE
-        : page
-      : PAGINATION_PAGE;
+    return page;
   }
 
   perPage(perPage?: number): number {

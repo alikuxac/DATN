@@ -190,8 +190,15 @@ export default function MapPage() {
     }
 
     displayData.forEach((item) => {
+      // Create Container (No transform transition here to avoid conflict with Mapbox/Vietmap positioning)
+      const containerRel = document.createElement('div');
+      containerRel.className = 'marker-container group relative'; // group for potential tooltip
+      
+      // Create Visual Element (Inner circle that scales)
       const el = document.createElement('div');
-      el.className = 'w-6 h-6 rounded-full border-2 border-white shadow-lg cursor-pointer flex items-center justify-center text-[10px] font-bold text-white transition-transform hover:scale-110';
+      el.className = 'w-6 h-6 rounded-full border-2 border-white shadow-lg cursor-pointer flex items-center justify-center text-[10px] font-bold text-white transition-transform duration-200 transform hover:scale-125';
+      
+      containerRel.appendChild(el);
       
       let color = '#6b7280';
       let popupContent = '';
@@ -211,7 +218,7 @@ export default function MapPage() {
 
           let guestPhone = 'N/A';
           if (isGuest && report.notes) {
-              const match = report.notes.match(/Guest Phone: ([\d+]+)/);
+              const match = report.notes?.match(/Guest Phone: ([\d+]+)/);
               if (match) guestPhone = match[1];
           }
 
@@ -221,10 +228,10 @@ export default function MapPage() {
                     <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isGuest ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'} uppercase">
                         ${isGuest ? 'GUEST' : 'APP'}
                     </span>
-                    <span class="text-[10px] font-medium text-gray-500 capitalize">${report.status.replace("_", " ")}</span>
+                    <span class="text-[10px] font-medium text-gray-500 capitalize">${report.status?.replace("_", " ") || 'Unknown'}</span>
                 </div>
                 
-                <h3 class="font-bold text-sm mb-1">${report.type.toUpperCase()}</h3>
+                <h3 class="font-bold text-sm mb-1">${report.type?.toUpperCase() || 'REPORT'}</h3>
                 
                 ${isGuest ? `
                     <div class="mb-2 p-2 bg-gray-50 rounded text-xs border border-dashed border-gray-300">
@@ -278,7 +285,7 @@ export default function MapPage() {
           el.innerHTML = 'V';
           popupContent = `
              <div class="p-2">
-                <h3 class="font-bold text-sm">${user.firstName} ${user.lastName}</h3>
+                <h3 class="font-bold text-sm">${user.firstName || ''} ${user.lastName || ''}</h3>
                 <div class="flex items-center gap-2 mt-1">
                     <p class="text-xs font-bold ${statusColor}">${statusText}</p>
                     <span class="text-[10px] text-gray-400">Volunteer</span>
@@ -288,7 +295,7 @@ export default function MapPage() {
                     Active: ${user.lastLocationAt ? formatDistanceToNow(new Date(user.lastLocationAt)) + ' ago' : 'Unknown'}
                 </div>
                 <div class="mt-2">
-                    <a href="tel:${user.mobileNumber}" class="text-blue-500 text-xs hover:underline">${user.mobileNumber}</a>
+                    <a href="tel:${user.mobileNumber}" class="text-blue-500 text-xs hover:underline">${user.mobileNumber || 'N/A'}</a>
                 </div>
             </div>
           `;
@@ -301,7 +308,7 @@ export default function MapPage() {
           el.innerHTML = 'U';
           popupContent = `
              <div class="p-2">
-                <h3 class="font-bold text-sm">${user.firstName} ${user.lastName}</h3>
+                <h3 class="font-bold text-sm">${user.firstName || ''} ${user.lastName || ''}</h3>
                 <p class="text-xs text-cyan-600 font-medium">User</p>
                  <div class="text-xs mt-1 text-gray-500">
                     Active: ${user.lastLocationAt ? formatDistanceToNow(new Date(user.lastLocationAt)) + ' ago' : 'Unknown'}
@@ -317,12 +324,14 @@ export default function MapPage() {
           el.style.borderColor = '#ffffff';
           el.style.borderWidth = '3px';
           el.style.boxShadow = '0 0 15px currentColor';
+          // Scale is handled by class, but if we need persistent scale:
           el.style.transform = 'scale(1.2)';
           el.style.zIndex = '10';
       }
 
       // Add Click Listener to set selected entity
-      el.addEventListener('click', (e) => {
+      // Attach to container to ensure reliable click 
+      containerRel.addEventListener('click', (e) => {
           e.stopPropagation(); // prevent map click
           setSelectedEntity({ id: itemId, type: item.type as any });
       });
@@ -331,14 +340,11 @@ export default function MapPage() {
       
       // Clear selection on popup close
       popup.on('close', () => {
-          // Optional: we might not want to clear immediately to allow viewing the line
-          // But usually closing logic implies deselection.
-          // setSelectedEntity(null); 
-          // Let's NOT clear it automatically on close, allows user to pan around and keep line.
-          // User can click on map or another marker to switch.
+          // Optional: logic as before
       });
 
-      const marker = new vietmapgl.Marker(el)
+      // Pass the CONTAINER to the marker, not the visual element
+      const marker = new vietmapgl.Marker(containerRel)
         .setLngLat(item.coords)
         .setPopup(popup)
         .addTo(mapRef.current!);

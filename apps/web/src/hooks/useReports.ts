@@ -34,13 +34,22 @@ export interface CreateReportRequest {
   isPublic?: boolean;
 }
 
+// Define response type locally to match API actual response (which differs from shared type)
+interface ReportsResponse {
+  data: Report[];
+  _pagination: {
+    total: number;
+    totalPage: number;
+  };
+}
+
 export function useReports(params: ReportsParams) {
   const queryClient = useQueryClient();
 
   const reportsQuery = useQuery({
     queryKey: ['reports', params],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<Report[]>>('/admin/report/list', {
+      const { data } = await api.get<ReportsResponse>('/admin/report/list', {
         params: {
           page: params.page || 1,
           perPage: params.limit || 10,
@@ -89,7 +98,7 @@ export function useReports(params: ReportsParams) {
 
   return {
     reports: reportsQuery.data?.data || [],
-    metadata: reportsQuery.data?._metadata,
+    metadata: reportsQuery.data?._pagination, // Fixed: use _pagination instead of _metadata
     isLoading: reportsQuery.isLoading,
     isError: reportsQuery.isError,
     error: reportsQuery.error,

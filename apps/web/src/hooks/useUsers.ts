@@ -65,6 +65,7 @@ export function useUsers(params: UseUsersParams) {
       const { data } = await api.get<UsersResponse>('/admin/user/list', { params: queryParams });
       return data;
     },
+    placeholderData: (previousData) => previousData,
   });
 
   const createUserMutation = useMutation({
