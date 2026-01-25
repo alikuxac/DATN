@@ -41,14 +41,12 @@ const notificationSlice = createSlice({
       state.unreadCount = Math.max(0, state.unreadCount - 1);
     },
     addNotification: (state, action: PayloadAction<NotificationItem>) => {
-      state.items.unshift(action.payload);
-      // Hybrid: Socket event adds item AND we increment count
-      // Logic handled in component or here? 
-      // If we call addNotification, we usually imply it's new/unread.
-      // But let's separate concerns or keep it simple.
-      // Let's keep addNotification doing both for convenience if it IS unread.
-      if (!action.payload.isRead) {
-        state.unreadCount += 1;
+      const exists = state.items.some(i => i._id === action.payload._id);
+      if (!exists) {
+        state.items.unshift(action.payload);
+        if (!action.payload.isRead) {
+          state.unreadCount += 1;
+        }
       }
     },
     markAsReadLocal: (state, action: PayloadAction<string>) => {

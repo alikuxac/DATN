@@ -2,11 +2,12 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { View, FlatList, StyleSheet, ActivityIndicator, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSocketNotification } from '@/hooks/useSocketNotification';
+
 import { apiService } from '@/services/api.service';
 import NotificationItem from '@/components/notifications/NotificationItem';
 import { AppColors } from '@/config/colors';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { setNotifications, addNotification, markAsReadLocal } from '@/store/slices/notificationSlice';
+import { setNotifications, addNotification, markAsReadLocal, setUnreadCount } from '@/store/slices/notificationSlice';
 
 // Interface for Notification Type
 interface Notification {
@@ -25,17 +26,28 @@ export default function NotificationsScreen() {
   const { items: notifications = [] } = useAppSelector((state) => state.notification);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  // Socket listeners are handled globally in _layout.tsx to prevent duplication
+  // and ensure unread count is accurate across the app.
   const { socket } = useSocketNotification();
-  // Socket Listeners - Handled globally in _layout, but keeping specific logic if needed
-  // Actually, for mark read synchronization we rely on the global listener updating the store.
-  // For new notifications, the global listener adds them to the store.
-  // So we technically don't need listeners here if the list is driven by Redux.
-  // However, if we want to show a toast or something specific to this screen, we could keep it.
-  // But strictly for the bug fix: remove broken lines.
-  
+
   useEffect(() => {
-     // Optional: Add specific listeners here if not covered globally
-  }, []);
+    if (!socket) return;
+    
+    const handleNewNotification = (data: any) => {
+        console.log('New notification received:', data);
+        dispatch(addNotification(data));
+    };
+
+    socket.on('notification', handleNewNotification);
+    socket.on('new_notification', handleNewNotification);
+
+    return () => {
+        socket.off('notification', handleNewNotification);
+        socket.off('new_notification', handleNewNotification);
+    };
+  }, [socket, dispatch]);
+
+
 
   const handleMarkRead = async (id: string) => {
     try {
@@ -46,10 +58,11 @@ export default function NotificationsScreen() {
       // but requirement says 'Fire-and-forget')
       apiService.patch(`/notifications/${id}/read`, {}).catch(err => console.error("Background sync failed", err));
       
-      // If socket also emits 'mark_read', redundancy is fine as local state is already read.
       if (socket) {
-          socket.emit('mark_read', { id });
+        socket.emit('mark_read', { id });
       }
+      
+
 
     } catch (error) {
       console.error('Error marking as read:', error);
@@ -78,9 +91,15 @@ export default function NotificationsScreen() {
 
   const fetchNotifications = useCallback(async () => {
     try {
-      // Don't set loading true here to avoid flickering on refresh
       const response = await apiService.get<any>('/notifications');
-      dispatch(setNotifications(response.data.data)); // Assumes response structure { data: { data: [...] } } or adjust based on API
+      dispatch(setNotifications(response.data.data)); 
+
+      // Sync unread count as well
+      const countResponse = await apiService.get<any>('/notifications/unread-count');
+      if (countResponse.data && typeof countResponse.data.count === 'number') {
+        dispatch(setUnreadCount(countResponse.data.count));
+      }
+
     } catch (error) {
       console.error('Error fetching notifications:', error);
     } finally {
