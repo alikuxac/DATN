@@ -61,7 +61,18 @@ export class ShelterEntity extends DatabaseObjectIdEntityBase {
   status: ENUM_SHELTER_STATUS;
 
   @DatabaseProp({
-    type: ShelterLocation,
+    type: {
+      type: {
+        type: String,
+        enum: ['Point'],
+        default: 'Point',
+        required: true,
+      },
+      coordinates: {
+        type: [Number],
+        required: true,
+      },
+    },
     required: true,
     index: '2dsphere',
   })
