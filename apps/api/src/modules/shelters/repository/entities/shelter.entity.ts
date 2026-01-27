@@ -65,17 +65,17 @@ export class ShelterEntity extends DatabaseObjectIdEntityBase {
       type: {
         type: String,
         enum: ['Point'],
-        default: 'Point',
-        required: true,
+        // default: 'Point', 
+        // required: true
       },
       coordinates: {
         type: [Number],
-        required: true,
-      },
+        // required: true
+      }
     },
-    _id: false,
+    _id: false
   })
-  location: ShelterLocation;
+  location?: { type: string; coordinates: number[] };
 
   @DatabaseProp({
     required: true,
