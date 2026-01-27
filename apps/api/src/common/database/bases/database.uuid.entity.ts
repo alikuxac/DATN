@@ -13,6 +13,7 @@ export class DatabaseUUIDEntityBase {
         required: true,
         index: true,
         default: false,
+        type: Boolean,
     })
     deleted: boolean;
 
@@ -27,6 +28,7 @@ export class DatabaseUUIDEntityBase {
     @DatabaseProp({
         required: false,
         index: true,
+        type: String,
     })
     createdBy?: string;
 
@@ -40,6 +42,7 @@ export class DatabaseUUIDEntityBase {
     @DatabaseProp({
         required: false,
         index: true,
+        type: String,
     })
     updatedBy?: string;
 
@@ -53,6 +56,7 @@ export class DatabaseUUIDEntityBase {
     @DatabaseProp({
         required: false,
         index: true,
+        type: String,
     })
     deletedBy?: string;
 

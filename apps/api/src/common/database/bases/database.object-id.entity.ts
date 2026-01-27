@@ -13,6 +13,7 @@ export class DatabaseObjectIdEntityBase {
         required: true,
         index: true,
         default: false,
+        type: Boolean,
     })
     deleted: boolean;
 
