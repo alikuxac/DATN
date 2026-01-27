@@ -45,7 +45,13 @@ export interface IResponse<T> {
   data?: T
 }
 
-export type IResponsePaging<T> = Pick<IResponse<T>, 'statusCode'> & {
-  _metadata: IResponseMetadata;
-  data: Record<string, any>[];
+export interface IResponsePagingPagination {
+  totalPage: number;
+  total: number;
+}
+
+export interface IResponsePaging<T = any> {
+  _metadata?: IResponseMetadata;
+  _pagination: IResponsePagingPagination;
+  data: T[];
 }
