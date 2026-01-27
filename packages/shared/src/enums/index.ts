@@ -18,3 +18,4 @@ export * from "./status-code.enum";
 export * from "./user.enum";
 export * from "./verification.enum";
 export * from "./activity.enum";
+export * from "./shelter.enum";

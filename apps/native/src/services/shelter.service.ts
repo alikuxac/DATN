@@ -32,11 +32,11 @@ export const shelterService = {
     maxDistance: number = 10000 // 10km
   ): Promise<Shelter[]> => {
     return apiService.get<Shelter[]>(
-      `/admin/shelter/nearby/search?lat=${lat}&lng=${lng}&maxDistance=${maxDistance}`
+      `/shelter/nearby/search?lat=${lat}&lng=${lng}&maxDistance=${maxDistance}`
     );
   },
 
   getShelterDetail: async (id: string): Promise<Shelter> => {
-    return apiService.get<Shelter>(`/admin/shelter/${id}`);
+    return apiService.get<Shelter>(`/shelter/${id}`);
   },
 };

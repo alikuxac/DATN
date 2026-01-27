@@ -1,11 +1,13 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { ShelterRepository } from '../repository/repositories/shelter.repository';
+import { ShelterEntity, ShelterDocument } from '../repository/entities/shelter.entity';
 import { ShelterCreateRequestDto } from '../dtos/request/shelter.create.request.dto';
 import { ShelterUpdateRequestDto } from '../dtos/request/shelter.update.request.dto';
-import { ShelterDocument, ENUM_SHELTER_STATUS } from '../repository/entities/shelter.entity';
+
 import { UserDocument } from '@modules/users/repository/entities/user.entity';
 import { Types } from 'mongoose';
 import { IDatabaseFindAllOptions } from '@common/database/interfaces/database.interface';
+import { ENUM_SHELTER_STATUS } from '@repo/shared';
 
 @Injectable()
 export class ShelterService {
@@ -19,9 +21,9 @@ export class ShelterService {
   ): Promise<ShelterDocument> {
     const shelter = await this.shelterRepository.create({
       ...dto,
-      createdBy: user._id,
+      createdBy: user._id.toString(),
       status: ENUM_SHELTER_STATUS.ACTIVE,
-    });
+    } as unknown as ShelterEntity);
 
     return shelter;
   }
@@ -64,9 +66,9 @@ export class ShelterService {
   ): Promise<ShelterDocument> {
     const shelter = await this.findOneById(id);
 
-    const updated = await this.shelterRepository.updateOneById(
-      shelter._id.toString(),
-      dto
+    const updated = await this.shelterRepository.updateRaw(
+      { _id: shelter._id },
+      { $set: dto }
     );
 
     if (!updated) {
@@ -87,9 +89,9 @@ export class ShelterService {
       lastUpdated: new Date()
     }));
 
-    const updated = await this.shelterRepository.updateOneById(
-      shelter._id.toString(),
-      { resources: updatedResources }
+    const updated = await this.shelterRepository.updateRaw(
+      { _id: shelter._id },
+      { $set: { resources: updatedResources } }
     );
 
     if (!updated) {
@@ -113,9 +115,9 @@ export class ShelterService {
       ? ENUM_SHELTER_STATUS.FULL
       : ENUM_SHELTER_STATUS.ACTIVE;
 
-    const updated = await this.shelterRepository.updateOneById(
-      shelter._id.toString(),
-      { currentOccupancy, status }
+    const updated = await this.shelterRepository.updateRaw(
+      { _id: shelter._id },
+      { $set: { currentOccupancy, status } }
     );
 
     if (!updated) {
@@ -128,10 +130,7 @@ export class ShelterService {
   async delete(id: string): Promise<boolean> {
     const shelter = await this.findOneById(id);
 
-    await this.shelterRepository.updateOneById(
-      shelter._id.toString(),
-      { deletedAt: new Date() }
-    );
+    await this.shelterRepository.softDelete(shelter);
 
     return true;
   }

@@ -48,7 +48,7 @@ jobs:
           yarn install --immutable
 
       - name: 🚀 Build APK
-        run: eas build --platform android --profile apk --local --non-interactive --no-wait
+        run: eas build --platform android --profile apk --local --non-interactive --no-wait --output=app-release.apk
         env:
           EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL || 'https://doan-api.alikuxac.xyz' }}
           EXPO_PUBLIC_VIETMAP_API_KEY: ${{ secrets.EXPO_PUBLIC_VIETMAP_API_KEY }}
@@ -59,4 +59,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-release
-          path: apps/native/android/app/build/outputs/apk/release/*.apk
+          path: apps/native/app-release.apk

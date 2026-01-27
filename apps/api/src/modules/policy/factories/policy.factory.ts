@@ -38,6 +38,8 @@ export class PolicyAbilityFactory {
 
             can(ENUM_POLICY_ACTION.READ, ENUM_POLICY_SUBJECT.SESSION, { user: user._id })
             can(ENUM_POLICY_ACTION.UPDATE, ENUM_POLICY_SUBJECT.SESSION, { user: user._id })
+
+            can(ENUM_POLICY_ACTION.READ, ENUM_POLICY_SUBJECT.SHELTER);
         };
 
         switch (user.role) {

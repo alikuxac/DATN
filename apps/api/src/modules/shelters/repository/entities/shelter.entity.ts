@@ -5,28 +5,10 @@ import {
 } from '@common/database/decorators/database.decorator';
 import { DatabaseObjectIdEntityBase } from '@common/database/bases/database.object-id.entity';
 import { IDatabaseDocument } from '@common/database/interfaces/database.interface';
+import { UserEntity } from '@modules/users/repository/entities/user.entity';
+import { Schema } from 'mongoose';
 
-export enum ENUM_SHELTER_STATUS {
-  ACTIVE = 'ACTIVE',
-  INACTIVE = 'INACTIVE',
-  FULL = 'FULL',
-  CLOSED = 'CLOSED'
-}
-
-export enum ENUM_SHELTER_TYPE {
-  EVACUATION = 'EVACUATION',
-  WAREHOUSE = 'WAREHOUSE',
-  MEDICAL = 'MEDICAL',
-  TEMPORARY = 'TEMPORARY'
-}
-
-export interface ShelterResource {
-  name: string;
-  quantity: number;
-  unit: string;
-  category?: string;
-  lastUpdated?: Date;
-}
+import { ENUM_SHELTER_STATUS, ENUM_SHELTER_TYPE, IShelterResource } from '@repo/shared';
 
 export const SHELTER_ENTITY_NAME = 'Shelters';
 
@@ -108,7 +90,7 @@ export class ShelterEntity extends DatabaseObjectIdEntityBase {
     type: Array,
     default: [],
   })
-  resources?: ShelterResource[];
+  resources?: IShelterResource[];
 
   @DatabaseProp({
     required: false,
