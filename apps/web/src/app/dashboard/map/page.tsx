@@ -12,6 +12,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDistanceToNow } from "date-fns";
+import { AssignVolunteerDialog } from "@/components/dashboard/map/AssignVolunteerDialog";
 
 // Placeholder for Vietmap API Key
 const VIETMAP_API_KEY = process.env.NEXT_PUBLIC_VIETMAP_API_KEY || "YOUR_VIETMAP_API_KEY";
@@ -40,6 +41,7 @@ export default function MapPage() {
   // Report Filters
   const [reportTypeFilter, setReportTypeFilter] = useState<string>("all");
   const [reportStatusFilter, setReportStatusFilter] = useState<string>("all");
+  const [assignReportId, setAssignReportId] = useState<string | null>(null);
   
   const [showFilters, setShowFilters] = useState(false);
   const [showLegend, setShowLegend] = useState(true);
@@ -168,6 +170,15 @@ export default function MapPage() {
     };
   }, []);
 
+  useEffect(() => {
+    (window as any).dispatchReport = (id: string) => {
+        setAssignReportId(id);
+    };
+    return () => {
+        delete (window as any).dispatchReport;
+    }
+  }, []);
+
   // Update Markers
   useEffect(() => {
     if (!mapRef.current) return;
@@ -263,6 +274,15 @@ export default function MapPage() {
                     <div class="mt-2 pt-2 border-t text-xs text-gray-500 italic">
                         "${report.notes.length > 50 ? report.notes.substring(0, 50) + '...' : report.notes}"
                     </div>
+                ` : ''}
+                
+                ${report.status === ReportStatus.PENDING ? `
+                    <button 
+                        onclick="window.dispatchReport('${report._id}')"
+                        class="mt-2 w-full bg-blue-600 text-white text-xs font-bold py-1.5 rounded hover:bg-blue-700 transition mb-2"
+                    >
+                        Dispatch Volunteer
+                    </button>
                 ` : ''}
                 
                 <div class="mt-2 pt-2 border-t flex justify-end">
@@ -551,6 +571,13 @@ export default function MapPage() {
                <Button variant="secondary" size="sm" onClick={() => setShowLegend(true)}>Legend</Button>
           )}
       </div>
+      
+      {assignReportId && (
+        <AssignVolunteerDialog 
+            reportId={assignReportId} 
+            onClose={() => setAssignReportId(null)} 
+        />
+      )}
     </div>
   );
 }

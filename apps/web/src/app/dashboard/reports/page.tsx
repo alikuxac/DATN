@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Loader2, Eye, CheckCircle, XCircle, Plus } from "lucide-react";
+import { Calendar as CalendarIcon, Loader2, Eye, CheckCircle, XCircle, Plus, Download } from "lucide-react";
 import { DateRange } from "react-day-picker";
 
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -12,6 +12,8 @@ import { Report, ReportStatus, ReportType } from "@/types";
 import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
+import api from "@/lib/axios";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -75,6 +77,30 @@ export default function ReportsPage() {
     if (val === 'all') setStatus("ALL");
     if (val === 'active') setStatus([ReportStatus.PENDING, ReportStatus.IN_PROGRESS].join(',') as any);
     if (val === 'history') setStatus([ReportStatus.RESOLVED, ReportStatus.REJECTED].join(',') as any);
+    if (val === 'history') setStatus([ReportStatus.RESOLVED, ReportStatus.REJECTED].join(',') as any);
+  };
+
+  const handleExport = async () => {
+    try {
+      const response = await api.get('/report/export', {
+         params: {
+             start: dateRange?.from?.toISOString(),
+             end: dateRange?.to?.toISOString()
+         },
+         responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `reports_export_${format(new Date(), 'yyyyMMdd_HHmm')}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success(t("COMMON.SUCCESS"));
+    } catch (error) {
+       toast.error(t("COMMON.ERROR"));
+    }
   };
   
   const { t } = useLanguage();
@@ -232,6 +258,11 @@ export default function ReportsPage() {
               />
             </PopoverContent>
           </Popover>
+
+          <Button variant="outline" onClick={handleExport}>
+            <Download className="mr-2 h-4 w-4" />
+            Excel
+          </Button>
         </div>
       </div>
 

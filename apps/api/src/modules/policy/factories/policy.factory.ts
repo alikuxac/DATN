@@ -47,6 +47,7 @@ export class PolicyAbilityFactory {
                 can(ENUM_POLICY_ACTION.READ, ENUM_POLICY_SUBJECT.REPORT);
                 can(ENUM_POLICY_ACTION.READ, ENUM_POLICY_SUBJECT.ACTIVITY);
                 can(ENUM_POLICY_ACTION.READ, ENUM_POLICY_SUBJECT.SESSION);
+                can(ENUM_POLICY_ACTION.MANAGE, ENUM_POLICY_SUBJECT.SHELTER);
                 break;
             case ENUM_USER_ROLE.ADMIN:
                 can(ENUM_POLICY_ACTION.MANAGE, ENUM_POLICY_SUBJECT.USER);
@@ -63,6 +64,10 @@ export class PolicyAbilityFactory {
                 // Reports & Others
                 can(ENUM_POLICY_ACTION.MANAGE, ENUM_POLICY_SUBJECT.REPORT);
                 can(ENUM_POLICY_ACTION.READ, ENUM_POLICY_SUBJECT.REPORT);
+
+                // Shelters
+                can(ENUM_POLICY_ACTION.MANAGE, ENUM_POLICY_SUBJECT.SHELTER);
+                can(ENUM_POLICY_ACTION.READ, ENUM_POLICY_SUBJECT.SHELTER);
 
                 can(ENUM_POLICY_ACTION.READ, ENUM_POLICY_SUBJECT.ACTIVITY);
                 can(ENUM_POLICY_ACTION.READ, ENUM_POLICY_SUBJECT.SESSION);

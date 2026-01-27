@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Res, UseGuards } from '@nestjs/common';
+import { Response as ExpressResponse } from 'express';
 import { ReportService } from '@modules/reports/services/reports.service';
 import { ReportCreateByAdminRequestDto } from '@modules/reports/dtos/request/report.create-by-admin.request.dto';
 import { ReportListResponseDto } from '@modules/reports/dtos/response/report.list.reponse.dto';
@@ -18,13 +19,15 @@ import {
 } from '@common/pagination/decorators/pagination.decorator';
 import { PaginationListDto } from '@common/pagination/dtos/pagination.list.dto';
 import { PaginationService } from '@common/pagination/services/pagination.service';
-import { ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS, ENUM_REPORT_SEVERITY, ENUM_REPORT_STATUS, ENUM_REPORT_TYPE, ENUM_REPORT_SOURCE } from '@repo/shared';
+import { ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS, ENUM_REPORT_SEVERITY, ENUM_REPORT_STATUS, ENUM_REPORT_TYPE, ENUM_REPORT_SOURCE, ENUM_USER_ROLE } from '@repo/shared';
+import { BadRequestException, Param } from '@nestjs/common';
 import { UserDocument } from '@modules/users/repository/entities/user.entity';
 import { UserParsePipe } from '@modules/users/pipes/user.parse.pipe';
 import { IResponsePaging } from '@common/response/interfaces/response.interface';
 import { UsersService } from '@modules/users/services/users.service';
 import { Throttle } from '@nestjs/throttler';
 import { PolicyAbilityProtected } from '@modules/policy/decorators/policy.decorator';
+import { PolicyAbilityGuard } from '@modules/policy/guards/policy.ability.guard';
 import { ENUM_POLICY_SUBJECT, ENUM_POLICY_ACTION } from '@repo/shared';
 
 import { UserProtected } from '@modules/users/decorators/user.decorator';
@@ -174,5 +177,74 @@ export class ReportAdminController {
   @Get('/stats')
   async getStats() {
     return this.reportService.getStatistics();
+  }
+
+  @Response('report.assign')
+  @PolicyAbilityProtected({
+    subject: ENUM_POLICY_SUBJECT.REPORT,
+    action: [ENUM_POLICY_ACTION.UPDATE],
+  })
+  @UserProtected()
+  @AuthJwtAccessProtected()
+  @Post(':id/assign')
+  async assign(
+    @AuthJwtPayload('user', UserParsePipe) user: UserDocument,
+    @Param('id') id: string,
+    @Body('volunteerId') volunteerId: string
+  ) {
+    if (!volunteerId) {
+      throw new BadRequestException('report.assign.error.volunteerIdRequired');
+    }
+
+    const report = await this.reportService.findOneById(id);
+    if (!report) throw new BadRequestException('report.error.notFound');
+
+    const volunteer = await this.userService.findOneById(volunteerId);
+    if (!volunteer) throw new BadRequestException('user.error.notFound');
+
+    if (volunteer.role !== ENUM_USER_ROLE.VOLUNTEER) {
+      throw new BadRequestException('user.error.notVolunteer');
+    }
+
+    const assigned = await this.reportService.assignReport(report, volunteer, user);
+
+    this.eventEmitter.emit(
+      'activity.create',
+      new ActivityCreateEvent({
+        user: user._id,
+        type: ENUM_ACTIVITY_TYPE.REPORT_ACCEPT, // Reuse accept for now
+        description: `Admin assigned report ${id} to volunteer ${volunteerId}`,
+        properties: { reportId: String(id), volunteerId: String(volunteerId) }
+      })
+    );
+
+    return assigned;
+  }
+
+  @Get('export')
+  @PolicyAbilityProtected({
+    subject: ENUM_POLICY_SUBJECT.REPORT,
+    action: [ENUM_POLICY_ACTION.READ],
+  })
+  @AuthJwtAccessProtected()
+  @UseGuards(PolicyAbilityGuard)
+  async export(
+    @Res() res: ExpressResponse,
+    @Query('start') start?: string,
+    @Query('end') end?: string,
+  ) {
+    const workbook = await this.reportService.exportToExcel({ start, end });
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename=' + `reports_export_${Date.now()}.xlsx`,
+    );
+
+    await workbook.xlsx.write(res);
+    res.end();
   }
 }

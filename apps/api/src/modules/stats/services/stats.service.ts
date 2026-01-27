@@ -59,12 +59,15 @@ export class StatsService {
     // Daily Growth (New items per day)
     const [
       userCreated, userDeleted,
-      reportCreated, reportDeleted
+      reportCreated, reportDeleted,
+      rescuesTrendData, hotspotsData
     ] = await Promise.all([
       this.usersService.getGrowthStats(startDate, endDate, timezone),
       this.usersService.getDeletedStats(startDate, endDate, timezone),
       this.reportService.getGrowthStats(startDate, endDate, timezone),
-      this.reportService.getDeletedStats(startDate, endDate, timezone)
+      this.reportService.getDeletedStats(startDate, endDate, timezone),
+      this.reportService.getRescuesByDay(startDate, endDate, timezone),
+      this.reportService.getHotspots(5)
     ]);
 
     // Calculate Cumulative
@@ -84,7 +87,9 @@ export class StatsService {
       },
       charts: {
         users,
-        reports
+        reports,
+        rescuesTrend: this.fillDailyData(rescuesTrendData, startDate, endDate),
+        hotspots: hotspotsData.map(h => ({ _id: h._id || 'Unknown', count: h.count }))
       }
     };
   }
@@ -119,6 +124,27 @@ export class StatsService {
       });
 
       // Move to next day
+      currentDate = this.helperDateService.forwardInDays(1, { fromDate: currentDate });
+    }
+    return result;
+  }
+
+  private fillDailyData(
+    data: { _id: string, count: number }[],
+    startDate: Date,
+    endDate: Date,
+  ) {
+    const result = [];
+    let currentDate = new Date(startDate);
+    const end = new Date(endDate);
+    const dataMap = new Map(data.map(item => [item._id, item.count]));
+
+    while (currentDate <= end) {
+      const dateStr = this.helperDateService.format(currentDate, { format: 'yyyy-MM-dd' });
+      result.push({
+        date: dateStr,
+        count: dataMap.get(dateStr) || 0
+      });
       currentDate = this.helperDateService.forwardInDays(1, { fromDate: currentDate });
     }
     return result;

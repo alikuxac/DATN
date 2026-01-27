@@ -33,7 +33,11 @@ import { CreateReportModal } from "@/components/map/CreateReportModal";
 import { MapReportMarker } from "@/components/map/MapReportMarker";
 import { MapRescuerMarker } from "@/components/map/MapRescuerMarker";
 import { ReportDetailSheet } from "@/components/map/ReportDetailSheet";
+
 import { RescuerDetailSheet } from "@/components/map/RescuerDetailSheet";
+import { MapShelterMarker } from "@/components/map/MapShelterMarker";
+import { ShelterDetailSheet } from "@/components/map/ShelterDetailSheet";
+import { shelterService, Shelter } from "@/services/shelter.service";
 
 // Vietmap Imports
 import {
@@ -109,13 +113,17 @@ import { calculateDistance } from "@/utils/geo";
   
     // --- STATE ---
     const [reports, setReports] = useState<IReportListResponse[]>([]);
-    const [rescuers, setRescuers] = useState<RescuerData[]>([]); // Danh sách Rescuer
-  
+    const [nearbyRescuers, setNearbyRescuers] = useState<RescuerData[]>([]);
+    const [shelters, setShelters] = useState<Shelter[]>([]);
+    
+    // Selection State
     const [selectedReport, setSelectedReport] = useState<IReportListResponse | null>(null);
-    const [selectedRescuer, setSelectedRescuer] = useState<RescuerData | null>(
-      null
-    );
-  
+    const [selectedRescuer, setSelectedRescuer] = useState<RescuerData | null>(null);
+    const [selectedShelter, setSelectedShelter] = useState<Shelter | null>(null);
+    
+    // UI State
+    const [filterStatus, setFilterStatus] = useState<string>("ALL");
+    const [isLoading, setIsLoading] = useState(false);
     const [isActionLoading, setIsActionLoading] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
     
@@ -194,7 +202,7 @@ import { calculateDistance } from "@/utils/geo";
     // --- API FETCHING ---
     const fetchData = async () => {
       if (!token) return;
-  
+      setIsLoading(true);
       try {
         const param = {
           regionId: currentRegion!,
@@ -238,14 +246,26 @@ import { calculateDistance } from "@/utils/geo";
 
                  // Deduplicate based on ID
                  const uniqueRescuers = Array.from(new Map(extractedRescuers.map(item => [item._id, item])).values());
-                 setRescuers(uniqueRescuers);
+                 setNearbyRescuers(uniqueRescuers);
             } else {
-               setRescuers([]);
+               setNearbyRescuers([]);
             }
         }
-      } catch (error) {
-        console.error("Fetch data error:", error);
-      }
+          // 3. Fetch shelters if user has location
+          if (userLocation) {
+             const sheltersData = await shelterService.getNearbyShelters(
+                userLocation.latitude,
+                userLocation.longitude,
+                10000 // 10km
+             );
+             setShelters(sheltersData);
+          }
+
+       } catch (error) {
+          console.error("Error fetching map data:", error);
+       } finally {
+          setIsLoading(false);
+       }
     };
   
     // --- SOCKET TRACKING ---
@@ -256,7 +276,7 @@ import { calculateDistance } from "@/utils/geo";
       
       const handleRescuerMoved = (data: { rescuerId: string; lat: number; lng: number }) => {
         // console.log("Rescuer moved:", data);
-        setRescuers((prev) => {
+        setNearbyRescuers((prev) => {
           const exists = prev.find(r => r._id === data.rescuerId);
           if (exists) {
               return prev.map((r) => 
@@ -328,27 +348,77 @@ import { calculateDistance } from "@/utils/geo";
              }));
         };
 
+        const handleReportCancelled = (data: { reportId: string, status: string }) => {
+             console.log("Report cancelled via socket:", data.reportId);
+             setReports(prev => prev.map(r => {
+                 if (r._id === data.reportId) {
+                     return { 
+                        ...r, 
+                        status: ENUM_REPORT_STATUS.PENDING,
+                        rescuer: undefined
+                     };
+                 }
+                 return r;
+             }));
+        };
+
         socket.on('report_created', handleNewReport);
         socket.on('report_accepted', handleReportUpdate);
+        socket.on('report_assigned', handleReportUpdate); // Admin assigned
         socket.on('report_completed', handleReportUpdate);
         socket.on('report_rejected', handleReportUpdate);
+        socket.on('report_cancelled', handleReportCancelled);
 
         return () => {
              // Leave region room when unmounting or changing region
              socket.emit('leave_room', { room: `region_${currentRegion}` });
 
              socket.off('report_created', handleNewReport);
+             socket.off('report_assigned', handleReportUpdate);
              socket.off('report_accepted', handleReportUpdate);
              socket.off('report_completed', handleReportUpdate);
              socket.off('report_rejected', handleReportUpdate);
+             socket.off('report_cancelled', handleReportCancelled);
         };
     }, [socket, currentRegion]);
 
   
+    const getShelterMarkers = useMemo(() => {
+        return shelters.map((shelter) => (
+            <MapShelterMarker
+                key={shelter._id}
+                id={shelter._id}
+                coordinate={[shelter.location.coordinates[0], shelter.location.coordinates[1]]}
+                title={shelter.name}
+                type={shelter.type}
+                status={shelter.status}
+                onPress={() => {
+                   setSelectedReport(null);
+                   setSelectedRescuer(null);
+                   setSelectedShelter(shelter);
+                }}
+            />
+        ));
+    }, [shelters]);
+
+    const getRescuerMarkers = useMemo(() => {
+      return nearbyRescuers.map((rescuer) => (
+        <MapRescuerMarker
+          key={rescuer._id}
+          rescuer={rescuer}
+          onSelected={(r) => {
+            setSelectedReport(null);
+            setSelectedRescuer(r);
+            setSelectedShelter(null);
+          }}
+        />
+      ));
+    }, [nearbyRescuers]);
+
     const isVolunteerMode = useMemo(() => {
       return user?.role === ENUM_USER_ROLE.VOLUNTEER || user?.isRescueMode;
     }, [user]);
-  
+
     // --- LOGIC FILTER REPORTS ---
     const displayedReports = useMemo(() => {
       if (!user) return reports; // Fallback show all while loading user
@@ -367,56 +437,68 @@ import { calculateDistance } from "@/utils/geo";
           } else if (typeof r.rescuer === 'object' && r.rescuer) {
                rRescuerId = (r.rescuer as any)._id?.toString();
           }
-  
-          const isMatch = rRescuerId === currentUserId;
-  
-          return isMatch;
+
+          return rRescuerId === currentUserId;
         });
-  
-        if (myActiveReport) return [myActiveReport];
-  
-        // B. Filter by radius (10km) & Pending status
-        // ALSO: Include my own reports so I don't lose them
-        return reports.filter((r) => {
-           const isMyReport = r.user?._id === currentUserId;
-           if (isMyReport) return true;
-  
-           if (r.status !== ENUM_REPORT_STATUS.PENDING) return false;
-           
-           // If no user location, show all PENDING reports (don't hide them)
-           if (!userLocation) return true;
-           
-           if (!r.location?.coordinates) return false; 
-  
-           const dist = calculateDistance(
-               userLocation.latitude, userLocation.longitude,
-               r.location.coordinates[1], r.location.coordinates[0]
-           );
-           return dist <= 10000;
-        });
+        
+        if (myActiveReport) {
+             return [myActiveReport]; // ONLY show my task
+        }
+
+        // B. If free, show PENDING reports
+        return reports.filter(r => r.status === ENUM_REPORT_STATUS.PENDING);
       }
-  
-      // 2. Admin Mode (Show All)
-      if (isAdmin) return reports;
       
-      // 3. User Mode (Show Own Only)
-      return reports.filter((r) => r.user?._id === currentUserId);
-    }, [reports, user, isVolunteerMode, userLocation]);
+      // 2. User Mode: Show my reports + PENDING/IN_PROGRESS nearby public
+      if (user.role === ENUM_USER_ROLE.USER) {
+          return reports.filter(r => {
+             const isMyReport = r.user?._id === currentUserId;
+             const isActive = [ENUM_REPORT_STATUS.PENDING, ENUM_REPORT_STATUS.IN_PROGRESS].includes(r.status as ENUM_REPORT_STATUS);
+             return isMyReport || isActive;
+          });
+      }
+
+      // 3. Admin Mode: Show basic filter
+      if (isAdmin) {
+         if (filterStatus === "ALL") return reports;
+         return reports.filter(r => r.status === filterStatus);
+      }
+
+      return reports;
+    }, [reports, user, isVolunteerMode, filterStatus]);
+
+    const getReportMarkers = useMemo(() => {
+      return displayedReports.map((report) => (
+        <MapReportMarker
+          key={report._id}
+          report={report}
+          onSelected={(r) => {
+            setSelectedRescuer(null);
+            setSelectedReport(r);
+            setSelectedShelter(null);
+          }}
+        />
+      ));
+    }, [displayedReports]);
   
     const displayedRescuers = useMemo(() => {
       if (!user) return [];
       const isAdmin = user.role === ENUM_USER_ROLE.ADMIN || user.role === ENUM_USER_ROLE.SUPER_ADMIN;
   
-      const result = isAdmin ? rescuers : 
+      const result = isAdmin ? nearbyRescuers : 
                      user.role === ENUM_USER_ROLE.USER ? (() => {
                         const myActiveVolunteers = reports
                           .filter(r => r.user?._id.toString() === user._id.toString() && r.status === ENUM_REPORT_STATUS.IN_PROGRESS)
                           .map(r => typeof r.rescuer === 'string' ? r.rescuer : r.rescuer?._id.toString());
-                        return rescuers.filter(res => myActiveVolunteers.includes(res._id.toString()));
+                        return nearbyRescuers.filter(res => myActiveVolunteers.includes(res._id.toString()));
                      })() : [];
       
       return result;
-    }, [rescuers, reports, user]);
+    }, [nearbyRescuers, reports, user]);
+
+
+
+
   
     // --- LOCATION TRACKING FOR VOLUNTEER ---
     // Sync active report ID to LocationContext so it sends 'rescuer_moved'
@@ -458,11 +540,14 @@ import { calculateDistance } from "@/utils/geo";
                       setSelectedReport(null);
                   } catch (e) {
                       showError("Lỗi", "Không thể từ chối báo cáo.");
-                  } finally {
-                      setIsActionLoading(false);
                   }
                   return;
             }
+        } else if (action === "cancel") {
+          await apiService.post(`/user/report/${selectedReport._id}/cancel`, {});
+          showSuccess("Đã hủy tiếp nhận. Báo cáo sẽ được giao cho người khác.");
+          await fetchData();
+          setSelectedReport(null);
         } else if (action === "complete") {
           await apiService.post(`/user/report/${selectedReport._id}/complete`, {});
           showSuccess("Nhiệm vụ hoàn thành! Cảm ơn bạn.");
@@ -521,8 +606,13 @@ import { calculateDistance } from "@/utils/geo";
           logoEnabled={false}
           attributionEnabled={false}
           onPress={() => {
+            // Clear selections
             setSelectedReport(null);
             setSelectedRescuer(null);
+            setSelectedShelter(null);
+            
+            // Re-fetch
+            fetchData();
           }}
           onRegionDidChange={(event) => {
               if (event && event.geometry && event.geometry.coordinates) {
@@ -539,29 +629,10 @@ import { calculateDistance } from "@/utils/geo";
           animationMode="flyTo"
         />
         
-        {/* 1. REPORT MARKERS (Trên cùng để dễ bấm) */}
-        {displayedReports.map((report) => (
-          <MapReportMarker
-            key={report._id}
-            report={report}
-            onSelected={(r) => {
-              setSelectedRescuer(null);
-              setSelectedReport(r);
-            }}
-          />
-        ))}
-
-        {/* 2. RESCUER MARKERS */}
-        {displayedRescuers.map((rescuer) => (
-          <MapRescuerMarker
-            key={rescuer._id}
-            rescuer={rescuer}
-            onSelected={(r) => {
-              setSelectedReport(null);
-              setSelectedRescuer(r);
-            }}
-          />
-        ))}
+        {/* Render Markers */}
+        {getReportMarkers}
+        {getRescuerMarkers}
+        {getShelterMarkers}
 
         {/* 3. MY LOCATION (Dưới cùng để tránh chặn click của Marker) */}
         {userLocation && (
@@ -682,28 +753,34 @@ import { calculateDistance } from "@/utils/geo";
         onPickLocation={handlePickLocation}
       />
 
-      {/* --- BOTTOM SHEET: REPORT DETAIL (NO NAVIGATION) --- */}
-      {selectedReport && (
-        <ReportDetailSheet
+      <ReportDetailSheet
           selectedReport={selectedReport}
           onClose={() => setSelectedReport(null)}
           isVolunteerMode={!!isVolunteerMode}
           user={user}
-          userLocation={userLocation}
+          userLocation={
+             userLocation 
+             ? { latitude: userLocation.latitude, longitude: userLocation.longitude } 
+             : null
+          }
           isActionLoading={isActionLoading}
           handleReportAction={handleReportAction}
           handleCall={handleCall}
+      />
+      
+      {selectedRescuer && (
+        <RescuerDetailSheet
+           selectedRescuer={selectedRescuer}
+           onClose={() => setSelectedRescuer(null)}
+           handleCall={handleCall}
         />
       )}
 
-      {/* --- BOTTOM SHEET: RESCUER INFO (Chỉ hiện khi click vào Rescuer marker) --- */}
-      {selectedRescuer && (
-        <RescuerDetailSheet
-          selectedRescuer={selectedRescuer}
-          onClose={() => setSelectedRescuer(null)}
-          handleCall={handleCall}
-        />
-      )}
+      <ShelterDetailSheet
+         shelter={selectedShelter}
+         onClose={() => setSelectedShelter(null)}
+         userLocation={userLocation ? { lat: userLocation.latitude, lng: userLocation.longitude } : null}
+      />
     </View>
   );
 }

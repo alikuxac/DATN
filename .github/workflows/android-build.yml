@@ -2,13 +2,13 @@ name: Build Android APK
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - development
-    paths:
-      - "apps/native/**"
-      - "package.json"
-      - "yarn.lock"
+  # push:
+  #   branches:
+  #     - development
+  #   paths:
+  #     - "apps/native/**"
+  #     - "package.json"
+  #     - "yarn.lock"
 
 jobs:
   build:

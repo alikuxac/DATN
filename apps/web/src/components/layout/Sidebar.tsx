@@ -13,7 +13,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Shield,
-  Settings2
+  Settings2,
+  Warehouse
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -89,6 +90,11 @@ export function Sidebar() {
           title: t("SIDEBAR.REPORTS"),
           href: "/dashboard/reports",
           icon: FileText,
+        },
+        {
+          title: t("SIDEBAR.SHELTERS"),
+          href: "/dashboard/shelters",
+          icon: Warehouse,
         },
       ],
     },

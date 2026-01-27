@@ -17,4 +17,5 @@ export enum ENUM_POLICY_SUBJECT {
     UTILITIES = 'UTILITIES',
     REPORT = 'REPORT',
     TEAM = 'TEAM',
+    SHELTER = 'SHELTER',
 }

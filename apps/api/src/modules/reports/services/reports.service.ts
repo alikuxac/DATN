@@ -580,10 +580,55 @@ export class ReportService {
 
   async cancelReport(report: ReportDocument, options?: IDatabaseUpdateOptions) {
     report.status = ENUM_REPORT_STATUS.PENDING;
+    report.rescuer = null;
+    report.acceptedAt = null;
+
     const saved = await this.reportRepository.save(report, options);
     await this.cacheManager.del(`report:detail:${report._id}`);
 
+    this.eventEmitter.emit('report.cancelled', {
+      reportId: saved._id.toString(),
+      regionId: saved.regionId,
+      report: saved,
+    });
+
     return saved;
+  }
+
+  async assignReport(report: ReportDocument, volunteer: UserDocument, assigner: UserDocument, options?: IDatabaseUpdateOptions) {
+    if (report.status !== ENUM_REPORT_STATUS.PENDING) {
+      throw new BadRequestException('report.error.notPending');
+    }
+
+    const updated = await this.reportRepository.updateRaw(
+      { _id: report._id },
+      {
+        status: ENUM_REPORT_STATUS.IN_PROGRESS,
+        rescuer: volunteer._id,
+        acceptedAt: new Date(),
+      },
+      options
+    );
+
+    if (updated) {
+      await this.cacheManager.del(`report:detail:${report._id}`);
+
+      this.eventEmitter.emit('report.assigned', {
+        reportId: updated._id.toString(),
+        rescuerId: volunteer._id.toString(),
+        assignerId: assigner._id.toString(),
+        regionId: updated.regionId,
+        report: updated
+      });
+
+      this.eventEmitter.emit('report.accepted', {
+        reportId: updated._id.toString(),
+        rescuerId: volunteer._id.toString(),
+        regionId: updated.regionId,
+        report: updated
+      });
+    }
+    return updated;
   }
 
   async updateByUser(
@@ -657,6 +702,42 @@ export class ReportService {
     return false;
   }
 
+  async getRescuesByDay(startDate: Date, endDate: Date, timezone = '+07:00') {
+    return this.reportRepository.findAllAggregate<{ _id: string; count: number }>([
+      {
+        $match: {
+          status: ENUM_REPORT_STATUS.RESOLVED,
+          resolvedAt: { $gte: startDate, $lte: endDate },
+        },
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$resolvedAt', timezone } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+  }
+
+  async getHotspots(limit = 5) {
+    return this.reportRepository.findAllAggregate<{ _id: string; count: number }>([
+      {
+        $match: {
+          status: { $ne: ENUM_REPORT_STATUS.REJECTED }
+        }
+      },
+      {
+        $group: {
+          _id: '$regionId',
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { count: -1 } },
+      { $limit: limit }
+    ]);
+  }
+
   async getGrowthStats(startDate: Date, endDate: Date, timezone = '+07:00') {
     return this.reportRepository.findAllAggregate<{ _id: string; count: number }>([
       {
@@ -695,5 +776,66 @@ export class ReportService {
   async getStatistics() {
     const stats = await this.reportRepository.getStatistics();
     return stats[0] || { avgResponseTime: 0, avgRescueTime: 0, avgTotalTime: 0, count: 0 };
+  }
+  async exportToExcel(filters: { start?: string; end?: string }): Promise<any> {
+    const find: Record<string, any> = {};
+
+    if (filters.start && filters.end) {
+      find.createdAt = {
+        $gte: new Date(filters.start),
+        $lte: new Date(filters.end),
+      };
+    }
+
+    const reports = await this.reportRepository.findAll(find, {
+      join: [
+        { path: 'user' },
+        { path: 'rescuer' }
+      ]
+    });
+
+    const ExcelJS = require('exceljs');
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Reports');
+
+    worksheet.columns = [
+      { header: 'ID', key: 'id', width: 25 },
+      { header: 'Title', key: 'title', width: 30 },
+      { header: 'Type', key: 'type', width: 15 },
+      { header: 'Status', key: 'status', width: 15 },
+      { header: 'Notes', key: 'notes', width: 40 },
+      { header: 'Address', key: 'address', width: 40 },
+      { header: 'Reporter Name', key: 'reporterName', width: 25 },
+      { header: 'Reporter Phone', key: 'reporterPhone', width: 15 },
+      { header: 'Rescuer Name', key: 'rescuerName', width: 25 },
+      { header: 'People Count', key: 'peopleCount', width: 10 },
+      { header: 'Severity', key: 'severity', width: 10 },
+      { header: 'Created At', key: 'createdAt', width: 20 },
+    ];
+
+    reports.forEach((report) => {
+      const reporter = report.user as any;
+      const rescuer = report.rescuer as any;
+
+      worksheet.addRow({
+        id: report._id.toString(),
+        title: report.title,
+        type: report.type,
+        status: report.status,
+        notes: report.notes || '',
+        address: report.address || '',
+        reporterName: reporter ? `${reporter.firstName} ${reporter.lastName}` : 'N/A',
+        reporterPhone: reporter ? reporter.mobileNumber : 'N/A',
+        rescuerName: rescuer ? `${rescuer.firstName} ${rescuer.lastName}` : 'Unassigned',
+        peopleCount: report.peopleCount,
+        severity: report.severity,
+        createdAt: new Date(report.createdAt).toLocaleString('vi-VN'),
+      });
+    });
+
+    // Formatting Header
+    worksheet.getRow(1).font = { bold: true };
+
+    return workbook;
   }
 }

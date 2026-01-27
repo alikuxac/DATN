@@ -18,6 +18,8 @@ import { AuthAdminController } from "@modules/auth/controllers/auth.admin.contro
 import { StatsModule } from "@modules/stats/stats.module";
 import { StatsAdminController } from "@modules/stats/controllers/stats.admin.controller";
 import { NotificationModule } from "@modules/notifications/notification.module";
+import { ShelterModule } from "@modules/shelters/shelter.module";
+import { ShelterAdminController } from "@modules/shelters/controllers/shelter.admin.controller";
 @Module({
   imports: [
     UsersModule,
@@ -29,6 +31,7 @@ import { NotificationModule } from "@modules/notifications/notification.module";
     VerificationModule,
     StatsModule,
     NotificationModule,
+    ShelterModule,
     BullModule.registerQueueAsync({
       name: ENUM_WORKER_QUEUES.EMAIL_QUEUE,
     })
@@ -40,7 +43,8 @@ import { NotificationModule } from "@modules/notifications/notification.module";
     AuthAdminController,
     ActivityAdminController,
     ReportAdminController,
-    StatsAdminController
+    StatsAdminController,
+    ShelterAdminController
   ],
 })
 export class RouterAdminModule { }

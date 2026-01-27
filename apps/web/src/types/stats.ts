@@ -12,5 +12,7 @@ export interface DashboardStats {
   charts: {
     users: { date: string, count: number }[];
     reports: { date: string, count: number }[];
+    rescuesTrend: { date: string, count: number }[];
+    hotspots: { _id: string, count: number, name?: string }[];
   };
 }

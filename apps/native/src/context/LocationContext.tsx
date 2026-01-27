@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import * as Location from 'expo-location';
+import { Alert } from 'react-native';
 import { io, Socket } from 'socket.io-client';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setRegionId } from '@/store/slices/appSlice';
@@ -51,6 +52,20 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       auth: { token },
       query: { userId: user?._id },
       transports: ['websocket'],
+    });
+
+    // Listen for assignment notifications
+    socketRef.current.on('notification', (data: { title: string; message: string; type: string; data?: any }) => {
+      console.log('[LocationContext] Notification received:', data);
+      if (data.type === 'ASSIGNMENT') {
+        Alert.alert(
+          data.title || 'Nhiệm vụ mới',
+          data.message || 'Bạn đã được chỉ định một nhiệm vụ cứu trợ mới.',
+          [
+            { text: 'OK', style: 'default' }
+          ]
+        );
+      }
     });
 
     const handleNewLocation = (lat: number, lng: number) => {

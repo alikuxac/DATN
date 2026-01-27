@@ -241,10 +241,26 @@ export default function ReportsScreen() {
            }));
       };
 
+      const handleReportCancelled = (payload: { reportId: string, status: string }) => {
+           console.log("Report cancelled via socket (List):", payload.reportId);
+           setData(prev => prev.map(r => {
+               if (r._id === payload.reportId) {
+                   return { 
+                      ...r, 
+                      status: ENUM_REPORT_STATUS.PENDING,
+                      rescuer: undefined
+                   };
+               }
+               return r;
+           }));
+      };
+
       socket.on('report_created', handleNewReport);
       socket.on('report_accepted', handleReportUpdate);
+      socket.on('report_assigned', handleReportUpdate); // Admin assigned
       socket.on('report_completed', handleReportUpdate);
       socket.on('report_rejected', handleReportUpdate);
+      socket.on('report_cancelled', handleReportCancelled);
 
       return () => {
            // Leave region room when unmounting or changing region
@@ -252,8 +268,10 @@ export default function ReportsScreen() {
 
            socket.off('report_created', handleNewReport);
            socket.off('report_accepted', handleReportUpdate);
+           socket.off('report_assigned', handleReportUpdate);
            socket.off('report_completed', handleReportUpdate);
            socket.off('report_rejected', handleReportUpdate);
+           socket.off('report_cancelled', handleReportCancelled);
       };
   }, [socket, currentRegion, appliedTypeFilter, appliedStatusFilter, appliedSourceFilter]);
 
@@ -397,6 +415,33 @@ export default function ReportsScreen() {
     );
   };
 
+  // 6. CANCEL REPORT (Volunteer cancels accepted mission)
+  const handleCancel = async (id: string) => {
+     Alert.alert(
+      t('COMMON.CONFIRM') || "Confirm",
+      t('REPORT.CONFIRM.CANCEL') || "Are you sure you want to cancel this mission? The report will be available for others.",
+      [
+        { text: t('COMMON.NO') || "No", style: "cancel" },
+        {
+          text: t('COMMON.YES') || "Yes",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setIsSubmitting(true);
+              await apiService.post(`/user/report/${id}/cancel`, {});
+              Alert.alert(t('COMMON.SUCCESS') || "Success", t('REPORT.SUCCESS.CANCELLED') || "Mission cancelled. Report is now available for others.");
+              fetchReports();
+            } catch (error: any) {
+               Alert.alert("Error", error?.response?.data?.message || "Cannot cancel");
+            } finally {
+              setIsSubmitting(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleViewOnMap = (lat: number, long: number) => {
     router.push({
         pathname: "/(tabs)/map",
@@ -412,11 +457,12 @@ export default function ReportsScreen() {
       handleReject={handleReject}
       handleResolve={handleResolve}
       handleDelete={handleDelete}
+      handleCancel={handleCancel}
       setEditingReport={setEditingReport}
       handleViewOnMap={handleViewOnMap}
       isOwner={user?._id === item.by || user?._id === item.by?._id}
     />
-  ), [user, handleAccept, handleReject, handleResolve, handleDelete, setEditingReport]);
+  ), [user, handleAccept, handleReject, handleResolve, handleDelete, handleCancel, setEditingReport]);
 
   // --- MAIN RENDER ---
   if (!isReady) {

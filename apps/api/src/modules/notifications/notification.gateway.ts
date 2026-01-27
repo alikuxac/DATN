@@ -206,6 +206,24 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
     });
   }
 
+  @OnEvent('report.assigned')
+  handleReportAssigned(payload: { reportId: string; rescuerId: string; assignerId: string; report: any }) {
+    const { reportId, rescuerId } = payload;
+    this.logger.log(`Report ${reportId} manually assigned to ${rescuerId}`);
+
+    // Notify the volunteer explicitly
+    this.server.to(`user_${rescuerId}`).emit('notification', {
+      title: '🔔 Nhiệm vụ mới!',
+      message: 'Admin đã chỉ định bạn một nhiệm vụ cứu trợ mới.',
+      type: 'ASSIGNMENT',
+      data: { reportId }
+    });
+
+    this.server.to(`user_${rescuerId}`).emit('report_assigned', {
+      reportId
+    });
+  }
+
   @OnEvent('report.accepted')
   handleReportAccepted(payload: { reportId: string; rescuerId: string; regionId?: string; report: any }) {
     const { reportId, rescuerId, regionId, report } = payload;
@@ -295,5 +313,35 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
         isGuest: true
       });
     }
+  }
+
+  @OnEvent('report.cancelled')
+  handleReportCancelled(payload: { reportId: string; regionId?: string; report: any }) {
+    const { reportId, regionId, report } = payload;
+    this.logger.log(`Report ${reportId} cancelled by rescuer. Returning to PENDING.`);
+
+    // Broadcast to Region (So volunteers see it's available again)
+    if (regionId) {
+      this.server.to(`region_${regionId}`).emit('report_cancelled', {
+        reportId,
+        status: 'PENDING',
+      });
+    }
+
+    // Notify the report owner if exists
+    if (report?.user) {
+      const userId = typeof report.user === 'object' ? report.user._id : report.user;
+      this.server.to(`user_${userId}`).emit('report_cancelled', {
+        reportId,
+        status: 'PENDING',
+        message: 'Tình nguyện viên đã hủy nhiệm vụ. Báo cáo đang chờ người khác nhận.',
+      });
+    }
+
+    // Also notify admins
+    this.server.to('admin_room').emit('report_cancelled', {
+      reportId,
+      status: 'PENDING',
+    });
   }
 }

@@ -401,10 +401,23 @@ export const ReportDetailSheet = ({
               <View className="flex-[2] flex-row gap-2">
                  <AppButton
                   disabled={isActionLoading}
-                  onPress={() => setShowRejectModal(true)} 
-                  className="flex-1 bg-red-100 dark:bg-red-900/30 rounded-xl justify-center items-center"
+                  onPress={() => {
+                    Alert.alert(
+                      t('COMMON.CONFIRM') || 'Confirm',
+                      t('REPORT.CONFIRM.CANCEL') || 'Are you sure you want to cancel this mission? The report will be available for others.',
+                      [
+                        { text: t('COMMON.NO') || 'No', style: 'cancel' },
+                        { 
+                          text: t('COMMON.YES') || 'Yes', 
+                          style: 'destructive',
+                          onPress: () => handleReportAction("cancel")
+                        }
+                      ]
+                    );
+                  }} 
+                  className="flex-1 bg-orange-100 dark:bg-orange-900/30 rounded-xl justify-center items-center"
                 >
-                  <Ban size={24} className="text-red-600 dark:text-red-400" />
+                  <Icon name="CircleX" size={24} className="text-orange-600 dark:text-orange-400" />
                 </AppButton>
                 <AppButton
                   disabled={isActionLoading}

@@ -17,7 +17,13 @@
 
     "ERR_UPDATE_FAILED": "Failed to save settings",
     "UNVERIFIED_ACCOUNT_WARNING": "Account Unverified",
-    "UNVERIFIED_ACCOUNT_DESC": "Please verify your email and phone number to access all features."
+    "UNVERIFIED_ACCOUNT_DESC": "Please verify your email and phone number to access all features.",
+    "ACTIONS": "Actions",
+    "PAGINATION": {
+      "PREVIOUS": "Previous",
+      "NEXT": "Next",
+      "PAGE_OF": "Page {{page}} of {{total}}"
+    }
   },
 
   "AUTH": {
@@ -305,6 +311,7 @@
     "LIVE_MAP": "Live Map",
     "NOTIFICATIONS": "Notifications",
     "USERS": "Users",
+    "SHELTERS": "Shelters & Resources",
     "LOGOUT": "Logout",
     "LOGOUT_CONFIRM": "Are you sure you want to logout?"
   },
@@ -313,5 +320,74 @@
     "DESC": "Manage your active sessions and logged-in devices.",
     "REVOKE_SUCCESS": "Session revoked successfully",
     "REVOKE_FAILED": "Failed to revoke session"
+  },
+  "DISPATCH": {
+    "TITLE": "Dispatch Volunteer",
+    "SUCCESS": "Dispatch successful",
+    "ERROR": "Dispatch failed",
+    "NO_VOLUNTEERS": "No active volunteers found.",
+    "CONFIRM": "Confirm Dispatch"
+  },
+  "SHELTERS": {
+    "TITLE": "Shelters & Resources",
+    "SUBTITLE": "Manage evacuation shelters, warehouses, and resources",
+    "CREATE": "Create New",
+    "CREATE_TITLE": "Create New Shelter",
+    "EDIT_TITLE": "Edit Shelter",
+    "SEARCH_PLACEHOLDER": "Search by name, address...",
+    "TYPE_FILTER": "Type",
+    "STATUS_FILTER": "Status",
+    "ALL_TYPES": "All Types",
+    "ALL_STATUSES": "All Statuses",
+    "NO_RESULTS": "No shelters found.",
+    "COL_NAME": "Name",
+    "COL_TYPE": "Type",
+    "COL_STATUS": "Status",
+    "COL_ADDRESS": "Address",
+    "COL_CAPACITY": "Capacity",
+    "COL_CONTACT": "Contact",
+    "TYPE": {
+      "EVACUATION": "Evacuation",
+      "WAREHOUSE": "Warehouse",
+      "MEDICAL": "Medical",
+      "TEMPORARY": "Temporary"
+    },
+    "STATUS": {
+      "ACTIVE": "Active",
+      "INACTIVE": "Inactive",
+      "FULL": "Full",
+      "CLOSED": "Closed"
+    },
+    "FIELD_NAME": "Shelter Name",
+    "FIELD_NAME_PLACEHOLDER": "Enter shelter name",
+    "FIELD_TYPE": "Type",
+    "FIELD_STATUS": "Status",
+    "FIELD_ADDRESS": "Address",
+    "FIELD_ADDRESS_PLACEHOLDER": "Enter full address",
+    "FIELD_REGION": "Region",
+    "FIELD_LAT": "Latitude",
+    "FIELD_LNG": "Longitude",
+    "FIELD_CAPACITY": "Capacity",
+    "FIELD_OCCUPANCY": "Current Occupancy",
+    "FIELD_CONTACT_PERSON": "Contact Person",
+    "FIELD_CONTACT_PERSON_PLACEHOLDER": "Name of contact person",
+    "FIELD_CONTACT_PHONE": "Phone Number",
+    "FIELD_DESCRIPTION": "Description",
+    "FIELD_DESCRIPTION_PLACEHOLDER": "Detailed description",
+    "FIELD_FACILITIES": "Facilities",
+    "FACILITIES": {
+      "ELECTRICITY": "Electricity",
+      "WATER": "Water",
+      "MEDICAL": "Medical",
+      "KITCHEN": "Kitchen",
+      "RESTROOM": "Restroom"
+    },
+    "SELECT_TYPE": "Select Type",
+    "CREATE_SUCCESS": "Shelter created successfully",
+    "CREATE_ERROR": "Failed to create shelter",
+    "UPDATE_SUCCESS": "Shelter updated successfully",
+    "UPDATE_ERROR": "Failed to update shelter",
+    "DELETE_SUCCESS": "Shelter deleted successfully",
+    "DELETE_ERROR": "Failed to delete shelter"
   }
 }

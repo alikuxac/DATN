@@ -11,6 +11,7 @@ interface ReportCardProps {
   handleReject: (id: string, data?: any) => void;
   handleResolve: (id: string) => void;
   handleDelete: (id: string) => void;
+  handleCancel?: (id: string) => void;
   setEditingReport: (report: any) => void;
   handleViewOnMap: (lat: number, long: number) => void;
   isOwner?: boolean;
@@ -23,6 +24,7 @@ export const ReportCard = ({
   handleReject,
   handleResolve,
   handleDelete,
+  handleCancel,
   setEditingReport,
   handleViewOnMap,
   isOwner: isOwnerProp,
@@ -38,8 +40,9 @@ export const ReportCard = ({
   const isAdmin = user?.role === ENUM_USER_ROLE.ADMIN;
   const isVolunteer = user?.isVolunteer;
 
-  // Fix: Check item.volunteer instead of item.rescuer
-  const isMyMission = isVolunteer && item.status === ENUM_REPORT_STATUS.IN_PROGRESS && item.volunteer === currentUserId;
+  // Fix: Check rescuer field
+  const rescuerId = typeof item.rescuer === 'object' ? item.rescuer?._id : item.rescuer;
+  const isMyMission = isVolunteer && item.status === ENUM_REPORT_STATUS.IN_PROGRESS && rescuerId === currentUserId;
 
   const canEdit =
     (isOwner || isAdmin) && item.status === ENUM_REPORT_STATUS.PENDING;
@@ -50,8 +53,9 @@ export const ReportCard = ({
     item.status === ENUM_REPORT_STATUS.PENDING &&
     !isOwner; // Cannot accept own report
   const canReject =
-    (isAdmin && item.status === ENUM_REPORT_STATUS.PENDING) || isMyMission;
+    isAdmin && item.status === ENUM_REPORT_STATUS.PENDING; // Only admin can reject PENDING reports
   const canResolve = isMyMission; // Rescuer can resolve
+  const canCancel = isMyMission && !!handleCancel; // Volunteer can cancel their accepted mission
 
   // ... (color helpers omit)
   const getSeverityColor = (severity: ENUM_REPORT_SEVERITY) => {
@@ -397,6 +401,17 @@ export const ReportCard = ({
             </AppText>
           </TouchableOpacity>
         )}
+        {canCancel && (
+          <TouchableOpacity
+            onPress={() => handleCancel!(item._id)}
+            className="flex-1 bg-orange-100 dark:bg-orange-500/10 px-3 py-2.5 rounded-xl flex-row items-center justify-center gap-2"
+          >
+            <Icon name="CircleX" className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+            <AppText className="text-orange-600 dark:text-orange-400 font-sans-bold text-xs">
+              {t('REPORT.CARD.BTN_CANCEL') || 'Cancel'}
+            </AppText>
+          </TouchableOpacity>
+        )}
         {canReject && (
           <TouchableOpacity
             onPress={() => handleReject(item._id)}
@@ -404,7 +419,7 @@ export const ReportCard = ({
           >
             <Icon name="CircleX" className="w-4 h-4 text-red-600 dark:text-red-400" />
             <AppText className="text-red-600 dark:text-red-400 font-sans-bold text-xs">
-              {isAdmin ? t('REPORT.CARD.BTN_REJECT') : t('REPORT.CARD.BTN_ABORT')}
+              {t('REPORT.CARD.BTN_REJECT')}
             </AppText>
           </TouchableOpacity>
         )}

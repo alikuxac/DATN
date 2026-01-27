@@ -16,7 +16,12 @@
 
     "ERR_UPDATE_FAILED": "Không thể lưu cài đặt",
     "UNVERIFIED_ACCOUNT_WARNING": "Tài khoản chưa xác thực",
-    "UNVERIFIED_ACCOUNT_DESC": "Vui lòng xác thực email và số điện thoại để sử dụng đầy đủ tính năng."
+    "UNVERIFIED_ACCOUNT_DESC": "Vui lòng xác thực email và số điện thoại để sử dụng đầy đủ tính năng.",
+    "PAGINATION": {
+      "PREVIOUS": "Trước",
+      "NEXT": "Sau",
+      "PAGE_OF": "Trang {{page}} trên {{total}}"
+    }
   },
   "AUTH": {
     "LOGIN_TITLE": "Đăng nhập",
@@ -277,6 +282,7 @@
     "LIVE_MAP": "Bản đồ",
     "NOTIFICATIONS": "Thông báo",
     "USERS": "Người dùng",
+    "SHELTERS": "Kho & Điểm tập kết",
     "LOGOUT": "Đăng xuất",
     "LOGOUT_CONFIRM": "Bạn có chắc chắn muốn đăng xuất không?"
   },
@@ -285,5 +291,74 @@
     "DESC": "Quản lý các thiết bị và phiên đăng nhập hiện tại của bạn.",
     "REVOKE_SUCCESS": "Đã đăng xuất thiết bị thành công",
     "REVOKE_FAILED": "Không thể đăng xuất thiết bị"
+  },
+  "DISPATCH": {
+    "TITLE": "Điều phối tình nguyện viên",
+    "SUCCESS": "Điều phối thành công",
+    "ERROR": "Điều phối thất bại",
+    "NO_VOLUNTEERS": "Không tìm thấy tình nguyện viên hoạt động.",
+    "CONFIRM": "Xác nhận điều phối"
+  },
+  "SHELTERS": {
+    "TITLE": "Quản lý Kho & Điểm tập kết",
+    "SUBTITLE": "Quản lý các điểm sơ tán, kho hàng cứu trợ và tài nguyên",
+    "CREATE": "Tạo điểm mới",
+    "CREATE_TITLE": "Tạo điểm tập kết mới",
+    "EDIT_TITLE": "Chỉnh sửa điểm tập kết",
+    "SEARCH_PLACEHOLDER": "Tìm kiếm theo tên, địa chỉ...",
+    "TYPE_FILTER": "Loại",
+    "STATUS_FILTER": "Trạng thái",
+    "ALL_TYPES": "Tất cả loại",
+    "ALL_STATUSES": "Tất cả trạng thái",
+    "NO_RESULTS": "Không tìm thấy điểm tập kết nào.",
+    "COL_NAME": "Tên",
+    "COL_TYPE": "Loại",
+    "COL_STATUS": "Trạng thái",
+    "COL_ADDRESS": "Địa chỉ",
+    "COL_CAPACITY": "Sức chứa",
+    "COL_CONTACT": "Liên hệ",
+    "TYPE": {
+      "EVACUATION": "Điểm sơ tán",
+      "WAREHOUSE": "Kho hàng",
+      "MEDICAL": "Y tế",
+      "TEMPORARY": "Tạm thời"
+    },
+    "STATUS": {
+      "ACTIVE": "Hoạt động",
+      "INACTIVE": "Không hoạt động",
+      "FULL": "Đã đầy",
+      "CLOSED": "Đã đóng"
+    },
+    "FIELD_NAME": "Tên điểm tập kết",
+    "FIELD_NAME_PLACEHOLDER": "Nhập tên điểm tập kết",
+    "FIELD_TYPE": "Loại",
+    "FIELD_STATUS": "Trạng thái",
+    "FIELD_ADDRESS": "Địa chỉ",
+    "FIELD_ADDRESS_PLACEHOLDER": "Nhập địa chỉ đầy đủ",
+    "FIELD_REGION": "Khu vực",
+    "FIELD_LAT": "Vĩ độ",
+    "FIELD_LNG": "Kinh độ",
+    "FIELD_CAPACITY": "Sức chứa",
+    "FIELD_OCCUPANCY": "Số người hiện tại",
+    "FIELD_CONTACT_PERSON": "Người liên hệ",
+    "FIELD_CONTACT_PERSON_PLACEHOLDER": "Tên người phụ trách",
+    "FIELD_CONTACT_PHONE": "Số điện thoại",
+    "FIELD_DESCRIPTION": "Mô tả",
+    "FIELD_DESCRIPTION_PLACEHOLDER": "Mô tả chi tiết về điểm tập kết",
+    "FIELD_FACILITIES": "Tiện nghi",
+    "FACILITIES": {
+      "ELECTRICITY": "Điện",
+      "WATER": "Nước",
+      "MEDICAL": "Y tế",
+      "KITCHEN": "Bếp ăn",
+      "RESTROOM": "Nhà vệ sinh"
+    },
+    "SELECT_TYPE": "Chọn loại",
+    "CREATE_SUCCESS": "Tạo điểm tập kết thành công",
+    "CREATE_ERROR": "Không thể tạo điểm tập kết",
+    "UPDATE_SUCCESS": "Cập nhật thành công",
+    "UPDATE_ERROR": "Không thể cập nhật",
+    "DELETE_SUCCESS": "Xóa thành công",
+    "DELETE_ERROR": "Không thể xóa"
   }
 }
