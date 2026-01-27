@@ -12,22 +12,6 @@ import { ENUM_SHELTER_STATUS, ENUM_SHELTER_TYPE, IShelterResource } from '@repo/
 
 export const SHELTER_ENTITY_NAME = 'Shelters';
 
-@DatabaseEntity({ _id: false, timestamps: false })
-export class ShelterLocation {
-  @DatabaseProp({
-    type: String,
-    enum: ['Point'],
-    default: 'Point',
-    required: true,
-  })
-  type: string;
-
-  @DatabaseProp({
-    type: [Number],
-    required: true,
-  })
-  coordinates: number[];
-}
 
 @DatabaseEntity({
   collection: SHELTER_ENTITY_NAME,
