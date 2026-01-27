@@ -26,10 +26,10 @@ import { PaginationListDto } from '@common/pagination/dtos/pagination.list.dto';
 import { PaginationService } from '@common/pagination/services/pagination.service';
 import { UserDocument } from '@modules/users/repository/entities/user.entity';
 import { UserParsePipe } from '@modules/users/pipes/user.parse.pipe';
-import { IResponsePaging } from '@common/response/interfaces/response.interface';
+
 import { Throttle } from '@nestjs/throttler';
 import { PolicyAbilityProtected } from '@modules/policy/decorators/policy.decorator';
-import { ENUM_POLICY_SUBJECT, ENUM_POLICY_ACTION } from '@repo/shared';
+import { ENUM_POLICY_SUBJECT, ENUM_POLICY_ACTION, IResponsePaging } from '@repo/shared';
 import { UserProtected } from '@modules/users/decorators/user.decorator';
 
 @Controller({

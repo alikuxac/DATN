@@ -7,7 +7,7 @@ import { ShelterUpdateRequestDto } from '../dtos/request/shelter.update.request.
 import { UserDocument } from '@modules/users/repository/entities/user.entity';
 import { Types } from 'mongoose';
 import { IDatabaseFindAllOptions } from '@common/database/interfaces/database.interface';
-import { ENUM_SHELTER_STATUS } from '@repo/shared';
+import { ENUM_SHELTER_STATUS, IShelterResponse } from '@repo/shared';
 
 @Injectable()
 export class ShelterService {
@@ -140,7 +140,7 @@ export class ShelterService {
     return this.shelterRepository.getTotal(query);
   }
 
-  mapToResponse(shelter: ShelterDocument): any {
+  mapToResponse(shelter: ShelterDocument): IShelterResponse {
     return {
       _id: shelter._id.toString(),
       name: shelter.name,
