@@ -78,14 +78,16 @@ export class UserEntity extends DatabaseObjectIdEntityBase {
 
   @DatabaseProp({
     type: {
-      type: String,
-      enum: ['Point'],
-      // default: 'Point', // Removed to avoid auto-creating partial object
-      // required: true
-    },
-    coordinates: {
-      type: [Number],
-      // required: true
+      type: {
+        type: String,
+        enum: ['Point'],
+        // default: 'Point', 
+        // required: true
+      },
+      coordinates: {
+        type: [Number],
+        // required: true
+      }
     },
     _id: false
   })
