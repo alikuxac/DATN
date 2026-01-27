@@ -13,6 +13,21 @@ import { ENUM_SHELTER_STATUS, ENUM_SHELTER_TYPE, IShelterResource } from '@repo/
 export const SHELTER_ENTITY_NAME = 'Shelters';
 
 
+@DatabaseEntity({ _id: false, timestamps: false })
+export class ShelterLocation {
+  @DatabaseProp({
+    type: String,
+    enum: ['Point'],
+    default: 'Point',
+  })
+  type: string;
+
+  @DatabaseProp({
+    type: [Number],
+  })
+  coordinates: number[];
+}
+
 @DatabaseEntity({
   collection: SHELTER_ENTITY_NAME,
   timestamps: true,
@@ -45,21 +60,10 @@ export class ShelterEntity extends DatabaseObjectIdEntityBase {
   status: ENUM_SHELTER_STATUS;
 
   @DatabaseProp({
-    type: {
-      type: {
-        type: String,
-        enum: ['Point'],
-        // default: 'Point', 
-        // required: true
-      },
-      coordinates: {
-        type: [Number],
-        // required: true
-      }
-    },
-    _id: false
+    type: ShelterLocation,
+    required: true,
   })
-  location?: { type: string; coordinates: number[] };
+  location: ShelterLocation;
 
   @DatabaseProp({
     required: true,
