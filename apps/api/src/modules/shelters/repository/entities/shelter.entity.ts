@@ -73,8 +73,7 @@ export class ShelterEntity extends DatabaseObjectIdEntityBase {
         required: true,
       },
     },
-    required: true,
-    index: '2dsphere',
+    _id: false,
   })
   location: ShelterLocation;
 
