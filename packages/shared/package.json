@@ -35,7 +35,7 @@
     "build": "tsc",
     "lint": "eslint .",
     "type-check": "tsc --noEmit",
-    "generate:index": "barrelsby --delete --directory ./src --location replace --include \".ts$\" --exclude \".spec.ts$\""
+    "generate:index": "barrelsby --delete --directory ./src --location replace --include '.ts$' --exclude '.spec.ts$'"
   },
   "devDependencies": {
     "@repo/typescript-config": "*",

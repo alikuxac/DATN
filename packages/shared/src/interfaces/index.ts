@@ -9,6 +9,6 @@ export * from "./password-history.interface";
 export * from "./report.interface";
 export * from "./response.interface";
 export * from "./session.interface";
+export * from "./shelter.interface";
 export * from "./user.interface";
 export * from "./verification.interface";
-export * from "./shelter.interface";
