@@ -25,7 +25,6 @@ export class ShelterLocation {
   @DatabaseProp({
     type: [Number],
     required: true,
-    index: '2dsphere',
   })
   coordinates: number[];
 }
@@ -64,6 +63,7 @@ export class ShelterEntity extends DatabaseObjectIdEntityBase {
   @DatabaseProp({
     type: ShelterLocation,
     required: true,
+    index: '2dsphere',
   })
   location: ShelterLocation;
 
@@ -146,4 +146,5 @@ export class ShelterEntity extends DatabaseObjectIdEntityBase {
 }
 
 export const ShelterSchema = DatabaseSchema(ShelterEntity);
+ShelterSchema.index({ location: '2dsphere' });
 export type ShelterDocument = IDatabaseDocument<ShelterEntity>;
