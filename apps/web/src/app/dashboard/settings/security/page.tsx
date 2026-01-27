@@ -16,8 +16,11 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
+import { useLanguage } from "@/contexts/LanguageContext";
+
 export default function SecurityPage() {
   const [page, setPage] = useState(1);
+  const { t } = useLanguage();
   const { sessions, metadata, isLoading, revokeSession, isRevoking } = useSession({
     page,
     limit: 20,
@@ -52,18 +55,18 @@ export default function SecurityPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Security & Login</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("SECURITY.TITLE")}</h1>
       </div>
 
       <div className="rounded-md border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Device</TableHead>
-              <TableHead>Location (IP)</TableHead>
-              <TableHead>Last Active</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Action</TableHead>
+              <TableHead>{t("SECURITY.TABLE_DEVICE")}</TableHead>
+              <TableHead>{t("SECURITY.TABLE_LOCATION")}</TableHead>
+              <TableHead>{t("SECURITY.TABLE_LAST_ACTIVE")}</TableHead>
+              <TableHead>{t("SECURITY.TABLE_STATUS")}</TableHead>
+              <TableHead>{t("SECURITY.TABLE_ACTION")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -78,7 +81,7 @@ export default function SecurityPage() {
             ) : sessions.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="h-24 text-center">
-                  No active sessions found.
+                  {t("SECURITY.NO_SESSIONS")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -98,14 +101,14 @@ export default function SecurityPage() {
                   <TableCell>{session.ip || "Unknown IP"}</TableCell>
                   <TableCell>
                     {session.isCurrent ? (
-                      <span className="text-green-600 font-medium">Active Now</span>
+                      <span className="text-green-600 font-medium">{t("SECURITY.STATUS_ONLINE")}</span>
                     ) : (
                       formatSafeDate(session.lastActiveAt)
                     )}
                   </TableCell>
                   <TableCell>
                     <Badge variant={session.isCurrent ? "default" : "secondary"}>
-                      {session.isCurrent ? "Online" : "Active"}
+                      {session.isCurrent ? t("SECURITY.STATUS_ONLINE") : t("SECURITY.STATUS_ACTIVE")}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -118,7 +121,7 @@ export default function SecurityPage() {
                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
                         <LogOut className="h-4 w-4 mr-2" />
-                        Revoke
+                        {t("SECURITY.ACTION_REVOKE")}
                       </Button>
                     )}
                   </TableCell>
@@ -131,7 +134,7 @@ export default function SecurityPage() {
 
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="flex-1 text-sm text-muted-foreground">
-             Page {page} of {metadata?.totalPage || 1}
+             {t("USERS.PAGINATION.PAGE_OF", { page: String(page), total: String(metadata?.totalPage || 1) })}
         </div>
         <div className="space-x-2">
             <Button
@@ -140,7 +143,7 @@ export default function SecurityPage() {
               onClick={() => setPage(page - 1)}
               disabled={page === 1 || isLoading}
             >
-              Previous
+              {t("USERS.PAGINATION.PREVIOUS")}
             </Button>
             <Button
               variant="outline"
@@ -148,7 +151,7 @@ export default function SecurityPage() {
               onClick={() => setPage(page + 1)}
               disabled={page >= (metadata?.totalPage ?? 1) || isLoading}
             >
-              Next
+              {t("USERS.PAGINATION.NEXT")}
             </Button>
         </div>
       </div>

@@ -325,8 +325,8 @@ export default function ReportsPage() {
                         {(report as any).source || 'APP'}
                     </span>
                   </TableCell>
-                  <TableCell>
-                     {report.type}
+                   <TableCell>
+                     {t(`REPORTS.TYPE_OPTIONS.${report.type.toLowerCase()}` as any)}
                      {(report as any).source === 'guest' && (
                         <div className="text-[10px] text-muted-foreground truncate max-w-[120px]">
                             {(report.notes?.match(/Guest Phone: ([\d+]+)/)?.[1])}
@@ -343,7 +343,7 @@ export default function ReportsPage() {
                         report.status === ReportStatus.REJECTED && "bg-red-100 text-red-800"
                       )}
                     >
-                      {report.status}
+                       {t(`REPORTS.STATUS.${report.status}`)}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -487,7 +487,7 @@ export default function ReportsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <h4 className="font-medium text-sm text-muted-foreground">{t("REPORTS.TYPE")}</h4>
-                  <p className="text-foreground font-medium">{selectedReport.type}</p>
+                  <p className="text-foreground font-medium">{t(`REPORTS.TYPE_OPTIONS.${selectedReport.type.toLowerCase()}` as any)}</p>
                 </div>
                 <div>
                   <h4 className="font-medium text-sm text-muted-foreground">{t("REPORTS.COL_STATUS")}</h4>
@@ -500,7 +500,7 @@ export default function ReportsPage() {
                         selectedReport.status === ReportStatus.REJECTED && "bg-red-100 text-red-800"
                       )}
                     >
-                      {selectedReport.status}
+                      {t(`REPORTS.STATUS.${selectedReport.status}`)}
                     </span>
                 </div>
                  <div>

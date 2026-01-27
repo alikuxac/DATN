@@ -11,8 +11,10 @@ import {
 } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/useAuth";
 import { UserRole } from "@/types";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function SystemSettingsPage() {
+    const { t } = useLanguage();
     const { cleanUpExpiredSessions, isCleaningUp } = useUsers({ page: 1, limit: 1 });
     const { user } = useAuth();
     const currentUserRole = user?.data?.role;
@@ -23,40 +25,36 @@ export default function SystemSettingsPage() {
 
     return (
         <div className="space-y-6">
-            <h1 className="text-2xl font-bold tracking-tight">System Settings</h1>
+            <h1 className="text-2xl font-bold tracking-tight">{t("SYSTEM.TITLE")}</h1>
 
             <Card className="border-destructive/50">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-destructive">
                          <Trash2 className="h-5 w-5" />
-                         Session Management
+                         {t("SYSTEM.SESSION_MANAGEMENT")}
                     </CardTitle>
                     <CardDescription>
-                        Manage global session states.
+                        {t("SYSTEM.SESSION_DESC")}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <Alert variant="destructive">
                         <AlertTriangle className="h-4 w-4" />
-                        <AlertTitle>Warning</AlertTitle>
-                        <AlertDescription>
-                            This action will expire sessions for <strong>ALL users</strong>, including Admins. 
-                            Users with expired sessions (based on the system cleanup policy) will be logged out immediately. 
-                            You might need to log in again if your session is expired.
-                        </AlertDescription>
+                        <AlertTitle>{t("SYSTEM.WARNING_TITLE")}</AlertTitle>
+                        <AlertDescription dangerouslySetInnerHTML={{ __html: t("SYSTEM.WARNING_DESC") }} />
                     </Alert>
 
                     <Button 
                         variant="destructive" 
                         onClick={() => {
-                            if (confirm("Warning: This action will expire sessions for ALL users, including Admins. You might need to log in again. Are you sure?")) {
+                            if (confirm(t("SYSTEM.CONFIRM_CLEANUP"))) {
                                 cleanUpExpiredSessions();
                             }
                         }}
                         disabled={isCleaningUp}
                     >
                         {isCleaningUp ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
-                        Clean Up Expired Sessions
+                        {t("SYSTEM.BTN_CLEANUP")}
                     </Button>
                 </CardContent>
             </Card>

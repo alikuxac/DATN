@@ -99,7 +99,8 @@
     "UPDATE_VOLUNTEER_FAILED": "Không thể cập nhật trạng thái tình nguyện viên.",
     "VERIFIED_STATUS": "Đã xác thực",
     "UNVERIFIED_STATUS": "Chưa xác thực",
-    "VERIFY_NOW": "Xác thực ngay"
+    "VERIFY_NOW": "Xác thực ngay",
+    "EMAIL_MANAGED": "Địa chỉ email được quản lý bởi quản trị viên."
   },
   "SETTINGS": {
     "TITLE": "Cài đặt",
@@ -140,7 +141,26 @@
     "LABEL_ACTIVE_SESSIONS": "Phiên hoạt động",
     "BTN_UPDATE_PASSWORD": "Cập nhật mật khẩu",
     "MSG_PASSWORD_CHANGED": "Mật khẩu đã được thay đổi thành công.",
-    "MSG_PASSWORD_ERROR": "Không thể thay đổi mật khẩu."
+    "MSG_PASSWORD_ERROR": "Không thể thay đổi mật khẩu.",
+    "TABLE_DEVICE": "Thiết bị",
+    "TABLE_LOCATION": "Vị trí (IP)",
+    "TABLE_LAST_ACTIVE": "Hoạt động gần nhất",
+    "TABLE_STATUS": "Trạng thái",
+    "TABLE_ACTION": "Hành động",
+    "STATUS_ONLINE": "Trực tuyến",
+    "STATUS_ACTIVE": "Hoạt động",
+    "ACTION_REVOKE": "Đăng xuất",
+    "CONFIRM_REVOKE": "Bạn có chắc chắn muốn thu hồi phiên đăng nhập này không?",
+    "NO_SESSIONS": "Không tìm thấy phiên hoạt động nào."
+  },
+  "SYSTEM": {
+    "TITLE": "Cài đặt hệ thống",
+    "SESSION_MANAGEMENT": "Quản lý phiên",
+    "SESSION_DESC": "Quản lý trạng thái phiên toàn hệ thống.",
+    "WARNING_TITLE": "Cảnh báo",
+    "WARNING_DESC": "Hành động này sẽ làm hết hạn phiên cho <strong>TẤT CẢ người dùng</strong>, bao gồm cả Admin. Người dùng có phiên hết hạn sẽ bị đăng xuất ngay lập tức. Bạn có thể cần đăng nhập lại.",
+    "BTN_CLEANUP": "Dọn dẹp phiên hết hạn",
+    "CONFIRM_CLEANUP": "Cảnh báo: Hành động này sẽ làm hết hạn phiên cho TẤT CẢ người dùng. Bạn có chắc chắn không?"
   },
   "FEATURE": {
     "SURVIVAL_MODE": "Chế độ sinh tồn",
@@ -177,6 +197,18 @@
     "STATUS_PLACEHOLDER": "Trạng thái",
     "ALL_STATUSES": "Tất cả trạng thái",
     "NO_RESULTS": "Không tìm thấy người dùng nào.",
+    "ROLES": {
+      "SUPER_ADMIN": "Quản trị viên cấp cao",
+      "ADMIN": "Quản trị viên",
+      "VOLUNTEER": "Tình nguyện viên",
+      "USER": "Người dùng"
+    },
+    "STATUS_OPTIONS": {
+      "ACTIVE": "Hoạt động",
+      "INACTIVE": "Không hoạt động",
+      "BANNED": "Bị cấm",
+      "DELETED": "Đã xóa"
+    },
     "PAGINATION": {
       "PREVIOUS": "Trước",
       "NEXT": "Sau",
@@ -199,7 +231,9 @@
       "YES": "Có",
       "NO": "Không",
       "ON": "Bật",
-      "OFF": "Tắt"
+      "OFF": "Tắt",
+      "REVOKE_ALL": "Đăng xuất khỏi tất cả thiết bị",
+      "CONFIRM_REVOKE_ALL": "Bạn có chắc chắn muốn đăng xuất {{email}} khỏi tất cả thiết bị không?"
     }
   },
 
@@ -259,11 +293,37 @@
       "BTN_CONFIRM": "Xác nhận từ chối",
       "BTN_CANCEL": "Hủy bỏ",
       "REJECTING": "Đang từ chối..."
-    }
+    },
+    "TYPE_OPTIONS": {
+      "emergency": "Khẩn cấp",
+      "medical": "Y tế",
+      "fire": "Hỏa hoạn",
+      "flood": "Lũ lụt",
+      "landslide": "Sạt lở đất",
+      "earthquake": "Động đất",
+      "accident": "Tai nạn",
+      "other": "Khác",
+      "evacuation": "Sơ tán",
+      "supplies": "Nhu yếu phẩm",
+      "rescue": "Cứu hộ"
+    },
+    "USER": "Người tạo",
+    "SEVERITY": "Mức độ",
+    "SEVERITIES": {
+        "low": "Thấp",
+        "medium": "Trung bình",
+        "high": "Cao",
+        "critical": "Nguy cấp"
+    },
+    "PHONE": "Số điện thoại",
+    "DISPATCH_VOLUNTEER": "Điều phối tình nguyện viên",
+    "VIEW_DETAILS": "Xem chi tiết",
+    "PROCESSING_BY": "Đang xử lý bởi",
+    "SOURCE_APP": "Ứng dụng",
+    "SOURCE_GUEST": "Khách"
   },
-
   "MAP": {
-    "TITLE": "Bản đồ",
+    "TITLE": "Bản đồ cứu hộ",
     "SEARCH_PLACEHOLDER": "Tìm kiếm báo cáo...",
     "FILTERS": "Bộ lọc",
     "LABEL_TYPE": "Loại",
@@ -272,7 +332,14 @@
     "SHOWING_REPORTS": "Hiển thị {{count}} báo cáo",
     "LEGEND_TITLE": "Chú thích trạng thái",
     "SHOW_LEGEND": "Hiện chú thích",
-    "CLOSE": "Đóng"
+    "CLOSE": "Đóng",
+    "LEGEND": "Chú thích",
+    "LEGEND_USER": "Người dùng",
+    "LEGEND_VOL_IDLE": "TNV (Rảnh)",
+    "LEGEND_VOL_BUSY": "TNV (Bận)",
+    "LEGEND_SHELTER": "Điểm tập kết",
+    "LEGEND_REPORT_PENDING": "Đang chờ",
+    "LEGEND_REPORT_PROCESSING": "Đang xử lý"
   },
 
   "SIDEBAR": {
@@ -321,7 +388,14 @@
       "EVACUATION": "Điểm sơ tán",
       "WAREHOUSE": "Kho hàng",
       "MEDICAL": "Y tế",
-      "TEMPORARY": "Tạm thời"
+      "TEMPORARY": "Tạm thời",
+      "SCHOOL": "Trường học",
+      "COMMUNITY_CENTER": "TT Cộng đồng",
+      "GYM": "Nhà thi đấu",
+      "PAGODA": "Chùa",
+      "CHURCH": "Nhà thờ",
+      "OFFICIAL": "Cơ quan",
+      "OTHER": "Khác"
     },
     "STATUS": {
       "ACTIVE": "Hoạt động",

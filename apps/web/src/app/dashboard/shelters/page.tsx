@@ -109,14 +109,21 @@ export default function SheltersPage() {
   };
 
   const getTypeBadge = (type: ShelterType) => {
-    const colors: Record<ShelterType, string> = {
+    const colors: Record<string, string> = {
       EVACUATION: "bg-blue-100 text-blue-800",
       WAREHOUSE: "bg-green-100 text-green-800",
       MEDICAL: "bg-red-100 text-red-800",
       TEMPORARY: "bg-yellow-100 text-yellow-800",
+      SCHOOL: "bg-violet-100 text-violet-800",
+      COMMUNITY_CENTER: "bg-pink-100 text-pink-800",
+      GYM: "bg-teal-100 text-teal-800",
+      PAGODA: "bg-purple-100 text-purple-800",
+      CHURCH: "bg-indigo-100 text-indigo-800",
+      OFFICIAL: "bg-slate-100 text-slate-800",
+      OTHER: "bg-zinc-100 text-zinc-800",
     };
     return (
-      <Badge className={colors[type]}>
+      <Badge className={colors[type] || colors.OTHER}>
         {t(`SHELTERS.TYPE.${type}`)}
       </Badge>
     );

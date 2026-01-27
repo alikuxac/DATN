@@ -283,10 +283,10 @@ export function UserDialog({ open, onOpenChange, user, currentUserRole }: UserDi
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                        <SelectItem value={ENUM_USER_ROLE.USER}>User</SelectItem>
-                        <SelectItem value={ENUM_USER_ROLE.VOLUNTEER}>Volunteer</SelectItem>
-                        <SelectItem value={ENUM_USER_ROLE.ADMIN}>Admin</SelectItem>
-                        <SelectItem value={ENUM_USER_ROLE.SUPER_ADMIN}>Super Admin</SelectItem>
+                        <SelectItem value={ENUM_USER_ROLE.USER}>{t("USERS.ROLES.USER")}</SelectItem>
+                        <SelectItem value={ENUM_USER_ROLE.VOLUNTEER}>{t("USERS.ROLES.VOLUNTEER")}</SelectItem>
+                        <SelectItem value={ENUM_USER_ROLE.ADMIN}>{t("USERS.ROLES.ADMIN")}</SelectItem>
+                        <SelectItem value={ENUM_USER_ROLE.SUPER_ADMIN}>{t("USERS.ROLES.SUPER_ADMIN")}</SelectItem>
                         </SelectContent>
                     </Select>
                     <FormMessage />

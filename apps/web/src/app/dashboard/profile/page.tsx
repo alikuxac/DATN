@@ -171,7 +171,7 @@ export default function ProfilePage() {
                     </div>
                     <Input id="email" value={user?.data.email} disabled />
                     <p className="text-[0.8rem] text-muted-foreground">
-                      Email address is managed by administrator.
+                      {t("PROFILE.EMAIL_MANAGED")}
                     </p>
                  </div>
                  

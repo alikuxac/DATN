@@ -345,61 +345,80 @@ export default function MapPage() {
               if (match) guestPhone = match[1];
           }
 
+          // Translations
+          const sourceText = isGuest ? t('REPORTS.SOURCE_GUEST') : t('REPORTS.SOURCE_APP');
+          const statusText = t(`REPORTS.STATUS.${report.status}`);
+          const typeText = t(`REPORTS.TYPE_OPTIONS.${report.type?.toLowerCase()}`) || report.type;
+          const phoneLabel = t('REPORTS.PHONE');
+          const userLabel = t('REPORTS.USER');
+          const severityLabel = t('REPORTS.SEVERITY');
+          const severityValue = t(`REPORTS.SEVERITIES.${report.severity || 'low'}`);
+          const processingText = t('REPORTS.PROCESSING_BY');
+          const dispatchText = t('REPORTS.DISPATCH_VOLUNTEER');
+          const viewDetailsText = t('REPORTS.VIEW_DETAILS');
+
           popupContent = `
-            <div class="p-3 w-48">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isGuest ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'} uppercase">
-                        ${isGuest ? 'GUEST' : 'APP'}
+            <div class="p-4 w-60 font-sans">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isGuest ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'} uppercase tracking-wider">
+                        ${sourceText ? sourceText.toUpperCase() : (isGuest ? 'GUEST' : 'APP')}
                     </span>
-                    <span class="text-[10px] font-medium text-gray-500 capitalize">${report.status?.replace("_", " ") || 'Unknown'}</span>
+                    <span class="text-[10px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full border border-gray-200">${statusText}</span>
                 </div>
                 
-                <h3 class="font-bold text-sm mb-1">${report.type?.toUpperCase() || 'REPORT'}</h3>
+                <h3 class="font-bold text-base mb-2 text-gray-800 leading-tight">${typeText ? typeText.toUpperCase() : 'REPORT'}</h3>
                 
                 ${isGuest ? `
-                    <div class="mb-2 p-2 bg-gray-50 rounded text-xs border border-dashed border-gray-300">
-                        <p class="font-semibold text-gray-700">📞 Phone:</p>
-                        <a href="tel:${guestPhone}" class="text-blue-600 hover:underline block mb-1">${guestPhone}</a>
+                    <div class="mb-3 p-2.5 bg-purple-50 rounded-md text-xs border border-purple-100">
+                        <p class="font-semibold text-purple-900 mb-0.5 flex items-center gap-1">📞 ${phoneLabel}:</p>
+                        <a href="tel:${guestPhone}" class="text-blue-600 hover:text-blue-800 hover:underline font-bold text-sm block">${guestPhone}</a>
                     </div>
                 ` : `
-                    <div class="mb-2 p-2 bg-gray-50 rounded text-xs">
-                        <p class="font-semibold text-gray-700">👤 User:</p>
-                         <p class="text-gray-600">${report.user?.firstName || 'Unknown'} ${report.user?.lastName || ''}</p>
-                         <p class="text-gray-500 text-[10px]">${report.user?.email || ''}</p>
+                    <div class="mb-3 p-2.5 bg-gray-50 rounded-md text-xs border border-gray-100">
+                        <p class="font-semibold text-gray-700 mb-0.5 flex items-center gap-1">👤 ${userLabel}:</p>
+                         <p class="text-gray-900 font-medium">${report.user?.firstName || ''} ${report.user?.lastName || ''}</p>
+                         <p class="text-gray-500 text-[10px] truncate">${report.user?.email || ''}</p>
                     </div>
                 `}
                 
-                <div class="flex items-center gap-1 text-xs mb-1">
-                    <span class="font-semibold">Severity:</span>
-                    <span class="${report.severity === 'critical' ? 'text-red-600 font-bold' : report.severity === 'high' ? 'text-orange-600 font-bold' : 'text-gray-600'} capitalize">
-                        ${report.severity || 'low'}
+                <div class="flex items-center justify-between gap-1 text-xs mb-2">
+                    <span class="font-semibold text-gray-600">${severityLabel}:</span>
+                    <span class="px-2 py-0.5 rounded font-bold text-[10px] uppercase tracking-wide border ${
+                        report.severity === 'critical' ? 'bg-red-100 text-red-700 border-red-200' : 
+                        report.severity === 'high' ? 'bg-orange-100 text-orange-700 border-orange-200' : 
+                        report.severity === 'medium' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' :
+                        'bg-gray-100 text-gray-700 border-gray-200'
+                    }">
+                        ${severityValue}
                     </span>
                 </div>
 
                 ${report.status === ReportStatus.IN_PROGRESS && report.rescuer ? `
-                     <div class="mt-2 pt-2 border-t text-xs">
-                        <p class="font-semibold text-orange-600">🛠 Processing by Rescuer</p>
+                     <div class="mt-3 pt-2 border-t border-gray-100 text-xs">
+                        <p class="font-semibold text-orange-600 flex items-center gap-1">
+                          <span class="animate-pulse">●</span> ${processingText}
+                        </p>
                      </div>
                 ` : ''}
 
                 ${report.notes ? `
-                    <div class="mt-2 pt-2 border-t text-xs text-gray-500 italic">
-                        "${report.notes.length > 50 ? report.notes.substring(0, 50) + '...' : report.notes}"
+                    <div class="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-500 italic relative pl-2 border-l-2 border-gray-300">
+                        "${report.notes.length > 60 ? report.notes.substring(0, 60) + '...' : report.notes}"
                     </div>
                 ` : ''}
                 
                 ${report.status === ReportStatus.PENDING ? `
                     <button 
                         onclick="window.dispatchReport('${report._id}')"
-                        class="mt-2 w-full bg-blue-600 text-white text-xs font-bold py-1.5 rounded hover:bg-blue-700 transition mb-2"
+                        class="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 rounded-md transition-colors shadow-sm active:scale-95 transform duration-100"
                     >
-                        Dispatch Volunteer
+                        ${dispatchText}
                     </button>
                 ` : ''}
                 
-                <div class="mt-2 pt-2 border-t flex justify-end">
-                    <a href="/dashboard/reports?id=${report._id}" class="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1">
-                        View Details →
+                <div class="mt-3 pt-2 border-t border-gray-100 flex justify-end">
+                    <a href="/dashboard/reports?id=${report._id}" class="text-xs font-medium text-blue-500 hover:text-blue-700 flex items-center gap-1 transition-colors group">
+                        ${viewDetailsText} <span class="group-hover:translate-x-0.5 transition-transform">→</span>
                     </a>
                 </div>
             </div>
@@ -562,7 +581,7 @@ export default function MapPage() {
         }
     }
 
-  }, [displayData, selectedEntity]);
+  }, [displayData, selectedEntity, t]);
 
   // Update Shelter Markers
   useEffect(() => {
@@ -580,6 +599,13 @@ export default function MapPage() {
       WAREHOUSE: '#22c55e',  // green
       MEDICAL: '#ef4444',    // red
       TEMPORARY: '#f59e0b',  // amber
+      SCHOOL: '#8b5cf6',     // violet
+      COMMUNITY_CENTER: '#ec4899', // pink
+      GYM: '#14b8a6',        // teal
+      PAGODA: '#a855f7',     // purple
+      CHURCH: '#6366f1',     // indigo
+      OFFICIAL: '#64748b',   // slate
+      OTHER: '#71717a',      // zinc
     };
 
     sheltersData.forEach((shelter) => {
@@ -667,10 +693,10 @@ export default function MapPage() {
         <div className="bg-background/95 backdrop-blur p-2 rounded-lg shadow-lg">
              <Tabs value={mapMode} onValueChange={(v) => setMapMode(v as MapMode)} className="w-full">
                 <TabsList className="grid w-full grid-cols-4 h-8">
-                    <TabsTrigger value="all" className="text-xs px-1">All</TabsTrigger>
-                    <TabsTrigger value="reports" className="text-xs px-1">Rpts</TabsTrigger>
-                    <TabsTrigger value="users" className="text-xs px-1">Usrs</TabsTrigger>
-                    <TabsTrigger value="volunteers" className="text-xs px-1">Vols</TabsTrigger>
+                    <TabsTrigger value="all" className="px-1"><Activity className="h-4 w-4" /></TabsTrigger>
+                    <TabsTrigger value="reports" className="px-1"><FileText className="h-4 w-4" /></TabsTrigger>
+                    <TabsTrigger value="users" className="px-1"><Users className="h-4 w-4" /></TabsTrigger>
+                    <TabsTrigger value="volunteers" className="px-1"><div className="flex items-center justify-center font-bold text-[10px] w-4 h-4 rounded-full border border-current">V</div></TabsTrigger>
                 </TabsList>
             </Tabs>
             {/* Shelter Toggle */}

@@ -215,7 +215,7 @@ export default function UsersPage() {
                         user.role === UserRole.USER && "bg-gray-50 text-gray-600 ring-gray-500/10"
                       )}
                     >
-                      {user.role}
+                      {t(`USERS.ROLES.${user.role}`)}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -226,7 +226,7 @@ export default function UsersPage() {
                         user.status === UserStatus.INACTIVE && "bg-red-50 text-red-700 ring-red-600/10"
                       )}
                     >
-                      {user.status}
+                      {t(`USERS.STATUS_OPTIONS.${user.status}` as any)}
                     </span>
                   </TableCell>
                   <TableCell>{format(new Date(user.createdAt), "PP p")}</TableCell>
@@ -345,11 +345,11 @@ export default function UsersPage() {
                 </div>
                 <div>
                   <h4 className="font-medium text-sm text-muted-foreground">{t("USERS.DIALOG.ROLE")}</h4>
-                  <p className="text-foreground font-medium">{selectedUser.role}</p>
+                  <p className="text-foreground font-medium">{t(`USERS.ROLES.${selectedUser.role}`)}</p>
                 </div>
                 <div>
                   <h4 className="font-medium text-sm text-muted-foreground">{t("USERS.DIALOG.STATUS")}</h4>
-                  <p className="text-foreground font-medium">{selectedUser.status}</p>
+                  <p className="text-foreground font-medium">{t(`USERS.STATUS_OPTIONS.${selectedUser.status}` as any)}</p>
                 </div>
                 <div>
                   <h4 className="font-medium text-sm text-muted-foreground">{t("USERS.DIALOG.RESCUE_MODE")}</h4>
@@ -357,7 +357,10 @@ export default function UsersPage() {
                 </div>
                 <div className="col-span-2">
                   <h4 className="font-medium text-sm text-muted-foreground">{t("USERS.DIALOG.PREFERENCES")}</h4>
-                  <p className="text-foreground font-medium">Language: {selectedUser.preferences.language}, Theme: {selectedUser.preferences.theme}</p>
+                  <p className="text-foreground font-medium">
+                      {t("SETTINGS.LANGUAGE.TITLE")}: {selectedUser.preferences.language === 'vi' ? t("SETTINGS.LANGUAGE.VI") : t("SETTINGS.LANGUAGE.EN")}, 
+                      {t("SETTINGS.THEME.TITLE")}: {selectedUser.preferences.theme}
+                  </p>
                 </div>
                 <div className="col-span-2">
                   <h4 className="font-medium text-sm text-muted-foreground">{t("USERS.DIALOG.SETTINGS")}</h4>
@@ -382,14 +385,14 @@ export default function UsersPage() {
                     <Button 
                       variant="destructive" 
                       onClick={() => {
-                        if (confirm(`Are you sure you want to revoke ALL sessions for ${selectedUser.email}? They will be logged out from all devices.`)) {
+                        if (confirm(t("USERS.DIALOG.CONFIRM_REVOKE_ALL", { email: selectedUser.email }))) {
                           revokeAllUserSessions(selectedUser._id);
                         }
                       }}
                       disabled={isRevokingAll}
                     >
                       {isRevokingAll ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <LogOut className="h-4 w-4 mr-2" />}
-                      Revoke All Sessions
+                      {t("USERS.DIALOG.REVOKE_ALL")}
                     </Button>
                  </div>
               ) : null}
