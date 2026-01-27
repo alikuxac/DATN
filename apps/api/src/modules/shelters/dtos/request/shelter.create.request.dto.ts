@@ -12,7 +12,7 @@ import {
   IsObject,
   IsBoolean
 } from 'class-validator';
-import { ENUM_SHELTER_TYPE, ENUM_SHELTER_STATUS } from '../../repository/entities/shelter.entity';
+import { ENUM_SHELTER_TYPE, ENUM_SHELTER_STATUS } from '@repo/shared';
 
 class LocationDto {
   @IsString()
