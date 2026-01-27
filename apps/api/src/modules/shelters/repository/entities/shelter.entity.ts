@@ -22,6 +22,7 @@ export class ShelterEntity extends DatabaseObjectIdEntityBase {
     required: true,
     trim: true,
     index: true,
+    type: String,
   })
   name: string;
 
@@ -29,6 +30,7 @@ export class ShelterEntity extends DatabaseObjectIdEntityBase {
     required: true,
     enum: ENUM_SHELTER_TYPE,
     index: true,
+    type: String,
   })
   type: ENUM_SHELTER_TYPE;
 
@@ -37,6 +39,7 @@ export class ShelterEntity extends DatabaseObjectIdEntityBase {
     enum: ENUM_SHELTER_STATUS,
     default: ENUM_SHELTER_STATUS.ACTIVE,
     index: true,
+    type: String,
   })
   status: ENUM_SHELTER_STATUS;
 
@@ -64,6 +67,7 @@ export class ShelterEntity extends DatabaseObjectIdEntityBase {
   @DatabaseProp({
     required: true,
     trim: true,
+    type: String,
   })
   address: string;
 
@@ -71,6 +75,7 @@ export class ShelterEntity extends DatabaseObjectIdEntityBase {
     required: true,
     trim: true,
     index: true,
+    type: String,
   })
   regionId: string;
 
@@ -98,18 +103,21 @@ export class ShelterEntity extends DatabaseObjectIdEntityBase {
   @DatabaseProp({
     required: false,
     trim: true,
+    type: String,
   })
   contactPerson?: string;
 
   @DatabaseProp({
     required: false,
     trim: true,
+    type: String,
   })
   contactPhone?: string;
 
   @DatabaseProp({
     required: false,
     trim: true,
+    type: String,
   })
   description?: string;
 

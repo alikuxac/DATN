@@ -27,6 +27,7 @@ export class ResetPasswordEntity extends DatabaseUUIDEntityBase {
         trim: true,
         minlength: 8,
         maxlength: 8,
+        type: String,
     })
     otp: string;
 
@@ -37,6 +38,7 @@ export class ResetPasswordEntity extends DatabaseUUIDEntityBase {
         index: true,
         minlength: 20,
         maxlength: 20,
+        type: String,
     })
     token: string;
 
@@ -83,6 +85,7 @@ export class ResetPasswordEntity extends DatabaseUUIDEntityBase {
     @DatabaseProp({
         required: true,
         index: true,
+        type: String,
     })
     reference: string;
 }

@@ -33,6 +33,7 @@ export class VerificationEntity extends DatabaseUUIDEntityBase {
     @DatabaseProp({
         required: true,
         trim: true,
+        type: String,
     })
     otp: string;
 
@@ -64,6 +65,7 @@ export class VerificationEntity extends DatabaseUUIDEntityBase {
 
     @DatabaseProp({
         required: true,
+        type: String,
     })
     reference: string;
 }
