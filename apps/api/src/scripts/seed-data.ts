@@ -13,46 +13,63 @@ import {
   ENUM_REPORT_SOURCE,
   ENUM_MESSAGE_LANGUAGE,
   ENUM_USER_THEME,
+  ENUM_SHELTER_TYPE,
+  ENUM_SHELTER_STATUS,
 } from '@repo/shared';
 import { Model } from 'mongoose';
 import { UserDocument, UserEntity } from '@modules/users/repository/entities/user.entity';
 import { ReportDocument, ReportEntity } from '@modules/reports/repository/entities/report.entity';
+import { ShelterDocument, ShelterEntity } from '@modules/shelters/repository/entities/shelter.entity';
 import { getModelToken } from '@nestjs/mongoose';
 import { DATABASE_CONNECTION_NAME } from '@common/database/constants/database.constant';
 
 // ==================== CONSTANTS ====================
 
 const VIETNAM_CLUSTERS = [
+  // Major Cities
+  { name: 'Hà Nội', lat: 21.0285, lng: 105.8542, regionId: 'ha-noi' },
+  { name: 'TP. Hồ Chí Minh', lat: 10.8231, lng: 106.6297, regionId: 'tp-ho-chi-minh' },
+  { name: 'Đà Nẵng', lat: 16.0544, lng: 108.2022, regionId: 'da-nang' },
+
   // Bắc Trung Bộ
-  { name: 'Thanh Hóa', lat: 19.8075, lng: 105.7764, regionId: 'thanhhoa' },
-  { name: 'Nghệ An', lat: 18.6653, lng: 105.6795, regionId: 'nghean' },
-  { name: 'Hà Tĩnh', lat: 18.3580, lng: 105.8906, regionId: 'hatinh' },
-  { name: 'Quảng Bình', lat: 17.4727, lng: 106.6030, regionId: 'quangbinh' },
-  { name: 'Quảng Trị', lat: 16.7865, lng: 107.1350, regionId: 'quangtri' },
+  { name: 'Thanh Hóa', lat: 19.8075, lng: 105.7764, regionId: 'thanh-hoa' },
+  { name: 'Nghệ An', lat: 18.6653, lng: 105.6795, regionId: 'nghe-an' },
+  { name: 'Hà Tĩnh', lat: 18.3580, lng: 105.8906, regionId: 'ha-tinh' },
+  { name: 'Quảng Trị', lat: 16.7865, lng: 107.1350, regionId: 'quang-tri' },
   { name: 'Huế', lat: 16.4637, lng: 107.5909, regionId: 'hue' }, // Thừa Thiên Huế
 
   // Nam Trung Bộ
-  { name: 'Đà Nẵng', lat: 16.0544, lng: 108.2022, regionId: 'danang' },
-  { name: 'Quảng Nam', lat: 15.5786, lng: 108.4682, regionId: 'quangnam' },
-  { name: 'Quảng Ngãi', lat: 15.1205, lng: 108.7915, regionId: 'quangngai' },
-  { name: 'Bình Định', lat: 13.783, lng: 109.2196, regionId: 'binhdinh' },
-  { name: 'Phú Yên', lat: 13.0882, lng: 109.3090, regionId: 'phuyen' },
-  { name: 'Khánh Hòa', lat: 12.2388, lng: 109.1967, regionId: 'khanhhoa' },
+  { name: 'Quảng Ngãi', lat: 15.1205, lng: 108.7915, regionId: 'quang-ngai' },
+  { name: 'Khánh Hòa', lat: 12.2388, lng: 109.1967, regionId: 'khanh-hoa' },
+
+  // Đông Bắc Bộ (Bão, Lũ lụt)
+  { name: 'Quảng Ninh', lat: 21.0069, lng: 107.2925, regionId: 'quang-ninh' },
+  { name: 'Hải Phòng', lat: 20.8561, lng: 106.6822, regionId: 'hai-phong' },
+  { name: 'Lạng Sơn', lat: 21.8477, lng: 106.7580, regionId: 'lang-son' },
+
+  // Tây Bắc Bộ (Sạt lở đất)
+  { name: 'Lào Cai', lat: 22.4856, lng: 103.9707, regionId: 'lao-cai' },
+  { name: 'Sơn La', lat: 21.3259, lng: 103.9816, regionId: 'son-la' },
 ];
 
 
 const PEAK_HOURS = [
   { start: 7, end: 9 },
   { start: 17, end: 20 },
+  { start: 11, end: 13 },
 ];
 
 const VN_LAST_NAMES = ['Nguyễn', 'Trần', 'Lê', 'Phạm', 'Huỳnh', 'Hoàng', 'Phan', 'Vũ', 'Võ', 'Đặng', 'Bùi', 'Đỗ', 'Hồ', 'Ngô', 'Dương', 'Lý'];
-const VN_MIDDLE_NAMES = ['Văn', 'Thị', 'Ngọc', 'Minh', 'Đức', 'Duy', 'Hoàng', 'Thanh', 'Quang', 'Hữu', 'Kim', 'Xuân'];
+const VN_MIDDLE_NAMES = ['Văn', 'Thị', 'Ngọc', 'Minh', 'Đức', 'Duy', 'Hoàng', 'Thanh', 'Quang', 'Hữu', 'Kim', 'Xuân', 'Công', 'Gia', 'Bảo'];
 const VN_FIRST_NAMES = [
   'An', 'Anh', 'Bình', 'Châu', 'Chi', 'Cường', 'Dũng', 'Dương', 'Đạt', 'Đông', 'Giang', 'Hà', 'Hải', 'Hạnh', 'Hiếu',
   'Hoa', 'Hoà', 'Hùng', 'Huy', 'Khánh', 'Lan', 'Linh', 'Long', 'Mai', 'Minh', 'Nam', 'Nga', 'Ngân', 'Ngọc', 'Nhung',
   'Phong', 'Phúc', 'Phương', 'Quân', 'Quang', 'Quỳnh', 'Sơn', 'Thảo', 'Thắng', 'Thành', 'Thảo', 'Thủy', 'Toàn', 'Trang',
-  'Trung', 'Tuấn', 'Tùng', 'Vân', 'Việt', 'Vinh', 'Yến'
+  'Trung', 'Tuấn', 'Tùng', 'Vân', 'Việt', 'Vinh', 'Yến', 'Tú', 'Thiện', 'Nhân', 'Nghĩa', 'Lễ', 'Trí', 'Tín'
+];
+
+const SHELTER_NAMES = [
+  'Nhà văn hóa', 'Trường tiểu học', 'Trường trung học', 'Ủy ban nhân dân', 'Trung tâm y tế', 'Nhà thi đấu', 'Chùa', 'Nhà thờ'
 ];
 
 const DEFAULT_PASSWORD = 'Password123!';
@@ -149,13 +166,13 @@ function getRandomCluster() {
 function randomCoordinatesInCluster(
   clusterLat: number,
   clusterLng: number,
-  radiusKm: number = 10
+  radiusKm: number = 5
 ): { lat: number; lng: number } {
   // Convert radius to degrees (rough approximation: 1 degree ≈ 111km)
   const radiusDeg = radiusKm / 111;
 
   const angle = Math.random() * 2 * Math.PI;
-  const distance = Math.random() * radiusDeg;
+  const distance = Math.sqrt(Math.random()) * radiusDeg; // Square root for uniform distribution in circle
 
   const lat = clusterLat + distance * Math.cos(angle);
   const lng = clusterLng + distance * Math.sin(angle);
@@ -381,7 +398,8 @@ async function generateReports(
 
     for (let i = 0; i < reportCount; i++) {
       const cluster = getRandomCluster();
-      const coords = randomCoordinatesInCluster(cluster.lat, cluster.lng);
+      // Increase radius for reports to specific cluster
+      const coords = randomCoordinatesInCluster(cluster.lat, cluster.lng, 8);
       const createdAt = randomDate(30);
 
       const status = weightedRandom(
@@ -393,8 +411,6 @@ async function generateReports(
         ],
         [20, 25, 45, 10] // More resolved reports for better stats
       );
-
-
 
       reports.push({
         user: user._id,
@@ -507,6 +523,61 @@ async function assignVolunteersToReports(
 
 }
 
+async function generateShelters(
+  shelterModel: Model<ShelterDocument>
+): Promise<ShelterDocument[]> {
+  console.log(`\n🏠 Generating shelters...`);
+  const shelters: any[] = [];
+
+  VIETNAM_CLUSTERS.forEach((cluster) => {
+    // 2-5 shelters per cluster
+    const count = 2 + Math.floor(Math.random() * 4);
+
+    for (let i = 0; i < count; i++) {
+      const coords = randomCoordinatesInCluster(cluster.lat, cluster.lng, 3); // Closer to center
+      const type = weightedRandom(
+        [ENUM_SHELTER_TYPE.SCHOOL, ENUM_SHELTER_TYPE.COMMUNITY_CENTER, ENUM_SHELTER_TYPE.GYM, ENUM_SHELTER_TYPE.PAGODA, ENUM_SHELTER_TYPE.CHURCH, ENUM_SHELTER_TYPE.OTHER],
+        [30, 30, 10, 10, 10, 10]
+      );
+
+      const baseName = SHELTER_NAMES[Math.floor(Math.random() * SHELTER_NAMES.length)];
+      const name = `${baseName} ${faker.address.streetName()}`;
+
+      shelters.push({
+        name,
+        type,
+        status: ENUM_SHELTER_STATUS.ACTIVE,
+        location: {
+          type: 'Point',
+          coordinates: [coords.lng, coords.lat],
+        },
+        address: faker.address.streetAddress(true) + `, ${cluster.name}`,
+        regionId: cluster.regionId,
+        capacity: 50 + Math.floor(Math.random() * 450),
+        currentOccupancy: Math.floor(Math.random() * 50),
+        contactPerson: faker.name.fullName(),
+        contactPhone: randomPhoneNumber(),
+        description: faker.lorem.sentence(),
+        images: [],
+        facilities: {
+          electricity: Math.random() > 0.1,
+          water: Math.random() > 0.1,
+          medical: Math.random() > 0.3,
+          kitchen: Math.random() > 0.2,
+          restroom: true,
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+    }
+  });
+
+  const createdShelters = await shelterModel.insertMany(shelters);
+  console.log(`✅ Created ${createdShelters.length} shelters across ${VIETNAM_CLUSTERS.length} regions`);
+  return createdShelters as ShelterDocument[];
+}
+
+
 // ==================== MAIN ====================
 
 async function bootstrap() {
@@ -524,6 +595,7 @@ async function bootstrap() {
 
   const userModel = app.get<Model<UserDocument>>(getModelToken(UserEntity.name, DATABASE_CONNECTION_NAME));
   const reportModel = app.get<Model<ReportDocument>>(getModelToken(ReportEntity.name, DATABASE_CONNECTION_NAME));
+  const shelterModel = app.get<Model<ShelterDocument>>(getModelToken(ShelterEntity.name, DATABASE_CONNECTION_NAME));
 
   try {
     // Clear existing seed data
@@ -543,17 +615,19 @@ async function bootstrap() {
     });
 
     await reportModel.deleteMany({ source: ENUM_REPORT_SOURCE.APP, isVerified: true });
-
+    await shelterModel.deleteMany({}); // Delete all shelters for simplicity as they are all seeded usually
 
     // Generate data
     const users = await generateUsers(userModel, emailDomain, userCount);
     const reports = await generateReports(reportModel, users);
     await assignVolunteersToReports(reportModel, reports, users);
+    const shelters = await generateShelters(shelterModel);
 
     console.log('\n✨ Seeding completed successfully!');
     console.log(`\n📊 Summary:`);
     console.log(`   - Total users: ${users.length}`);
     console.log(`   - Total reports: ${reports.length}`);
+    console.log(`   - Total shelters: ${shelters.length}`);
     console.log(`   - Default password: ${DEFAULT_PASSWORD}`);
     console.log(`\n🔐 Login credentials:`);
     console.log(`   - Super Admin: superadmin${emailDomain} / ${DEFAULT_PASSWORD}`);

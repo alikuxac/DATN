@@ -24,8 +24,6 @@ export class ReportListResponseDto extends DatabaseObjectIdDto {
     coordinates: number[];
   };
 
-  @Expose()
-  address: string;
 
   @Expose()
   notes: string;

@@ -59,18 +59,6 @@ export class ReportEntity extends DatabaseObjectIdEntityBase {
   })
   by: string;
 
-  @DatabaseProp({
-    required: true,
-    trim: true,
-    index: true,
-  })
-  title: string;
-
-  @DatabaseProp({
-    required: false,
-    trim: true,
-  })
-  address: string;
 
   @DatabaseProp({
     type: ReportLocation,

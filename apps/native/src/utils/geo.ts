@@ -1,6 +1,6 @@
 import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
 import { point } from '@turf/helpers';
-import { normalizeRegionId } from './string'; // Hàm normalize cũ của bạn
+import { normalizeRegionId } from '@repo/shared';
 
 // Import file JSON đã tối ưu
 const VIETNAM_GEOJSON = require('../../assets/geo/Provinces.json');

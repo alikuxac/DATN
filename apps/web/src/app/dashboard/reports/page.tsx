@@ -642,11 +642,7 @@ export default function ReportsPage() {
                 <div>
                    <h4 className="font-medium text-sm text-muted-foreground">{t("REPORTS.LOCATION")}</h4>
                    <p className="text-foreground text-sm mt-1">
-                      {selectedReport.address ? selectedReport.address : (
-                        <>
-                           {selectedReport.location?.coordinates?.[1] ?? 'N/A'}, {selectedReport.location?.coordinates?.[0] ?? 'N/A'}
-                        </>
-                      )}
+                      {selectedReport.location?.coordinates?.[1] ?? 'N/A'}, {selectedReport.location?.coordinates?.[0] ?? 'N/A'}
                    </p>
                 </div>
                  <div>

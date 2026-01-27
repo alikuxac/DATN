@@ -32,6 +32,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { ReportType, ReportSeverity } from "@/types";
 import { useReports, CreateReportRequest } from "@/hooks/useReports";
+import { PROVINCES } from "@repo/shared";
 
 const formSchema = z.object({
   userId: z.string().min(1, "User ID is required"),
@@ -195,10 +196,19 @@ export function ReportDialog({ open, onOpenChange }: ReportDialogProps) {
               name="regionId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Region ID</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. vn-dn-hc" {...field} />
-                  </FormControl>
+                  <FormLabel>Region</FormLabel>
+                   <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select region" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {PROVINCES.map((p: any) => (
+                           <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   <FormMessage />
                 </FormItem>
               )}

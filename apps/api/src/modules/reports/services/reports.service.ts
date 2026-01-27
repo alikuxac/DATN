@@ -800,11 +800,9 @@ export class ReportService {
 
     worksheet.columns = [
       { header: 'ID', key: 'id', width: 25 },
-      { header: 'Title', key: 'title', width: 30 },
       { header: 'Type', key: 'type', width: 15 },
       { header: 'Status', key: 'status', width: 15 },
       { header: 'Notes', key: 'notes', width: 40 },
-      { header: 'Address', key: 'address', width: 40 },
       { header: 'Reporter Name', key: 'reporterName', width: 25 },
       { header: 'Reporter Phone', key: 'reporterPhone', width: 15 },
       { header: 'Rescuer Name', key: 'rescuerName', width: 25 },
@@ -819,11 +817,9 @@ export class ReportService {
 
       worksheet.addRow({
         id: report._id.toString(),
-        title: report.title,
         type: report.type,
         status: report.status,
         notes: report.notes || '',
-        address: report.address || '',
         reporterName: reporter ? `${reporter.firstName} ${reporter.lastName}` : 'N/A',
         reporterPhone: reporter ? reporter.mobileNumber : 'N/A',
         rescuerName: rescuer ? `${rescuer.firstName} ${rescuer.lastName}` : 'Unassigned',

@@ -25,7 +25,6 @@ export interface IReportListResponse extends IDatabaseDto {
     coordinates: number[];
   };
   coordinates: number[];
-  address: string;
   notes: string;
   severity: ENUM_REPORT_SEVERITY;
   type: ENUM_REPORT_TYPE;
