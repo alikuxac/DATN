@@ -20,9 +20,11 @@ interface UseUsersParams {
 
 interface UsersResponse {
   data: UserListResponse[];
-  _pagination: {
-    total: number;
-    totalPage: number;
+  _metadata: {
+    pagination: {
+      total: number;
+      totalPage: number;
+    };
   };
 }
 
@@ -211,7 +213,7 @@ export function useUsers(params: UseUsersParams) {
 
   return {
     users: data?.data || [],
-    metadata: data?._pagination,
+    metadata: data?._metadata?.pagination,
     isLoading,
     error,
     refetch,

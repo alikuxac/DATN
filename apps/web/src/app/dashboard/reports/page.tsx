@@ -57,7 +57,7 @@ const REJECT_REASONS = [
 export default function ReportsPage() {
   const [page, setPage] = useState(1);
   const [q, setQ] = useState("");
-  const [status, setStatus] = useState<ReportStatus | "ALL">("ALL");
+  const [status, setStatus] = useState<ReportStatus | "ALL" | "ACTIVE_TAB" | "HISTORY_TAB">("ALL");
   const [source, setSource] = useState<"ALL" | "APP" | "GUEST">("ALL");
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   
@@ -74,10 +74,11 @@ export default function ReportsPage() {
 
   const onTabChange = (val: string) => {
     setActiveTab(val);
+    setPage(1); // Reset page when tab changes
     if (val === 'all') setStatus("ALL");
-    if (val === 'active') setStatus([ReportStatus.PENDING, ReportStatus.IN_PROGRESS].join(',') as any);
-    if (val === 'history') setStatus([ReportStatus.RESOLVED, ReportStatus.REJECTED].join(',') as any);
-    if (val === 'history') setStatus([ReportStatus.RESOLVED, ReportStatus.REJECTED].join(',') as any);
+    // For active/history, we'll handle it differently since API accepts array
+    if (val === 'active') setStatus("ACTIVE_TAB" as any); // Custom marker
+    if (val === 'history') setStatus("HISTORY_TAB" as any); // Custom marker
   };
 
   const handleExport = async () => {
@@ -104,11 +105,22 @@ export default function ReportsPage() {
   };
   
   const { t } = useLanguage();
+  
+  // Calculate actual status to send to API
+  const getApiStatus = () => {
+    const s = status as string; // Cast to avoid type comparison issues
+    if (s === "ALL") return undefined;
+    if (s === "ACTIVE_TAB") return [ReportStatus.PENDING, ReportStatus.IN_PROGRESS];
+    if (s === "HISTORY_TAB") return [ReportStatus.RESOLVED, ReportStatus.REJECTED];
+    return status as ReportStatus;
+  };
+  
   const { reports, metadata, isLoading, updateStatus, isUpdating, rejectReport, isRejecting } = useReports({
     page,
     limit: 10,
     q,
-    status: status === "ALL" ? undefined : status,
+    status: getApiStatus() as any,
+    source: source === "ALL" ? undefined : source.toLowerCase() as any,
     fromDate: dateRange?.from?.toISOString(),
     toDate: dateRange?.to?.toISOString(),
   });
@@ -194,7 +206,10 @@ export default function ReportsPage() {
                {/* Source Filter */}
               <Select
                 value={source}
-                onValueChange={(val) => setSource(val as any)}
+                onValueChange={(val) => {
+                  setSource(val as any);
+                  setPage(1);
+                }}
               >
                <SelectTrigger className="w-[120px]">
                   <SelectValue placeholder="Source" />
@@ -208,8 +223,12 @@ export default function ReportsPage() {
 
               {/* Only show specific status selector if needed, or rely on Tabs setting it */}
               <Select
-                value={status}
-                onValueChange={(val) => setStatus(val as ReportStatus | "ALL")}
+                value={(status as string) === "ALL" || (status as string) === "ACTIVE_TAB" || (status as string) === "HISTORY_TAB" ? "ALL" : (status as string)}
+                onValueChange={(val) => {
+                  setStatus(val as ReportStatus | "ALL");
+                  setActiveTab('all'); // Reset tab when manually selecting status
+                  setPage(1);
+                }}
               >
                <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder={t("REPORTS.STATUS_PLACEHOLDER")} />

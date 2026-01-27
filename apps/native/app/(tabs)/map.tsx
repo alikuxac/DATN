@@ -33,6 +33,7 @@ import { CreateReportModal } from "@/components/map/CreateReportModal";
 import { MapReportMarker } from "@/components/map/MapReportMarker";
 import { MapRescuerMarker } from "@/components/map/MapRescuerMarker";
 import { ReportDetailSheet } from "@/components/map/ReportDetailSheet";
+import { UserAvatarMarker } from "@/components/map/UserAvatarMarker";
 
 import { RescuerDetailSheet } from "@/components/map/RescuerDetailSheet";
 import { MapShelterMarker } from "@/components/map/MapShelterMarker";
@@ -401,19 +402,70 @@ import { calculateDistance } from "@/utils/geo";
         ));
     }, [shelters]);
 
+    // Calculate busy rescuer IDs (those assigned to IN_PROGRESS reports)
+    const busyRescuerIds = useMemo(() => {
+      const ids = new Set<string>();
+      reports.forEach(r => {
+        if (r.status === ENUM_REPORT_STATUS.IN_PROGRESS && r.rescuer) {
+          const rescuerId = typeof r.rescuer === 'string' ? r.rescuer : (r.rescuer as any)?._id?.toString();
+          if (rescuerId) ids.add(rescuerId);
+        }
+      });
+      return ids;
+    }, [reports]);
+
     const getRescuerMarkers = useMemo(() => {
-      return nearbyRescuers.map((rescuer) => (
-        <MapRescuerMarker
-          key={rescuer._id}
-          rescuer={rescuer}
-          onSelected={(r) => {
-            setSelectedReport(null);
-            setSelectedRescuer(r);
-            setSelectedShelter(null);
-          }}
-        />
-      ));
-    }, [nearbyRescuers]);
+      // Find IDs of rescuers helping MY reports (current user's reports)
+      const myRescuerIds = new Set<string>();
+      if (user?.role === ENUM_USER_ROLE.USER) {
+        reports.forEach(r => {
+          if (r.user?._id === user._id && r.status === ENUM_REPORT_STATUS.IN_PROGRESS && r.rescuer) {
+            const rescuerId = typeof r.rescuer === 'string' ? r.rescuer : (r.rescuer as any)?._id?.toString();
+            if (rescuerId) myRescuerIds.add(rescuerId);
+          }
+        });
+      }
+
+      return nearbyRescuers.map((rescuer) => {
+        const isMyRescuer = myRescuerIds.has(rescuer._id);
+        
+        // Use UserAvatarMarker for volunteers helping MY reports (shows their avatar)
+        if (isMyRescuer) {
+          const coords: [number, number] = [
+            rescuer.location?.lng ?? rescuer.coordinates?.[0] ?? 0,
+            rescuer.location?.lat ?? rescuer.coordinates?.[1] ?? 0
+          ];
+          return (
+            <UserAvatarMarker
+              key={rescuer._id}
+              userId={rescuer._id}
+              coordinate={coords}
+              avatarUrl={(rescuer as any).avatar}
+              userName={`${rescuer.firstName || ''} ${rescuer.lastName || ''}`}
+              onSelected={() => {
+                setSelectedReport(null);
+                setSelectedRescuer(rescuer);
+                setSelectedShelter(null);
+              }}
+            />
+          );
+        }
+        
+        // Use default MapRescuerMarker for other rescuers
+        return (
+          <MapRescuerMarker
+            key={rescuer._id}
+            rescuer={rescuer}
+            isBusy={busyRescuerIds.has(rescuer._id)}
+            onSelected={(r) => {
+              setSelectedReport(null);
+              setSelectedRescuer(r);
+              setSelectedShelter(null);
+            }}
+          />
+        );
+      });
+    }, [nearbyRescuers, busyRescuerIds, reports, user]);
 
     const isVolunteerMode = useMemo(() => {
       return user?.role === ENUM_USER_ROLE.VOLUNTEER || user?.isRescueMode;
@@ -634,18 +686,14 @@ import { calculateDistance } from "@/utils/geo";
         {getRescuerMarkers}
         {getShelterMarkers}
 
-        {/* 3. MY LOCATION (Dưới cùng để tránh chặn click của Marker) */}
-        {userLocation && (
-          <PointAnnotation
-            key="user-location-marker"
-            id="user-location"
+        {/* 3. MY LOCATION - Avatar thay vì blue dot */}
+        {userLocation && user && (
+          <UserAvatarMarker
+            userId={user._id}
             coordinate={[userLocation.longitude, userLocation.latitude]}
-          >
-            <View style={styles.userMarkerContainer}>
-              <View style={styles.userMarkerDot} />
-              <View style={styles.userMarkerHalo} />
-            </View>
-          </PointAnnotation>
+            avatarUrl={user.avatar}
+            userName={`${user.firstName || ''} ${user.lastName || ''}`}
+          />
         )}
       </MapView>
       

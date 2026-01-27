@@ -127,12 +127,18 @@ export default function UsersPage() {
           <Input
             placeholder={t("USERS.SEARCH_PLACEHOLDER")}
             value={q}
-            onChange={(e) => setQ(e.target.value)}
+            onChange={(e) => {
+              setQ(e.target.value);
+              setPage(1); // Reset page when search changes
+            }}
             className="w-[300px]"
           />
           <Select
             value={role}
-            onValueChange={(val) => setRole(val as UserRole | "ALL")}
+            onValueChange={(val) => {
+              setRole(val as UserRole | "ALL");
+              setPage(1); // Reset page when role filter changes
+            }}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder={t("USERS.ROLE_PLACEHOLDER")} />
@@ -147,7 +153,10 @@ export default function UsersPage() {
           </Select>
           <Select
             value={status}
-            onValueChange={(val) => setStatus(val as UserStatus | "ALL" | "DELETED")}
+            onValueChange={(val) => {
+              setStatus(val as UserStatus | "ALL" | "DELETED");
+              setPage(1); // Reset page when status filter changes
+            }}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder={t("USERS.STATUS_PLACEHOLDER")} />

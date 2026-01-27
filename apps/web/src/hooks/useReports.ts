@@ -6,7 +6,7 @@ interface ReportsParams {
   page?: number;
   limit?: number;
   q?: string;
-  status?: ReportStatus | "ALL";
+  status?: ReportStatus | ReportStatus[] | "ALL";
   source?: "app" | "guest" | "ALL";
   fromDate?: string; // ISO string
   toDate?: string;   // ISO string
@@ -37,9 +37,11 @@ export interface CreateReportRequest {
 // Define response type locally to match API actual response (which differs from shared type)
 interface ReportsResponse {
   data: Report[];
-  _pagination: {
-    total: number;
-    totalPage: number;
+  _metadata: {
+    pagination: {
+      total: number;
+      totalPage: number;
+    };
   };
 }
 
@@ -49,12 +51,20 @@ export function useReports(params: ReportsParams) {
   const reportsQuery = useQuery({
     queryKey: ['reports', params],
     queryFn: async () => {
+      // Build status param - handle array for tabs
+      let statusParam: string | undefined;
+      if (params.status && params.status !== 'ALL') {
+        statusParam = Array.isArray(params.status)
+          ? params.status.join(',')  // API accepts comma-separated values
+          : params.status;
+      }
+
       const { data } = await api.get<ReportsResponse>('/admin/report/list', {
         params: {
           page: params.page || 1,
           perPage: params.limit || 10,
           search: params.q,
-          status: (params.status === 'ALL' || !params.status) ? undefined : params.status,
+          status: statusParam,
           source: (params.source === 'ALL' || !params.source) ? undefined : params.source,
           fromDate: params.fromDate,
           toDate: params.toDate,
@@ -98,7 +108,7 @@ export function useReports(params: ReportsParams) {
 
   return {
     reports: reportsQuery.data?.data || [],
-    metadata: reportsQuery.data?._pagination, // Fixed: use _pagination instead of _metadata
+    metadata: reportsQuery.data?._metadata?.pagination,
     isLoading: reportsQuery.isLoading,
     isError: reportsQuery.isError,
     error: reportsQuery.error,

@@ -5,16 +5,20 @@ import { isUserOnline } from "@/utils/date";
 
 interface MapRescuerMarkerProps {
   rescuer: any;
+  isBusy?: boolean; // True if rescuer has an IN_PROGRESS report
   onSelected: (rescuer: any) => void;
 }
 
 import { ShipWheel } from "lucide-react-native";
 
 export const MapRescuerMarker = React.memo(
-  ({ rescuer, onSelected }: MapRescuerMarkerProps) => {
+  ({ rescuer, isBusy = false, onSelected }: MapRescuerMarkerProps) => {
     const lng = rescuer.location?.coordinates?.[0] ?? rescuer.coordinates?.[0] ?? rescuer.location?.lng;
     const lat = rescuer.location?.coordinates?.[1] ?? rescuer.coordinates?.[1] ?? rescuer.location?.lat;
     const coords: [number, number] = [lng ?? 0, lat ?? 0];
+    
+    // Dynamic colors based on busy status: Busy = red, Idle = green
+    const markerColor = isBusy ? '#dc2626' : '#22c55e';
     
     return (
       <PointAnnotation
@@ -24,10 +28,10 @@ export const MapRescuerMarker = React.memo(
       >
         <View style={styles.container}>
           <View style={styles.markerContainer}>
-            <View style={styles.markerPin}>
+            <View style={[styles.markerPin, { backgroundColor: markerColor }]}>
                <ShipWheel size={24} color="white" />
             </View>
-            <View style={styles.pinTip} />
+            <View style={[styles.pinTip, { borderTopColor: markerColor }]} />
           </View>
           
           <View style={styles.labelContainer}>
@@ -50,7 +54,8 @@ export const MapRescuerMarker = React.memo(
       prev.rescuer._id === next.rescuer._id &&
       prev.rescuer.location?.lat === next.rescuer.location?.lat &&
       prev.rescuer.location?.lng === next.rescuer.location?.lng &&
-      prev.rescuer.lastLocationAt === next.rescuer.lastLocationAt
+      prev.rescuer.lastLocationAt === next.rescuer.lastLocationAt &&
+      prev.isBusy === next.isBusy
     );
   }
 );

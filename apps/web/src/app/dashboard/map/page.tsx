@@ -5,7 +5,7 @@ import vietmapgl from "@vietmap/vietmap-gl-js/dist/vietmap-gl";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import { Report, ApiResponse, ReportStatus, ReportType, UserListResponse, UserRole } from "@/types";
-import { Loader2, Search, ListFilter, Users, FileText, Activity } from "lucide-react";
+import { Loader2, Search, ListFilter, Users, FileText, Activity, Home } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -13,6 +13,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDistanceToNow } from "date-fns";
 import { AssignVolunteerDialog } from "@/components/dashboard/map/AssignVolunteerDialog";
+import { useAuth } from "@/hooks/useAuth";
 
 // Placeholder for Vietmap API Key
 const VIETMAP_API_KEY = process.env.NEXT_PUBLIC_VIETMAP_API_KEY || "YOUR_VIETMAP_API_KEY";
@@ -26,12 +27,29 @@ interface MapUser extends Omit<UserListResponse, 'lastLocationAt'> {
     lastLocationAt?: string | Date;
 }
 
+// Shelter interface for map display
+interface MapShelter {
+    _id: string;
+    name: string;
+    type: 'EVACUATION' | 'WAREHOUSE' | 'MEDICAL' | 'TEMPORARY';
+    status: 'ACTIVE' | 'INACTIVE' | 'FULL' | 'CLOSED';
+    location: { type: string; coordinates: number[] };
+    address: string;
+    capacity?: number;
+    currentOccupancy?: number;
+    contactPerson?: string;
+    contactPhone?: string;
+}
+
 export default function MapPage() {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<vietmapgl.Map | null>(null);
   const markersRef = useRef<vietmapgl.Marker[]>([]);
+  const myMarkerRef = useRef<vietmapgl.Marker | null>(null);
   // Store selected entity to track interactions
   const [selectedEntity, setSelectedEntity] = useState<{ id: string; type: 'report' | 'user' | 'volunteer' } | null>(null);
+  const [myLocation, setMyLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const { user } = useAuth();
 
   // Filter & Search State
   const [searchQuery, setSearchQuery] = useState("");
@@ -45,6 +63,7 @@ export default function MapPage() {
   
   const [showFilters, setShowFilters] = useState(false);
   const [showLegend, setShowLegend] = useState(true);
+  const [showShelters, setShowShelters] = useState(true); // Toggle shelter visibility
   const { t } = useLanguage();
 
   // Fetch Reports
@@ -75,6 +94,21 @@ export default function MapPage() {
     },
     enabled: mapMode !== "reports", // Fetch if asking for users, volunteers or all
   });
+
+  // Fetch Shelters
+  const { data: sheltersData, isLoading: isLoadingShelters } = useQuery({
+    queryKey: ['map-shelters'],
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<MapShelter[]>>('/admin/shelter/list', { 
+        params: { limit: 100, page: 1 } 
+      });
+      return data.data || [];
+    },
+    enabled: showShelters,
+  });
+
+  // Shelter markers ref (separate from other markers)
+  const shelterMarkersRef = useRef<vietmapgl.Marker[]>([]);
 
   // Filter & Search State
   // Helper to safely get rescuer ID
@@ -177,6 +211,84 @@ export default function MapPage() {
     return () => {
         delete (window as any).dispatchReport;
     }
+  }, []);
+
+  // Create/update my location marker with avatar
+  useEffect(() => {
+    if (!mapRef.current || !myLocation || !user) return;
+
+    // Remove old marker
+    if (myMarkerRef.current) {
+      myMarkerRef.current.remove();
+    }
+
+    // Create avatar marker element
+    const container = document.createElement('div');
+    container.className = 'my-avatar-marker';
+    container.innerHTML = `
+      <div style="position: relative; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+        <!-- Direction cone -->
+        <div style="position: absolute; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+          <svg width="60" height="60" viewBox="0 0 100 100" style="position: absolute;">
+            <path d="M 50 50 L 30 20 A 28 28 0 0 1 70 20 Z" fill="rgba(147, 51, 234, 0.25)" stroke="rgba(147, 51, 234, 0.4)" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <!-- Avatar circle -->
+        <div style="
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          background: #fff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+          border: 3px solid #fff;
+          z-index: 2;
+        ">
+          <img 
+            src="${user.data.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${user.data.firstName} ${user.data.lastName}`}"
+            alt="Me"
+            style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover;"
+          />
+        </div>
+      </div>
+    `;
+
+    const marker = new vietmapgl.Marker({ element: container })
+      .setLngLat([myLocation.lng, myLocation.lat])
+      .addTo(mapRef.current!);
+
+    myMarkerRef.current = marker;
+
+    return () => {
+      if (myMarkerRef.current) {
+        myMarkerRef.current.remove();
+        myMarkerRef.current = null;
+      }
+    };
+  }, [myLocation, user]);
+
+  // Get my location from browser geolocation
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        setMyLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
+      },
+      (error) => {
+        console.warn('Geolocation error:', error);
+      },
+      { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
+    );
+
+    return () => {
+      navigator.geolocation.clearWatch(watchId);
+    };
   }, []);
 
   // Update Markers
@@ -298,9 +410,9 @@ export default function MapPage() {
           itemId = userId;
           const isBusy = userId ? busyVolunteerIds.has(userId) : false;
           
-          color = isBusy ? '#f97316' : '#8b5cf6';
+          color = isBusy ? '#dc2626' : '#22c55e';
           const statusText = isBusy ? 'ON DUTY' : 'IDLE';
-          const statusColor = isBusy ? 'text-orange-600' : 'text-purple-600';
+          const statusColor = isBusy ? 'text-red-600' : 'text-green-600';
 
           el.innerHTML = 'V';
           popupContent = `
@@ -452,7 +564,91 @@ export default function MapPage() {
 
   }, [displayData, selectedEntity]);
 
-  const isLoading = isLoadingReports || isLoadingUsers;
+  // Update Shelter Markers
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    // Clear existing shelter markers
+    shelterMarkersRef.current.forEach(marker => marker.remove());
+    shelterMarkersRef.current = [];
+
+    if (!showShelters || !sheltersData) return;
+
+    // Shelter type colors
+    const shelterColors: Record<string, string> = {
+      EVACUATION: '#3b82f6', // blue
+      WAREHOUSE: '#22c55e',  // green
+      MEDICAL: '#ef4444',    // red
+      TEMPORARY: '#f59e0b',  // amber
+    };
+
+    sheltersData.forEach((shelter) => {
+      if (!shelter.location?.coordinates?.length) return;
+
+      const coords: [number, number] = shelter.location.coordinates as [number, number];
+      const color = shelterColors[shelter.type] || '#6b7280';
+
+      // Create shelter marker element
+      const el = document.createElement('div');
+      el.className = 'shelter-marker cursor-pointer';
+      el.innerHTML = `
+        <div style="
+          width: 32px;
+          height: 32px;
+          background: ${color};
+          border-radius: 8px;
+          border: 2px solid white;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        ">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+        </div>
+      `;
+
+      const popupContent = `
+        <div class="p-3 min-w-[200px]">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-xs font-bold px-2 py-0.5 rounded" style="background: ${color}20; color: ${color}">
+              ${shelter.type}
+            </span>
+            <span class="text-xs ${shelter.status === 'ACTIVE' ? 'text-green-600' : 'text-gray-500'}">${shelter.status}</span>
+          </div>
+          <h3 class="font-bold text-sm mb-1">${shelter.name}</h3>
+          <p class="text-xs text-gray-600 mb-2">${shelter.address}</p>
+          ${shelter.capacity ? `
+            <div class="text-xs mb-2">
+              <span class="font-medium">Capacity:</span> ${shelter.currentOccupancy || 0}/${shelter.capacity}
+            </div>
+          ` : ''}
+          ${shelter.contactPerson ? `
+            <div class="text-xs border-t pt-2 mt-2">
+              <p class="font-medium">${shelter.contactPerson}</p>
+              ${shelter.contactPhone ? `<a href="tel:${shelter.contactPhone}" class="text-blue-500">${shelter.contactPhone}</a>` : ''}
+            </div>
+          ` : ''}
+          <div class="mt-2 pt-2 border-t">
+            <a href="/dashboard/shelters" class="text-xs text-blue-500 hover:underline">View all shelters →</a>
+          </div>
+        </div>
+      `;
+
+      const popup = new vietmapgl.Popup({ offset: 25 }).setHTML(popupContent);
+
+      const marker = new vietmapgl.Marker({ element: el })
+        .setLngLat(coords)
+        .setPopup(popup)
+        .addTo(mapRef.current!);
+
+      shelterMarkersRef.current.push(marker);
+    });
+  }, [showShelters, sheltersData]);
+
+  const isLoading = isLoadingReports || isLoadingUsers || isLoadingShelters;
 
   return (
     <div className="h-[calc(100vh-8rem)] w-full relative rounded-md overflow-hidden border">
@@ -477,6 +673,18 @@ export default function MapPage() {
                     <TabsTrigger value="volunteers" className="text-xs px-1">Vols</TabsTrigger>
                 </TabsList>
             </Tabs>
+            {/* Shelter Toggle */}
+            <div className="flex items-center gap-2 mt-2 pt-2 border-t">
+                <Button 
+                    variant={showShelters ? "default" : "outline"} 
+                    size="sm" 
+                    className="h-7 text-xs flex-1"
+                    onClick={() => setShowShelters(!showShelters)}
+                >
+                    <Home className="h-3 w-3 mr-1" />
+                    Shelters {showShelters ? 'ON' : 'OFF'}
+                </Button>
+            </div>
         </div>
 
         {/* Detailed Controls (Search/Filter) - Only show for Reports mode or All */}
@@ -540,11 +748,11 @@ export default function MapPage() {
                              {(mapMode !== "users") && (
                                  <>
                                     <div className="flex items-center gap-2">
-                                        <div className="w-4 h-4 rounded-full bg-purple-500 text-[8px] text-white flex items-center justify-center font-bold">V</div>
+                                        <div className="w-4 h-4 rounded-full bg-green-500 text-[8px] text-white flex items-center justify-center font-bold">V</div>
                                         <span>Vol (Idle)</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <div className="w-4 h-4 rounded-full bg-orange-500 text-[8px] text-white flex items-center justify-center font-bold">V</div>
+                                        <div className="w-4 h-4 rounded-full bg-red-600 text-[8px] text-white flex items-center justify-center font-bold">V</div>
                                         <span>Vol (Busy)</span>
                                     </div>
                                  </>
@@ -565,6 +773,39 @@ export default function MapPage() {
                            <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-orange-500" /> In Progress</div>
                         </>
                     )}
+                    
+                    {/* Shelter Legend */}
+                    {showShelters && (
+                        <>
+                            <hr className="my-1 border-muted" />
+                            <div className="text-[10px] font-medium text-muted-foreground mb-1">Shelters</div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded bg-blue-500" />
+                                <span className="text-[10px]">Evacuation</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded bg-green-500" />
+                                <span className="text-[10px]">Warehouse</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded bg-red-500" />
+                                <span className="text-[10px]">Medical</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded bg-amber-500" />
+                                <span className="text-[10px]">Temporary</span>
+                            </div>
+                        </>
+                    )}
+                    
+                    {/* Always show Me marker legend */}
+                    <hr className="my-1 border-muted" />
+                    <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 rounded-full bg-purple-500 border-2 border-white shadow flex items-center justify-center">
+                           <div className="w-2 h-2 rounded-full bg-white" />
+                        </div>
+                        <span>Me</span>
+                    </div>
                </div>
           )}
           {!showLegend && (
