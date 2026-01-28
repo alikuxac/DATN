@@ -472,7 +472,14 @@ import { calculateDistance } from "@/utils/geo";
         });
       }
 
-      return nearbyRescuers.map((rescuer) => {
+      return nearbyRescuers
+        .filter(r => {
+          const rid = r._id?.toString();
+          const isMe = rid === user?._id?.toString();
+          const isActiveReporter = rid === activeReporter?._id?.toString();
+          return !isMe && !isActiveReporter;
+        })
+        .map((rescuer) => {
         const isMyRescuer = myRescuerIds.has(rescuer._id);
         
         // Use UserAvatarMarker for volunteers helping MY reports (shows their avatar)
