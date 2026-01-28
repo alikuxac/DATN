@@ -116,6 +116,11 @@ import { calculateDistance } from "@/utils/geo";
     const [reports, setReports] = useState<IReportListResponse[]>([]);
     const [nearbyRescuers, setNearbyRescuers] = useState<RescuerData[]>([]);
     const [shelters, setShelters] = useState<Shelter[]>([]);
+    const [activeReporter, setActiveReporter] = useState<RescuerData | null>(null);
+
+    const isVolunteerMode = useMemo(() => {
+      return user?.role === ENUM_USER_ROLE.VOLUNTEER || user?.isRescueMode;
+    }, [user]);
     
     // Selection State
     const [selectedReport, setSelectedReport] = useState<IReportListResponse | null>(null);
@@ -253,15 +258,36 @@ import { calculateDistance } from "@/utils/geo";
                setNearbyRescuers([]);
             }
         }
-          // 3. Fetch shelters if user has location
-          if (userLocation) {
-             const sheltersData = await shelterService.getNearbyShelters(
-                userLocation.latitude,
-                userLocation.longitude,
-                10000 // 10km
-             );
-             setShelters(sheltersData || []);
-          }
+
+        // Extract Reporter for Volunteers (So they can see moving target)
+        const isVolunteer = user?.role === ENUM_USER_ROLE.VOLUNTEER || user?.isRescueMode;
+        if (isVolunteer && user) {
+            const myActiveReport = (reportRes.data || []).find(r => 
+                r.status === ENUM_REPORT_STATUS.IN_PROGRESS && 
+                (typeof r.rescuer === 'string' ? r.rescuer : r.rescuer?._id?.toString()) === user._id?.toString()
+            );
+
+            if (myActiveReport && myActiveReport.user && typeof myActiveReport.user === 'object') {
+                const reporter = myActiveReport.user as any;
+                const coords = reporter.location?.coordinates;
+                setActiveReporter({
+                    _id: reporter._id.toString(),
+                    firstName: reporter.firstName,
+                    lastName: reporter.lastName,
+                    phone: reporter.mobileNumber,
+                    location: coords ? { lat: coords[1], lng: coords[0] } : { lat: 0, lng: 0 },
+                    coordinates: coords,
+                    isOnline: true,
+                    lastLocationAt: reporter.lastOnlineAt
+                });
+            } else {
+                setActiveReporter(null);
+            }
+        }
+
+          // 3. Fetch all shelters
+          const sheltersData = await shelterService.getAllShelters();
+          setShelters(sheltersData || []);
 
        } catch (error) {
           console.error("Error fetching map data:", error);
@@ -292,6 +318,15 @@ import { calculateDistance } from "@/utils/geo";
                     } 
                   : r
               );
+          } else if (activeReporter && activeReporter._id === data.rescuerId) {
+             // It's the reporter moving
+             setActiveReporter(prevRep => prevRep ? {
+                ...prevRep,
+                location: { ...prevRep.location, lat: data.lat, lng: data.lng },
+                coordinates: [data.lng, data.lat],
+                lastLocationAt: new Date().toISOString()
+             } : null);
+             return prev;
           } else {
              // Optional: If we want to add new rescuers dynamically without fetch
              // But we need name/phone, so maybe better to trigger refetch or ignore
@@ -312,16 +347,25 @@ import { calculateDistance } from "@/utils/geo";
       };
     }, [socket]); // Clean dependency list
 
-    // 2. Join Rooms logic (Depends on reports/user changes)
+    // 2. Join Rooms logic (Join report rooms to hear movement)
     useEffect(() => {
-        if (!socket || !user || user.role !== ENUM_USER_ROLE.USER) return;
+        if (!socket || !user) return;
 
-        const myActiveReports = reports.filter(r => r.user?._id === user._id && r.status === ENUM_REPORT_STATUS.IN_PROGRESS);
+        let reportsToJoin: IReportListResponse[] = [];
+
+        if (user.role === ENUM_USER_ROLE.USER) {
+            reportsToJoin = reports.filter(r => r.user?._id?.toString() === user._id?.toString() && r.status === ENUM_REPORT_STATUS.IN_PROGRESS);
+        } else if (isVolunteerMode) {
+            reportsToJoin = reports.filter(r => {
+                const rRescuerId = typeof r.rescuer === 'string' ? r.rescuer : r.rescuer?._id?.toString();
+                return rRescuerId === user._id?.toString() && r.status === ENUM_REPORT_STATUS.IN_PROGRESS;
+            });
+        }
         
-        myActiveReports.forEach(report => {
+        reportsToJoin.forEach(report => {
              socket.emit('join_report_room', { reportId: report._id });
         });
-    }, [socket, reports, user?._id, user?.role]);
+    }, [socket, reports, user?._id, user?.role, isVolunteerMode]);
 
     // 3. Listen for Region Updates (New Reports, Status Updates)
     useEffect(() => {
@@ -469,14 +513,10 @@ import { calculateDistance } from "@/utils/geo";
       });
     }, [nearbyRescuers, busyRescuerIds, reports, user]);
 
-    const isVolunteerMode = useMemo(() => {
-      return user?.role === ENUM_USER_ROLE.VOLUNTEER || user?.isRescueMode;
-    }, [user]);
-
     // --- LOGIC FILTER REPORTS ---
     const displayedReports = useMemo(() => {
       if (!user) return reports; // Fallback show all while loading user
-      const currentUserId = user._id.toString();
+      const currentUserId = user._id?.toString();
       const isAdmin = user.role === ENUM_USER_ROLE.ADMIN || user.role === ENUM_USER_ROLE.SUPER_ADMIN;
   
       // 1. Volunteer Mode (Higher Priority - Focus on Rescue)
@@ -506,7 +546,8 @@ import { calculateDistance } from "@/utils/geo";
       // 2. User Mode: Show my reports + PENDING/IN_PROGRESS nearby public
       if (user.role === ENUM_USER_ROLE.USER) {
           return reports.filter(r => {
-             const isMyReport = r.user?._id === currentUserId;
+             const authorId = (typeof r.user === 'object' ? r.user?._id : r.user)?.toString();
+             const isMyReport = authorId === currentUserId;
              const isActive = [ENUM_REPORT_STATUS.PENDING, ENUM_REPORT_STATUS.IN_PROGRESS].includes(r.status as ENUM_REPORT_STATUS);
              return isMyReport || isActive;
           });
@@ -542,8 +583,8 @@ import { calculateDistance } from "@/utils/geo";
       const result = isAdmin ? nearbyRescuers : 
                      user.role === ENUM_USER_ROLE.USER ? (() => {
                         const myActiveVolunteers = reports
-                          .filter(r => r.user?._id.toString() === user._id.toString() && r.status === ENUM_REPORT_STATUS.IN_PROGRESS)
-                          .map(r => typeof r.rescuer === 'string' ? r.rescuer : r.rescuer?._id.toString());
+                          .filter(r => r.user?._id?.toString() === user._id?.toString() && r.status === ENUM_REPORT_STATUS.IN_PROGRESS)
+                          .map(r => typeof r.rescuer === 'string' ? r.rescuer : r.rescuer?._id?.toString());
                         return nearbyRescuers.filter(res => myActiveVolunteers.includes(res._id.toString()));
                      })() : [];
       
@@ -554,24 +595,27 @@ import { calculateDistance } from "@/utils/geo";
 
 
   
-    // --- LOCATION TRACKING FOR VOLUNTEER ---
-    // Sync active report ID to LocationContext so it sends 'rescuer_moved'
+    // --- LOCATION TRACKING SYNC ---
+    // Sync active report ID to LocationContext so it sends 'update_location' with context
     useEffect(() => {
-      if (user?.role === ENUM_USER_ROLE.VOLUNTEER || user?.isRescueMode) {
+      if (!user) return;
+
+      if (isVolunteerMode) {
           const activeReport = reports.find(
               r => r.status === ENUM_REPORT_STATUS.IN_PROGRESS && 
-              (typeof r.rescuer === 'string' ? r.rescuer : r.rescuer?._id) === user._id.toString()
+              (typeof r.rescuer === 'string' ? r.rescuer : r.rescuer?._id?.toString()) === user._id?.toString()
           );
-          
-          if (activeReport) {
-              setActiveReportId(activeReport._id);
-          } else {
-              setActiveReportId(null);
-          }
+          setActiveReportId(activeReport?._id || null);
+      } else if (user.role === ENUM_USER_ROLE.USER) {
+          const activeReport = reports.find(
+              r => r.status === ENUM_REPORT_STATUS.IN_PROGRESS && 
+              r.user?._id?.toString() === user._id?.toString()
+          );
+          setActiveReportId(activeReport?._id || null);
       } else {
           setActiveReportId(null);
       }
-    }, [reports, user, setActiveReportId]);
+    }, [reports, user, isVolunteerMode, setActiveReportId]);
   
     // --- ACTIONS (Xử lý trực tiếp, ko navigate) ---
     const handleReportAction = async (action: "accept" | "reject" | "cancel" | "complete", data?: any) => {
@@ -676,10 +720,10 @@ import { calculateDistance } from "@/utils/geo";
         >
         <Camera
           ref={cameraRef}
-          zoomLevel={13}
-          centerCoordinate={
-             userLocation ? [userLocation.longitude, userLocation.latitude] : [106.660172, 10.762622]
-          }
+          defaultSettings={{
+             centerCoordinate: [106.660172, 10.762622],
+             zoomLevel: 13
+          }}
           animationMode="flyTo"
         />
         
@@ -687,6 +731,21 @@ import { calculateDistance } from "@/utils/geo";
         {getReportMarkers}
         {getRescuerMarkers}
         {getShelterMarkers}
+
+        {/* 4. ACTIVE REPORTER (For Volunteer view) */}
+        {activeReporter && isVolunteerMode && (
+          <UserAvatarMarker
+            userId={activeReporter._id}
+            coordinate={[activeReporter.location.lng, activeReporter.location.lat]}
+            avatarUrl={(activeReporter as any).avatar}
+            userName={`${activeReporter.firstName || ''} ${activeReporter.lastName || ''}`}
+            onSelected={() => {
+              setSelectedReport(null);
+              setSelectedRescuer(activeReporter);
+              setSelectedShelter(null);
+            }}
+          />
+        )}
 
         {/* 3. MY LOCATION - Avatar thay vì blue dot */}
         {userLocation && user && (

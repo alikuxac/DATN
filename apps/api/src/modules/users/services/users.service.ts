@@ -466,23 +466,26 @@ export class UsersService {
   }
 
   async updateLocation(
-    repository: UserDocument,
+    userId: string,
     latitude: number,
     longitude: number,
     options?: IDatabaseSaveOptions
   ) {
-    repository.location = {
-      type: 'Point',
-      coordinates: [longitude, latitude],
-    }
-
-    repository.lastLocationAt = this.helperDateService.create();
-    // Also update online status
-    repository.lastOnlineAt = repository.lastLocationAt;
-
-    const updated = await this.userRepository.save(repository, options);
-    await this.cacheManager.del(`user:info:${repository._id}`);
-    return updated;
+    const lastAt = this.helperDateService.create();
+    return this.userRepository.updateRaw(
+      { _id: userId },
+      {
+        $set: {
+          location: {
+            type: 'Point',
+            coordinates: [longitude, latitude],
+          },
+          lastLocationAt: lastAt,
+          lastOnlineAt: lastAt,
+        }
+      },
+      options
+    );
   }
 
   async updateExpoPushToken(

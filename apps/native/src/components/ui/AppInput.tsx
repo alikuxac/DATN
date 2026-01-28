@@ -155,13 +155,10 @@ const AppInput = forwardRef<TextInput, AppInputProps>(
         )}
 
         <Animated.View style={animatedStyle} className="relative">
-          {leftIcon && (
+          {!!leftIcon && (
             <View className="absolute left-3 top-1/2 -translate-y-1/2 z-10 justify-center items-center">
-              {/* Fix: Kiểm tra nếu icon là string thì bọc trong Text */}
-              {typeof leftIcon === "string" ? (
-                <Text>{leftIcon}</Text>
-              ) : (
-                leftIcon
+              {React.isValidElement(leftIcon) ? leftIcon : (
+                <Text>{String(leftIcon)}</Text>
               )}
             </View>
           )}
@@ -206,19 +203,16 @@ const AppInput = forwardRef<TextInput, AppInputProps>(
             )}
           />
 
-          {rightIcon && (
+          {!!rightIcon && (
             <View className="absolute right-3 top-1/2 -translate-y-1/2 z-10 justify-center items-center">
-              {/* Fix: Kiểm tra nếu icon là string thì bọc trong Text */}
-              {typeof rightIcon === "string" ? (
-                <Text>{rightIcon}</Text>
-              ) : (
-                rightIcon
+              {React.isValidElement(rightIcon) ? rightIcon : (
+                <Text>{String(rightIcon)}</Text>
               )}
             </View>
           )}
         </Animated.View>
 
-        {(helperText || errorText) && (
+        {(!!helperText || !!errorText) && (
           <Text
             className={cn(
               helperVariants({

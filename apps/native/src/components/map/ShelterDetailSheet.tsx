@@ -208,7 +208,7 @@ const FacilityItem = ({ icon, label, active, colors }: any) => (
     <View style={[
         styles.facilityItem, 
         { 
-            backgroundColor: active ? colors.background : colors.gray[100],
+            backgroundColor: active ? colors.background : colors.neutrals800,
             opacity: active ? 1 : 0.5,
             borderColor: active ? colors.border : 'transparent',
             borderWidth: active ? 1 : 0

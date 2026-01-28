@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useAppSelector } from "@/store/hooks";
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import { apiService } from '@/services/api.service';
@@ -10,11 +11,15 @@ Notifications.setNotificationHandler({
 });
 
 export const useExpoPushToken = () => {
+  const { token: authToken } = useAppSelector((state) => state.app);
+
   useEffect(() => {
+    if (!authToken) return;
+
     registerForPushNotificationsAsync().then(token => {
       if (token) apiService.put('/shared/user/push-token/update', { token }).catch(console.error);
     });
-  }, []);
+  }, [authToken]);
 };
 
 async function registerForPushNotificationsAsync() {

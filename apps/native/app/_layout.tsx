@@ -170,12 +170,12 @@ const AppProviders = () => {
           <SafeAreaProvider>
             <DialogProvider>
               <ToastProvider>
-                <LocationProvider>
-                  <SocketProvider>
+                <SocketProvider>
+                  <LocationProvider>
                     {/* RootNavigator nằm trong cùng để tận dụng mọi Provider */}
                     <RootNavigator />
-                  </SocketProvider>
-                </LocationProvider>
+                  </LocationProvider>
+                </SocketProvider>
               </ToastProvider>
             </DialogProvider>
           </SafeAreaProvider>

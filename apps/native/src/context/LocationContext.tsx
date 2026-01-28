@@ -1,12 +1,10 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import * as Location from 'expo-location';
 import { Alert } from 'react-native';
-import { io, Socket } from 'socket.io-client';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setRegionId } from '@/store/slices/appSlice';
 import { getRegionFromGeoJSON } from '@/utils/geo';
-
-const SOCKET_URL = `https://${process.env.EXPO_PUBLIC_API_URL}/notifications`;
+import { useSocketContext } from './SocketContext';
 
 type UserLocation = {
   latitude: number;
@@ -16,7 +14,7 @@ type UserLocation = {
 interface LocationContextType {
   userLocation: UserLocation | null;
   currentRegion: string | null;
-  socket: Socket | null;
+  socket: any | null; 
   setActiveReportId: (id: string | null) => void;
 }
 
@@ -30,12 +28,12 @@ const LocationContext = createContext<LocationContextType>({
 export const useLocationContext = () => useContext(LocationContext);
 
 export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { token, user } = useAppSelector((state) => state.app);
+  const { token } = useAppSelector((state) => state.app);
+  const { socket, isConnected, sendLocationUpdate } = useSocketContext();
   const [currentRegion, setCurrentRegion] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const regionRef = useRef<string | null>(null);
   const activeReportIdRef = useRef<string | null>(null);
-  const socketRef = useRef<Socket | null>(null);
   const dispatch = useAppDispatch();
 
   const setActiveReportId = (id: string | null) => {
@@ -44,42 +42,41 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   useEffect(() => {
-    console.log('[LocationContext] Init with token:', !!token);
     if (!token) return;
 
-    // 1. Connect Socket
-    socketRef.current = io(SOCKET_URL, {
-      auth: { token },
-      query: { userId: user ? user._id : undefined },
-      transports: ['websocket'],
-    });
+    if (socket) {
+      const handleNotification = (data: { title: string; message: string; type: string; data?: any }) => {
+        console.log('[LocationContext] Notification received:', data);
+        if (data.type === 'ASSIGNMENT') {
+          Alert.alert(
+            data.title || 'Nhiệm vụ mới',
+            data.message || 'Bạn đã được chỉ định một nhiệm vụ cứu trợ mới.',
+            [{ text: 'OK', style: 'default' }]
+          );
+        }
+      };
 
-    // Listen for assignment notifications
-    socketRef.current.on('notification', (data: { title: string; message: string; type: string; data?: any }) => {
-      console.log('[LocationContext] Notification received:', data);
-      if (data.type === 'ASSIGNMENT') {
-        Alert.alert(
-          data.title || 'Nhiệm vụ mới',
-          data.message || 'Bạn đã được chỉ định một nhiệm vụ cứu trợ mới.',
-          [
-            { text: 'OK', style: 'default' }
-          ]
-        );
-      }
-    });
+      socket.on('notification', handleNotification);
+      return () => {
+        socket.off('notification', handleNotification);
+      };
+    }
+  }, [token, socket]);
+
+  useEffect(() => {
+    if (!token) return;
 
     const handleNewLocation = (lat: number, lng: number) => {
-      console.log(`[LocationContext] New Location: ${lat}, ${lng}`);
+      console.log(`[LocationContext] handleNewLocation: ${lat}, ${lng} | isConnected: ${isConnected}`);
       
       // A. Update UI
       setUserLocation({ latitude: lat, longitude: lng });
 
       // B. Emit Socket Location
-      socketRef.current?.emit('update_location', { 
-        lat, 
-        lng,
-        reportId: activeReportIdRef.current 
-      });
+      if (isConnected) {
+        console.log(`[LocationContext] Emitting update_location to server...`);
+        sendLocationUpdate(lat, lng, activeReportIdRef.current || undefined);
+      }
 
       // C. Calculate & Join Region
       const newRegionId = getRegionFromGeoJSON(lat, lng);
@@ -89,7 +86,9 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         console.log(`📍 Detected new region: ${newRegionId}`);
 
         // Join New Room
-        socketRef.current?.emit('join_region', { regionId: newRegionId });
+        if (socket && isConnected) {
+            socket.emit('join_region', { regionId: newRegionId });
+        }
 
         // Update State & Redux
         regionRef.current = newRegionId;
@@ -101,10 +100,7 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     let sub: Location.LocationSubscription | null = null;
 
     const startTracking = async () => {
-      console.log('[LocationContext] Requesting permissions...');
       const { status } = await Location.requestForegroundPermissionsAsync();
-      console.log('[LocationContext] Permission status:', status);
-      
       if (status !== 'granted') {
           console.warn('[LocationContext] Permission denied');
           return;
@@ -117,15 +113,14 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       try {
         const current = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-        console.log('[LocationContext] Initial position:', current?.coords);
         handleNewLocation(current.coords.latitude, current.coords.longitude);
       } catch (error) {
         console.warn('[LocationContext] Failed to get initial position:', error);
       }
 
-      // 2. Watch Position (Update every 100m)
+      // 2. Watch Position (Update every 10m or 5s)
       sub = await Location.watchPositionAsync(
-        { accuracy: Location.Accuracy.Balanced, distanceInterval: 100, timeInterval: 10000 },
+        { accuracy: Location.Accuracy.Balanced, distanceInterval: 10, timeInterval: 5000 },
         async (location) => {
           handleNewLocation(location.coords.latitude, location.coords.longitude);
         }
@@ -135,13 +130,15 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     startTracking();
 
     return () => {
-      sub?.remove();
-      socketRef.current?.disconnect();
+      if (sub) {
+        sub.remove();
+        console.log('[LocationContext] Tracking stopped');
+      }
     };
-  }, [token, user?._id, dispatch]);
+  }, [token, socket, isConnected, dispatch]);
 
   return (
-    <LocationContext.Provider value={{ userLocation, currentRegion, socket: socketRef.current, setActiveReportId }}>
+    <LocationContext.Provider value={{ userLocation, currentRegion, socket, setActiveReportId }}>
       {children}
     </LocationContext.Provider>
   );

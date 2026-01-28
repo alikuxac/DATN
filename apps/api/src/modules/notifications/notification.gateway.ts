@@ -97,13 +97,14 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
     @MessageBody() payload: { lat: number; lng: number, reportId?: string }
   ) {
     const userId = client.data.userId;
+    this.logger.log(`update_location received from user ${userId}: ${payload.lat}, ${payload.lng} (Report: ${payload.reportId})`);
     if (!userId || !payload.lat || !payload.lng) return;
 
     try {
       // 1. Fetch User to update location
       const user = await this.usersService.findOneById(userId);
       if (user) {
-        await this.usersService.updateLocation(user, payload.lat, payload.lng);
+        await this.usersService.updateLocation(userId, payload.lat, payload.lng);
         // updateLocation already handles lastOnlineAt if implemented in service
         // But if we just want lightweight ping?
       } else {
@@ -112,13 +113,22 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
       }
 
       // 2. Realtime Tracking (Like Grab)
+      const moveData = {
+        rescuerId: userId,
+        lat: payload.lat,
+        lng: payload.lng
+      };
+
       if (payload.reportId) {
-        client.to(`report_${payload.reportId}`).emit('rescuer_moved', {
-          rescuerId: userId,
-          lat: payload.lat,
-          lng: payload.lng
-        });
+        client.to(`report_${payload.reportId}`).emit('rescuer_moved', moveData);
       }
+
+      // Broadcast to region rooms as well
+      client.rooms.forEach(room => {
+        if (room.startsWith('region_')) {
+          client.to(room).emit('rescuer_moved', moveData);
+        }
+      });
     } catch (error) {
       this.logger.error(`Error updating location for user ${userId}`, error);
     }

@@ -36,6 +36,13 @@ export const shelterService = {
     );
   },
 
+  getAllShelters: async (): Promise<Shelter[]> => {
+    const res = await apiService.get<{ data: Shelter[] }>(
+      `/admin/shelter/list?limit=1000`
+    );
+    return res.data;
+  },
+
   getShelterDetail: async (id: string): Promise<Shelter> => {
     return apiService.get<Shelter>(`/shelter/${id}`);
   },

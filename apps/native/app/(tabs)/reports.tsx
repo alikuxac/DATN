@@ -146,26 +146,20 @@ export default function ReportsScreen() {
       // CLIENT-SIDE FILTER: Hide reports irrelevant to current user
       // Rule: Show only if (Mine) OR (My Rescue Task) OR (Pending & Unassigned)
       const filteredReports = reports.filter((item: any) => {
-          const currentUserId = user?._id;
+          const currentUserId = user?._id?.toString();
           if (!currentUserId) return false;
 
           // 1. Created by me
-          const isMyReport = 
-            item.user === currentUserId || 
-            item.by === currentUserId || 
-            item.user?._id === currentUserId || 
-            item.by?._id === currentUserId;
+          const authorId = (typeof item.user === 'object' ? item.user?._id : item.user)?.toString();
+          const creatorId = (typeof item.by === 'object' ? item.by?._id : item.by)?.toString();
           
-          if (isMyReport) return true;
+          if (authorId === currentUserId || creatorId === currentUserId) return true;
 
           // 2. Rescued by me
-          const rescuerId = typeof item.rescuer === 'object' ? item.rescuer?._id : item.rescuer;
-          if (rescuerId && rescuerId === currentUserId) return true;
+          const rescuerId = (typeof item.rescuer === 'object' ? item.rescuer?._id : item.rescuer)?.toString();
+          if (rescuerId === currentUserId) return true;
 
           // 3. Pending & Unassigned (Available for volunteers)
-          // If status is PENDING and no rescuer is assigned, show it.
-          // Note: If user is strictly USER role (not volunteer), they probably shouldn't see these either? 
-          // But typically Users don't see this list unless configured. Assuming Volunteer logic applies here.
           if (item.status === ENUM_REPORT_STATUS.PENDING && !rescuerId) return true;
 
           return false;
