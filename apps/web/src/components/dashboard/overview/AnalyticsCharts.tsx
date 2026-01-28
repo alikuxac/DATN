@@ -28,7 +28,7 @@ export const AnalyticsCharts = ({ rescuesTrend, hotspots }: AnalyticsChartsProps
             {/* Rescues Trend */}
             <Card className="col-span-4">
                 <CardHeader>
-                    <CardTitle>Rescues Trend (Daily)</CardTitle>
+                    <CardTitle>{t("DASHBOARD.CHARTS.RESCUES_TREND")}</CardTitle>
                 </CardHeader>
                 <CardContent className="pl-2">
                     <ResponsiveContainer width="100%" height={350}>
@@ -64,7 +64,7 @@ export const AnalyticsCharts = ({ rescuesTrend, hotspots }: AnalyticsChartsProps
                                      return label;
                                 }}
                             />
-                            <Bar dataKey="count" fill="#22c55e" radius={[4, 4, 0, 0]} name="Resolved Reports" />
+                            <Bar dataKey="count" fill="#22c55e" radius={[4, 4, 0, 0]} name={t("DASHBOARD.CHARTS.RESOLVED_REPORTS")} />
                         </BarChart>
                     </ResponsiveContainer>
                 </CardContent>
@@ -73,7 +73,7 @@ export const AnalyticsCharts = ({ rescuesTrend, hotspots }: AnalyticsChartsProps
             {/* Hotspots */}
             <Card className="col-span-3">
                 <CardHeader>
-                    <CardTitle>Top Hotspots (Regions)</CardTitle>
+                    <CardTitle>{t("DASHBOARD.CHARTS.TOP_HOTSPOTS")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <ResponsiveContainer width="100%" height={350}>
@@ -88,13 +88,13 @@ export const AnalyticsCharts = ({ rescuesTrend, hotspots }: AnalyticsChartsProps
                                 tickLine={false}
                                 axisLine={false}
                                 width={80}
-                                tickFormatter={(val) => val === 'unknown' ? 'Unknown' : (val.length > 10 ? val.substring(0, 10) + '...' : val)}
+                                tickFormatter={(val) => val === 'unknown' ? t("COMMON.UNKNOWN_ERROR") : (val.length > 10 ? val.substring(0, 10) + '...' : val)}
                             />
                             <Tooltip
                                 contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', color: 'hsl(var(--foreground))' }}
                                 cursor={{fill: 'hsl(var(--muted))'}}
                             />
-                            <Bar dataKey="count" fill="#ef4444" radius={[0, 4, 4, 0]} barSize={32} name="Total Reports">
+                            <Bar dataKey="count" fill="#ef4444" radius={[0, 4, 4, 0]} barSize={32} name={t("DASHBOARD.CHARTS.TOTAL_REPORTS")}>
                                 {hotspots.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={index === 0 ? '#ef4444' : '#f97316'} />
                                 ))}

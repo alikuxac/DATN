@@ -13,6 +13,7 @@
     "UNKNOWN_ERROR": "Đã xảy ra lỗi không xác định",
     "BTN_SAVE_CHANGES": "Lưu thay đổi",
     "BTN_VERIFY": "Xác thực",
+    "ACTIONS": "Hành động",
 
     "ERR_UPDATE_FAILED": "Không thể lưu cài đặt",
     "UNVERIFIED_ACCOUNT_WARNING": "Tài khoản chưa xác thực",
@@ -184,7 +185,22 @@
     "CHARTS": {
       "USER_GROWTH": "Tăng trưởng người dùng (30 ngày)",
       "REPORT_ACTIVITY": "Hoạt động báo cáo (30 ngày)",
-      "ONLINE_USERS": "Người dùng trực tuyến"
+      "ONLINE_USERS": "Người dùng trực tuyến",
+      "RESCUES_TREND": "Xu hướng cứu hộ (Hàng ngày)",
+      "TOP_HOTSPOTS": "Khu vực nóng (Top Hotspots)",
+      "RESOLVED_REPORTS": "Báo cáo đã giải quyết",
+      "TOTAL_REPORTS": "Tổng số báo cáo"
+    },
+    "PERFORMANCE": {
+      "TITLE": "Chỉ số hiệu suất",
+      "AVG_RESPONSE_TIME": "Thời gian phản hồi TB",
+      "CREATION_TO_ACCEPTANCE": "Tạo đến khi Chấp nhận",
+      "AVG_RESCUE_TIME": "Thời gian cứu hộ TB",
+      "ACCEPTANCE_TO_RESOLUTION": "Chấp nhận đến khi Giải quyết",
+      "AVG_TOTAL_TIME": "Tổng thời gian TB",
+      "CREATION_TO_RESOLUTION": "Tạo đến khi Giải quyết",
+      "COMPLETED_REPORTS": "Báo cáo hoàn thành",
+      "TOTAL_RESOLVED": "Tổng số đã giải quyết"
     }
   },
 
@@ -320,7 +336,21 @@
     "VIEW_DETAILS": "Xem chi tiết",
     "PROCESSING_BY": "Đang xử lý bởi",
     "SOURCE_APP": "Ứng dụng",
-    "SOURCE_GUEST": "Khách"
+    "SOURCE_GUEST": "Khách",
+    "TABS": {
+      "ALL": "Tất cả",
+      "ACTIVE": "Đang hoạt động (Live)",
+      "HISTORY": "Lịch sử (Đã xong)"
+    },
+    "FILTERS": {
+      "SOURCE": "Nguồn",
+      "ALL_SOURCES": "Tất cả nguồn",
+      "APP": "App (Người dùng)",
+      "GUEST": "Khách (SOS)"
+    },
+    "COL_SOURCE": "Nguồn",
+    "COL_SEVERITY": "Mức độ",
+    "BTN_EXCEL": "Xuất Excel"
   },
   "MAP": {
     "TITLE": "Bản đồ cứu hộ",
@@ -339,7 +369,14 @@
     "LEGEND_VOL_BUSY": "TNV (Bận)",
     "LEGEND_SHELTER": "Điểm tập kết",
     "LEGEND_REPORT_PENDING": "Đang chờ",
-    "LEGEND_REPORT_PROCESSING": "Đang xử lý"
+    "LEGEND_REPORT_PROCESSING": "Đang xử lý",
+    "LEGEND_ME": "Tôi",
+    "LEGEND_SHELTER_TYPES": {
+      "EVACUATION": "Điểm sơ tán",
+      "WAREHOUSE": "Kho hàng",
+      "MEDICAL": "Y tế",
+      "TEMPORARY": "Tạm thời" 
+    }
   },
 
   "SIDEBAR": {

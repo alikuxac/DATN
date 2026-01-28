@@ -3,9 +3,11 @@ import { useReportPerformanceStats } from "@/hooks/useStats";
 import { formatDuration, intervalToDuration } from "date-fns";
 import { Timer, Ambulance, Clock, Activity } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export function ReportPerformance() {
   const { data: stats, isLoading } = useReportPerformanceStats();
+  const { t } = useLanguage();
 
   if (isLoading) {
     return <PerformanceSkeleton />;
@@ -29,61 +31,61 @@ export function ReportPerformance() {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-medium">Performance Metrics</h3>
+      <h3 className="text-lg font-medium">{t("DASHBOARD.PERFORMANCE.TITLE")}</h3>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Avg. Response Time
+              {t("DASHBOARD.PERFORMANCE.AVG_RESPONSE_TIME")}
             </CardTitle>
             <Timer className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatMs(stats.avgResponseTime)}</div>
             <p className="text-xs text-muted-foreground">
-              Creation to Acceptance
+              {t("DASHBOARD.PERFORMANCE.CREATION_TO_ACCEPTANCE")}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Avg. Rescue Time
+              {t("DASHBOARD.PERFORMANCE.AVG_RESCUE_TIME")}
             </CardTitle>
             <Ambulance className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatMs(stats.avgRescueTime)}</div>
             <p className="text-xs text-muted-foreground">
-              Acceptance to Resolution
+              {t("DASHBOARD.PERFORMANCE.ACCEPTANCE_TO_RESOLUTION")}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Avg. Total Time
+              {t("DASHBOARD.PERFORMANCE.AVG_TOTAL_TIME")}
             </CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatMs(stats.avgTotalTime)}</div>
             <p className="text-xs text-muted-foreground">
-              Creation to Resolution
+              {t("DASHBOARD.PERFORMANCE.CREATION_TO_RESOLUTION")}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Completed Reports
+              {t("DASHBOARD.PERFORMANCE.COMPLETED_REPORTS")}
             </CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.count}</div>
             <p className="text-xs text-muted-foreground">
-              Total Resolved
+              {t("DASHBOARD.PERFORMANCE.TOTAL_RESOLVED")}
             </p>
           </CardContent>
         </Card>

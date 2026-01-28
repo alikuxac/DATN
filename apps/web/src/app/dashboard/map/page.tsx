@@ -766,7 +766,7 @@ export default function MapPage() {
           {showLegend && (
                <div className="bg-background/95 backdrop-blur p-3 rounded-lg shadow-lg w-32 space-y-1.5 animate-in slide-in-from-bottom-2">
                     <div className="font-semibold mb-1 flex justify-between items-center">
-                        Legend
+                        {t("MAP.LEGEND")}
                          <span onClick={() => setShowLegend(false)} className="cursor-pointer">×</span>
                     </div>
                     {/* User Legend */}
@@ -776,18 +776,18 @@ export default function MapPage() {
                                  <>
                                     <div className="flex items-center gap-2">
                                         <div className="w-4 h-4 rounded-full bg-green-500 text-[8px] text-white flex items-center justify-center font-bold">V</div>
-                                        <span>Vol (Idle)</span>
+                                        <span>{t("MAP.LEGEND_VOL_IDLE")}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <div className="w-4 h-4 rounded-full bg-red-600 text-[8px] text-white flex items-center justify-center font-bold">V</div>
-                                        <span>Vol (Busy)</span>
+                                        <span>{t("MAP.LEGEND_VOL_BUSY")}</span>
                                     </div>
                                  </>
                              )}
                              {(mapMode !== "volunteers") && (
                                  <div className="flex items-center gap-2">
                                     <div className="w-4 h-4 rounded-full bg-cyan-500 text-[8px] text-white flex items-center justify-center font-bold">U</div>
-                                    <span>User</span>
+                                    <span>{t("MAP.LEGEND_USER")}</span>
                                 </div>
                              )}
                              <hr className="my-1 border-muted" />
@@ -796,8 +796,8 @@ export default function MapPage() {
 
                     {(mapMode === "reports" || mapMode === "all") && (
                         <>
-                           <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-red-500" /> Pending</div>
-                           <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-orange-500" /> In Progress</div>
+                           <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-red-500" /> {t("MAP.LEGEND_REPORT_PENDING")}</div>
+                           <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-orange-500" /> {t("MAP.LEGEND_REPORT_PROCESSING")}</div>
                         </>
                     )}
                     
@@ -805,22 +805,22 @@ export default function MapPage() {
                     {showShelters && (
                         <>
                             <hr className="my-1 border-muted" />
-                            <div className="text-[10px] font-medium text-muted-foreground mb-1">Shelters</div>
+                            <div className="text-[10px] font-medium text-muted-foreground mb-1">{t("MAP.LEGEND_SHELTER")}</div>
                             <div className="flex items-center gap-2">
                                 <div className="w-3 h-3 rounded bg-blue-500" />
-                                <span className="text-[10px]">Evacuation</span>
+                                <span className="text-[10px]">{t("MAP.LEGEND_SHELTER_TYPES.EVACUATION")}</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <div className="w-3 h-3 rounded bg-green-500" />
-                                <span className="text-[10px]">Warehouse</span>
+                                <span className="text-[10px]">{t("MAP.LEGEND_SHELTER_TYPES.WAREHOUSE")}</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <div className="w-3 h-3 rounded bg-red-500" />
-                                <span className="text-[10px]">Medical</span>
+                                <span className="text-[10px]">{t("MAP.LEGEND_SHELTER_TYPES.MEDICAL")}</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <div className="w-3 h-3 rounded bg-amber-500" />
-                                <span className="text-[10px]">Temporary</span>
+                                <span className="text-[10px]">{t("MAP.LEGEND_SHELTER_TYPES.TEMPORARY")}</span>
                             </div>
                         </>
                     )}
@@ -831,12 +831,12 @@ export default function MapPage() {
                         <div className="w-4 h-4 rounded-full bg-purple-500 border-2 border-white shadow flex items-center justify-center">
                            <div className="w-2 h-2 rounded-full bg-white" />
                         </div>
-                        <span>Me</span>
+                        <span>{t("MAP.LEGEND_ME")}</span>
                     </div>
                </div>
           )}
           {!showLegend && (
-               <Button variant="secondary" size="sm" onClick={() => setShowLegend(true)}>Legend</Button>
+               <Button variant="secondary" size="sm" onClick={() => setShowLegend(true)}>{t("MAP.LEGEND")}</Button>
           )}
       </div>
       

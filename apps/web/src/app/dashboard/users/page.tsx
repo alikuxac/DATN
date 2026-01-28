@@ -202,7 +202,7 @@ export default function UsersPage() {
               users.map((user) => (
                 <TableRow key={user._id}>
                   <TableCell className="font-medium">
-                    {user.firstName} {user.lastName}
+                    {user.lastName} {user.firstName}
                   </TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>

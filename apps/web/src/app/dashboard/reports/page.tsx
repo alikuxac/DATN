@@ -189,9 +189,9 @@ export default function ReportsPage() {
           <div className="flex flex-col gap-4 w-full md:w-auto">
              <Tabs defaultValue="all" className="w-[400px]" onValueChange={onTabChange}>
               <TabsList>
-                <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="active">Active (Live)</TabsTrigger>
-                <TabsTrigger value="history">History (Resolved)</TabsTrigger>
+                <TabsTrigger value="all">{t("REPORTS.TABS.ALL")}</TabsTrigger>
+                <TabsTrigger value="active">{t("REPORTS.TABS.ACTIVE")}</TabsTrigger>
+                <TabsTrigger value="history">{t("REPORTS.TABS.HISTORY")}</TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
@@ -215,9 +215,9 @@ export default function ReportsPage() {
                   <SelectValue placeholder="Source" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ALL">All Sources</SelectItem>
-                  <SelectItem value="app">App (User)</SelectItem>
-                  <SelectItem value="guest">Guest (SOS)</SelectItem>
+                  <SelectItem value="ALL">{t("REPORTS.FILTERS.ALL_SOURCES")}</SelectItem>
+                  <SelectItem value="app">{t("REPORTS.FILTERS.APP")}</SelectItem>
+                  <SelectItem value="guest">{t("REPORTS.FILTERS.GUEST")}</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -280,7 +280,7 @@ export default function ReportsPage() {
 
           <Button variant="outline" onClick={handleExport}>
             <Download className="mr-2 h-4 w-4" />
-            Excel
+            {t("REPORTS.BTN_EXCEL")}
           </Button>
         </div>
       </div>
@@ -290,10 +290,10 @@ export default function ReportsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>{t("REPORTS.COL_ID")}</TableHead>
-              <TableHead>Source</TableHead>
+              <TableHead>{t("REPORTS.COL_SOURCE")}</TableHead>
               <TableHead>{t("REPORTS.COL_TITLE")}</TableHead>
               <TableHead>{t("REPORTS.COL_STATUS")}</TableHead>
-              <TableHead>Severity</TableHead>
+              <TableHead>{t("REPORTS.COL_SEVERITY")}</TableHead>
               <TableHead>{t("REPORTS.COL_CREATED_AT")}</TableHead>
               <TableHead>{t("REPORTS.COL_ACTIONS")}</TableHead>
             </TableRow>
@@ -460,10 +460,10 @@ export default function ReportsPage() {
           onClick={() => setPage((old) => Math.max(old - 1, 1))}
           disabled={page === 1 || isLoading}
         >
-          Previous
+          {t("COMMON.PAGINATION.PREVIOUS")}
         </Button>
         <span className="text-sm">
-          Page {page} of {metadata?.totalPage || 1}
+          {t("COMMON.PAGINATION.PAGE_OF", { page: page.toString(), total: (metadata?.totalPage || 1).toString() })}
         </span>
         <Button
           variant="outline"
@@ -471,7 +471,7 @@ export default function ReportsPage() {
           onClick={() => setPage((old) => (metadata && page < metadata.totalPage ? old + 1 : old))}
           disabled={!metadata || page >= metadata.totalPage || isLoading}
         >
-          Next
+          {t("COMMON.PAGINATION.NEXT")}
         </Button>
       </div>
 
@@ -686,7 +686,7 @@ export default function ReportsPage() {
           )}
           <DialogFooter className="gap-2 sm:gap-0">
              <Button variant="outline" onClick={() => setDetailOpen(false)}>
-                Close
+                {t("COMMON.CLOSE")}
              </Button>
           </DialogFooter>
         </DialogContent>
