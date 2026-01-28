@@ -57,7 +57,7 @@ export function Sidebar() {
   // Define groups
   const sidebarGroups: SidebarGroup[] = [
     {
-      label: "General",
+      label: t("SIDEBAR.GROUP_GENERAL"),
       items: [
         {
           title: t("SIDEBAR.HOME"),
@@ -78,7 +78,7 @@ export function Sidebar() {
       ],
     },
     {
-      label: "Management",
+      label: t("SIDEBAR.GROUP_MANAGEMENT"),
       roles: [UserRole.ADMIN, UserRole.SUPER_ADMIN], // Only visible to admins
       items: [
         {
@@ -99,15 +99,15 @@ export function Sidebar() {
       ],
     },
     {
-      label: "Settings",
+      label: t("SIDEBAR.GROUP_SETTINGS"),
       items: [
         {
-            title: "Security & Login", // TODO: Add translation key SIDEBAR.SECURITY
+            title: t("SIDEBAR.SECURITY"),
             href: "/dashboard/settings/security",
             icon: Shield,
         },
         {
-            title: "System Settings", // TODO: Add translation key SIDEBAR.SYSTEM
+            title: t("SIDEBAR.SYSTEM"),
             href: "/dashboard/settings/system",
             icon: Settings2,
             roles: [UserRole.SUPER_ADMIN],

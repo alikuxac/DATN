@@ -351,7 +351,12 @@
     "USERS": "Người dùng",
     "SHELTERS": "Kho & Điểm tập kết",
     "LOGOUT": "Đăng xuất",
-    "LOGOUT_CONFIRM": "Bạn có chắc chắn muốn đăng xuất không?"
+    "LOGOUT_CONFIRM": "Bạn có chắc chắn muốn đăng xuất không?",
+    "SECURITY": "Bảo mật & Đăng nhập",
+    "SYSTEM": "Cài đặt hệ thống",
+    "GROUP_GENERAL": "Chung",
+    "GROUP_MANAGEMENT": "Quản lý",
+    "GROUP_SETTINGS": "Cài đặt"
   },
   "SESSION": {
     "TITLE": "Phiên hoạt động",
