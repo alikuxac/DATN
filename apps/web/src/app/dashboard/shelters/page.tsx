@@ -45,6 +45,7 @@ interface Shelter {
   name: string;
   type: ShelterType;
   status: ShelterStatus;
+  location?: { type: string; coordinates: number[] };
   address: string;
   regionId: string;
   capacity?: number;
@@ -201,6 +202,7 @@ export default function SheltersPage() {
                   <TableHead>{t("SHELTERS.COL_NAME")}</TableHead>
                   <TableHead>{t("SHELTERS.COL_TYPE")}</TableHead>
                   <TableHead>{t("SHELTERS.COL_STATUS")}</TableHead>
+                  <TableHead>Coordinates</TableHead>
                   <TableHead>{t("SHELTERS.COL_ADDRESS")}</TableHead>
                   <TableHead>{t("SHELTERS.COL_CAPACITY")}</TableHead>
                   <TableHead>{t("SHELTERS.COL_CONTACT")}</TableHead>
@@ -225,6 +227,11 @@ export default function SheltersPage() {
                       </TableCell>
                       <TableCell>{getTypeBadge(shelter.type)}</TableCell>
                       <TableCell>{getStatusBadge(shelter.status)}</TableCell>
+                      <TableCell className="text-xs font-mono">
+                        {shelter.location?.coordinates ? 
+                          `${shelter.location.coordinates[1].toFixed(4)}, ${shelter.location.coordinates[0].toFixed(4)}` : 
+                          'N/A'}
+                      </TableCell>
                       <TableCell className="max-w-[200px] truncate">
                         {shelter.address}
                       </TableCell>

@@ -5,25 +5,27 @@ import {
 } from '@common/database/decorators/database.decorator';
 import { DatabaseObjectIdEntityBase } from '@common/database/bases/database.object-id.entity';
 import { IDatabaseDocument } from '@common/database/interfaces/database.interface';
-import { UserEntity } from '@modules/users/repository/entities/user.entity';
-import { Schema } from 'mongoose';
 
-import { ENUM_SHELTER_STATUS, ENUM_SHELTER_TYPE, IShelterResource } from '@repo/shared';
+
+
+import { ENUM_SHELTER_STATUS, ENUM_SHELTER_TYPE, IShelterResource, ENUM_REPORT_LOCATION_TYPE } from '@repo/shared';
 
 export const SHELTER_ENTITY_NAME = 'Shelters';
-
 
 @DatabaseEntity({ _id: false, timestamps: false })
 export class ShelterLocation {
   @DatabaseProp({
     type: String,
-    enum: ['Point'],
-    default: 'Point',
+    enum: ENUM_REPORT_LOCATION_TYPE,
+    default: ENUM_REPORT_LOCATION_TYPE.POINT,
+    required: true,
   })
   type: string;
 
   @DatabaseProp({
-    type: [Number],
+    type: [Number], // [longitude, latitude]
+    required: true,
+    index: '2dsphere', // Index cho GeoJSON
   })
   coordinates: number[];
 }
@@ -60,19 +62,10 @@ export class ShelterEntity extends DatabaseObjectIdEntityBase {
   status: ENUM_SHELTER_STATUS;
 
   @DatabaseProp({
-    _id: false,
-    type: {
-      type: {
-        type: String,
-        enum: ['Point'],
-        default: 'Point',
-      },
-      coordinates: {
-        type: [Number],
-      },
-    },
+    type: ShelterLocation,
+    required: true,
   })
-  location?: ShelterLocation;
+  location: ShelterLocation;
 
   @DatabaseProp({
     required: true,
@@ -153,5 +146,5 @@ export class ShelterEntity extends DatabaseObjectIdEntityBase {
 }
 
 export const ShelterSchema = DatabaseSchema(ShelterEntity);
-ShelterSchema.index({ location: '2dsphere' });
+
 export type ShelterDocument = IDatabaseDocument<ShelterEntity>;

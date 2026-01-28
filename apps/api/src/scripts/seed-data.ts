@@ -15,6 +15,7 @@ import {
   ENUM_USER_THEME,
   ENUM_SHELTER_TYPE,
   ENUM_SHELTER_STATUS,
+  ENUM_REPORT_LOCATION_TYPE,
 } from '@repo/shared';
 import { Model } from 'mongoose';
 import { UserDocument, UserEntity } from '@modules/users/repository/entities/user.entity';
@@ -548,7 +549,7 @@ async function generateShelters(
         type,
         status: ENUM_SHELTER_STATUS.ACTIVE,
         location: {
-          type: 'Point',
+          type: ENUM_REPORT_LOCATION_TYPE.POINT,
           coordinates: [coords.lng, coords.lat],
         },
         address: faker.address.streetAddress(true) + `, ${cluster.name}`,

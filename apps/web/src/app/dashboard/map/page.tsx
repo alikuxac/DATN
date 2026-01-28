@@ -609,6 +609,7 @@ export default function MapPage() {
     };
 
     sheltersData.forEach((shelter) => {
+
       if (!shelter.location?.coordinates?.length) return;
 
       const coords: [number, number] = shelter.location.coordinates as [number, number];

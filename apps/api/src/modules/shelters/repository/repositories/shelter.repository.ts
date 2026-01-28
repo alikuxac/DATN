@@ -4,6 +4,7 @@ import { DatabaseObjectIdRepositoryBase } from '@common/database/bases/database.
 import { ShelterDocument, ShelterEntity } from '../entities/shelter.entity';
 import { UserEntity } from '@modules/users/repository/entities/user.entity';
 import { InjectDatabaseModel } from '@common/database/decorators/database.decorator';
+import { ENUM_REPORT_LOCATION_TYPE } from '@repo/shared';
 
 @Injectable()
 export class ShelterRepository extends DatabaseObjectIdRepositoryBase<
@@ -36,7 +37,7 @@ export class ShelterRepository extends DatabaseObjectIdRepositoryBase<
       location: {
         $near: {
           $geometry: {
-            type: 'Point',
+            type: ENUM_REPORT_LOCATION_TYPE.POINT,
             coordinates: [lng, lat]
           },
           $maxDistance: maxDistance

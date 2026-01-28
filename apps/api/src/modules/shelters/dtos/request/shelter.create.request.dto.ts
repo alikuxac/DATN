@@ -12,12 +12,12 @@ import {
   IsObject,
   IsBoolean
 } from 'class-validator';
-import { ENUM_SHELTER_TYPE, ENUM_SHELTER_STATUS } from '@repo/shared';
+import { ENUM_SHELTER_TYPE, ENUM_SHELTER_STATUS, ENUM_REPORT_LOCATION_TYPE } from '@repo/shared';
 
 class LocationDto {
-  @IsString()
+  @IsEnum(ENUM_REPORT_LOCATION_TYPE)
   @IsNotEmpty()
-  type: string = 'Point';
+  type: string = ENUM_REPORT_LOCATION_TYPE.POINT;
 
   @IsArray()
   @IsNumber({}, { each: true })
