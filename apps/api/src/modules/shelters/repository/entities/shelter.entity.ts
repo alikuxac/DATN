@@ -60,7 +60,6 @@ export class ShelterEntity extends DatabaseObjectIdEntityBase {
   status: ENUM_SHELTER_STATUS;
 
   @DatabaseProp({
-    required: true,
     _id: false,
     type: {
       type: {
@@ -73,7 +72,7 @@ export class ShelterEntity extends DatabaseObjectIdEntityBase {
       },
     },
   })
-  location: ShelterLocation;
+  location?: ShelterLocation;
 
   @DatabaseProp({
     required: true,
