@@ -186,7 +186,7 @@ export class UserSharedController {
             await this.databaseService.createTransaction();
 
         try {
-            await this.userService.updateLocation(user, latitude, longitude, {
+            await this.userService.updateLocation(user.id, latitude, longitude, {
                 session,
             });
 
