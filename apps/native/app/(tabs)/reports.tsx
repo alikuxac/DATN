@@ -168,7 +168,10 @@ export default function ReportsScreen() {
       if (pageNum === 1) {
         setData(filteredReports);
       } else {
-        setData(prev => [...prev, ...filteredReports]);
+        setData(prev => {
+          const combined = [...prev, ...filteredReports];
+          return Array.from(new Map(combined.map(r => [r._id, r])).values());
+        });
       }
       
       // Update current page ref if needed, or rely on state passed in

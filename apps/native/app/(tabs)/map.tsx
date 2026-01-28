@@ -221,12 +221,13 @@ import { calculateDistance } from "@/utils/geo";
         const reportRes = await apiService.get<{ data: IReportListResponse[] }>(
           `/user/report?${queryString}`
         );
-        setReports(reportRes.data || []);
+        const uniqueReports = Array.from(new Map((reportRes.data || []).map(r => [r._id, r])).values());
+        setReports(uniqueReports);
   
         // 2. Extract Rescuers from Reports (Optimized: No extra API calls)
         // Only needed for USER role seeing who is coming
         if (user?.role === ENUM_USER_ROLE.USER) {
-            const activeReports = (reportRes.data || []).filter(r => 
+            const activeReports = uniqueReports.filter(r => 
                 r.status === ENUM_REPORT_STATUS.IN_PROGRESS && r.rescuer
             );
             
@@ -262,7 +263,7 @@ import { calculateDistance } from "@/utils/geo";
         // Extract Reporter for Volunteers (So they can see moving target)
         const isVolunteer = user?.role === ENUM_USER_ROLE.VOLUNTEER || user?.isRescueMode;
         if (isVolunteer && user) {
-            const myActiveReport = (reportRes.data || []).find(r => 
+            const myActiveReport = uniqueReports.find(r => 
                 r.status === ENUM_REPORT_STATUS.IN_PROGRESS && 
                 (typeof r.rescuer === 'string' ? r.rescuer : r.rescuer?._id?.toString()) === user._id?.toString()
             );
@@ -287,7 +288,8 @@ import { calculateDistance } from "@/utils/geo";
 
           // 3. Fetch all shelters
           const sheltersData = await shelterService.getAllShelters();
-          setShelters(sheltersData || []);
+          const uniqueShelters = Array.from(new Map((sheltersData || []).map(s => [s._id, s])).values());
+          setShelters(uniqueShelters);
 
        } catch (error) {
           console.error("Error fetching map data:", error);
@@ -433,7 +435,7 @@ import { calculateDistance } from "@/utils/geo";
     const getShelterMarkers = useMemo(() => {
         return shelters.map((shelter) => (
             <MapShelterMarker
-                key={shelter._id}
+                key={`shelter-${shelter._id}`}
                 id={shelter._id}
                 coordinate={[shelter.location.coordinates[0], shelter.location.coordinates[1]]}
                 title={shelter.name}
@@ -490,8 +492,9 @@ import { calculateDistance } from "@/utils/geo";
           ];
           return (
             <UserAvatarMarker
-              key={rescuer._id}
+              key={`rescuer-avatar-${rescuer._id}`}
               userId={rescuer._id}
+              id={`rescuer-avatar-${rescuer._id}`}
               coordinate={coords}
               avatarUrl={(rescuer as any).avatar}
               userName={`${rescuer.firstName || ''} ${rescuer.lastName || ''}`}
@@ -507,7 +510,7 @@ import { calculateDistance } from "@/utils/geo";
         // Use default MapRescuerMarker for other rescuers
         return (
           <MapRescuerMarker
-            key={rescuer._id}
+            key={`rescuer-${rescuer._id}`}
             rescuer={rescuer}
             isBusy={busyRescuerIds.has(rescuer._id)}
             onSelected={(r) => {
@@ -572,7 +575,7 @@ import { calculateDistance } from "@/utils/geo";
     const getReportMarkers = useMemo(() => {
       return displayedReports.map((report) => (
         <MapReportMarker
-          key={report._id}
+          key={`report-${report._id}`}
           report={report}
           onSelected={(r) => {
             setSelectedRescuer(null);
@@ -742,6 +745,8 @@ import { calculateDistance } from "@/utils/geo";
         {/* 4. ACTIVE REPORTER (For Volunteer view) */}
         {activeReporter && isVolunteerMode && (
           <UserAvatarMarker
+            key={`active-reporter-${activeReporter._id}`}
+            id={`active-reporter-${activeReporter._id}`}
             userId={activeReporter._id}
             coordinate={[activeReporter.location.lng, activeReporter.location.lat]}
             avatarUrl={(activeReporter as any).avatar}
@@ -757,6 +762,8 @@ import { calculateDistance } from "@/utils/geo";
         {/* 3. MY LOCATION - Avatar thay vì blue dot */}
         {userLocation && user && (
           <UserAvatarMarker
+            key={`my-location-${user._id}`}
+            id={`my-location-${user._id}`}
             userId={user._id}
             coordinate={[userLocation.longitude, userLocation.latitude]}
             avatarUrl={user.avatar}

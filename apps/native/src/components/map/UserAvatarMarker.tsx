@@ -6,6 +6,7 @@ import { getDiceBearUrl } from '@/utils/avatar';
 
 interface UserAvatarMarkerProps {
   userId: string;
+  id?: string;
   coordinate: [number, number]; // [longitude, latitude] for VietMap
   avatarUrl?: string;
   userName?: string; // For DiceBear fallback
@@ -19,6 +20,7 @@ export const UserAvatarMarker = ({
   avatarUrl,
   userName = 'User',
   heading = 0,
+  id,
   onSelected,
 }: UserAvatarMarkerProps) => {
   // Always use DiceBear as fallback - same logic as Avatar component
@@ -26,7 +28,7 @@ export const UserAvatarMarker = ({
 
   return (
     <PointAnnotation
-      id={`user-${userId}`}
+      id={id || `user-${userId}`}
       coordinate={coordinate}
       onSelected={onSelected}
     >

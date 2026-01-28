@@ -63,7 +63,7 @@ export const MapReportMarker = React.memo(
 
     return (
       <PointAnnotation
-        id={report._id}
+        id={`report-${report._id}`}
         coordinate={coords}
         onSelected={() => onSelected(report)}
       >

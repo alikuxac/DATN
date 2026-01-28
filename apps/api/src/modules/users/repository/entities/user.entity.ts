@@ -12,6 +12,23 @@ import { DatabaseObjectIdEntityBase } from '@common/database/bases/database.obje
 import { UserPreferencesEntity, UserPreferencesSchema } from './user.preferences.entity';
 import { NotificationSettingsEntity, NotificationSettingsSchema } from './user.settings.entity';
 
+@DatabaseEntity({ _id: false, timestamps: false })
+export class PointLocation {
+  @DatabaseProp({
+    type: String,
+    enum: ['Point'],
+    default: 'Point',
+    required: true,
+  })
+  type: string;
+
+  @DatabaseProp({
+    type: [Number], // [longitude, latitude]
+    required: true,
+  })
+  coordinates: number[];
+}
+
 @DatabaseEntity({
   collection: 'users',
   timestamps: true,
@@ -77,21 +94,10 @@ export class UserEntity extends DatabaseObjectIdEntityBase {
   expoPushToken?: string;
 
   @DatabaseProp({
-    type: {
-      type: {
-        type: String,
-        enum: ['Point'],
-        // default: 'Point', 
-        // required: true
-      },
-      coordinates: {
-        type: [Number],
-        // required: true
-      }
-    },
-    _id: false
+    type: PointLocation,
+    required: false,
   })
-  location?: { type: string; coordinates: number[] };
+  location?: PointLocation;
 
   @DatabaseProp({ type: Date })
   lastLocationAt?: Date;
