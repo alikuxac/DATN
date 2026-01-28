@@ -43,11 +43,11 @@ export class ReportService {
     }
 
     const userId = user._id;
-    const isVolunteer = user.role === ENUM_USER_ROLE.VOLUNTEER;
+    const isVolunteer = user.role === ENUM_USER_ROLE.VOLUNTEER || user.isRescueMode;
 
     // 🅰️ USER MODE: Chỉ xem tin của mình
     if (!isVolunteer) {
-      return { user: userId };
+      return { user: new Types.ObjectId(userId.toString()) };
     }
 
     const volunteerConditions: Record<string, any>[] = [
@@ -106,11 +106,11 @@ export class ReportService {
     }
 
     const userId = user._id;
-    const isVolunteer = user.role === ENUM_USER_ROLE.VOLUNTEER;
+    const isVolunteer = user.role === ENUM_USER_ROLE.VOLUNTEER || user.isRescueMode;
 
     // A. USER THƯỜNG: Chỉ xem tin của mình
     if (!isVolunteer) {
-      return { user: userId };
+      return { user: new Types.ObjectId(userId.toString()) };
     }
 
     // B. VOLUNTEER
@@ -131,7 +131,14 @@ export class ReportService {
       });
     }
 
-    return { $or: volunteerConditions };
+    return {
+      $or: volunteerConditions.map(c => {
+        // Ensure IDs are ObjectIds for $or operations
+        if (c.user) c.user = new Types.ObjectId(c.user.toString());
+        if (c.rescuer) c.rescuer = new Types.ObjectId(c.rescuer.toString());
+        return c;
+      })
+    };
   }
 
   private buildAppQuery(find: Record<string, any>, user: UserDocument): Record<string, any> {
