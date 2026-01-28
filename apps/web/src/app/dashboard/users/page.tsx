@@ -215,7 +215,7 @@ export default function UsersPage() {
                         user.role === UserRole.USER && "bg-gray-50 text-gray-600 ring-gray-500/10"
                       )}
                     >
-                      {t(`USERS.ROLES.${user.role}`)}
+                      {t(`USERS.ROLES.${user.role.toUpperCase().replace(/\s+/g, '_')}`)}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -226,7 +226,7 @@ export default function UsersPage() {
                         user.status === UserStatus.INACTIVE && "bg-red-50 text-red-700 ring-red-600/10"
                       )}
                     >
-                      {t(`USERS.STATUS_OPTIONS.${user.status}` as any)}
+                      {t(`USERS.STATUS_OPTIONS.${user.status.toUpperCase()}` as any)}
                     </span>
                   </TableCell>
                   <TableCell>{format(new Date(user.createdAt), "PP p")}</TableCell>

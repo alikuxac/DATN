@@ -321,7 +321,9 @@
       "other": "Khác",
       "evacuation": "Sơ tán",
       "supplies": "Nhu yếu phẩm",
-      "rescue": "Cứu hộ"
+      "rescue": "Cứu hộ",
+      "water": "Nước uống",
+      "food": "Thực phẩm"
     },
     "USER": "Người tạo",
     "SEVERITY": "Mức độ",

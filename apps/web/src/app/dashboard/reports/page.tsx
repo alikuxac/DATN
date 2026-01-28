@@ -343,7 +343,7 @@ export default function ReportsPage() {
                         report.status === ReportStatus.REJECTED && "bg-red-100 text-red-800"
                       )}
                     >
-                       {t(`REPORTS.STATUS.${report.status}`)}
+                       {t(`REPORTS.STATUS.${report.status.toUpperCase()}`)}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -353,7 +353,7 @@ export default function ReportsPage() {
                         report.severity === 'high' ? "bg-orange-500 text-white" :
                         "bg-gray-200 text-gray-700"
                      )}>
-                        {report.severity || 'low'}
+                        {t(`REPORTS.SEVERITIES.${(report.severity || 'low').toLowerCase()}`)}
                      </span>
                   </TableCell>
                   <TableCell>
