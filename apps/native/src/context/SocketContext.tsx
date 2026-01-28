@@ -52,7 +52,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const newSocket = io(SOCKET_URL, {
       transports: ['websocket'],
       auth: { token },
-      query: { userId: user?._id },
+      query: { userId: user ? user._id : undefined },
       reconnection: true,
       reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,

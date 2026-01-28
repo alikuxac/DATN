@@ -50,7 +50,7 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     // 1. Connect Socket
     socketRef.current = io(SOCKET_URL, {
       auth: { token },
-      query: { userId: user?._id },
+      query: { userId: user ? user._id : undefined },
       transports: ['websocket'],
     });
 

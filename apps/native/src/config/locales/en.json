@@ -20,7 +20,8 @@
     "PHONE_NUMBER": "Phone Number",
     "GUEST_USER": "Guest User",
     "NO_PHONE": "No Phone",
-    "NOTE": "Note"
+    "NOTE": "Note",
+    "PHONE": "Phone"
   },
 
   "TABS": {
@@ -163,6 +164,14 @@
     "SOURCE": {
       "APP": "APP",
       "GUEST": "GUEST"
+    },
+    "STATUS": {
+      "pending": "PENDING",
+      "in_progress": "IN PROGRESS",
+      "resolved": "RESOLVED",
+      "cancelled": "CANCELLED",
+      "rejected": "REJECTED",
+      "verified": "VERIFIED"
     }
   },
 

@@ -32,7 +32,7 @@ export const shelterService = {
     maxDistance: number = 10000 // 10km
   ): Promise<Shelter[]> => {
     return apiService.get<Shelter[]>(
-      `/shelter/nearby/search?lat=${lat}&lng=${lng}&maxDistance=${maxDistance}`
+      `/admin/shelter/nearby/search?lat=${lat}&lng=${lng}&maxDistance=${maxDistance}`
     );
   },
 

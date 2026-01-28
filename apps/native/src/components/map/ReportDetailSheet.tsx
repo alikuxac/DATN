@@ -131,7 +131,7 @@ export const ReportDetailSheet = ({
               >
                 {getStatusIcon(selectedReport.status)}
                 <AppText className="text-white font-bold uppercase text-[10px]">
-                  {selectedReport.status}
+                  {t(`REPORT.STATUS.${selectedReport.status}`)}
                 </AppText>
               </View>
               

@@ -351,7 +351,7 @@ export const ReportCard = ({
             <AppText
               className={`text-xs font-sans-bold uppercase ${getStatusColorClass(item.status)}`}
             >
-              {item.status ? item.status.replace("_", " ") : t('COMMON.UNKNOWN')}
+              {item.status ? t(`REPORT.STATUS.${item.status}`) : t('COMMON.UNKNOWN')}
             </AppText>
           </View>
         </View>

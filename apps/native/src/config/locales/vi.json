@@ -19,7 +19,8 @@
     "PHONE_NUMBER": "Số điện thoại",
     "GUEST_USER": "Khách vãng lai",
     "NO_PHONE": "Không có SĐT",
-    "NOTE": "Ghi chú"
+    "NOTE": "Ghi chú",
+    "PHONE": "Điện thoại"
   },
   "TABS": {
     "MAP": "Bản đồ",
@@ -153,6 +154,14 @@
     "SOURCE": {
       "APP": "Ứng dụng",
       "GUEST": "Khách"
+    },
+    "STATUS": {
+      "pending": "Đang chờ",
+      "in_progress": "Đang xử lý",
+      "resolved": "Đã hoàn thành",
+      "cancelled": "Đã hủy",
+      "rejected": "Đã từ chối",
+      "verified": "Đã xác thực"
     }
   },
 

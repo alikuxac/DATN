@@ -205,22 +205,23 @@ import { calculateDistance } from "@/utils/geo";
       if (!token) return;
       setIsLoading(true);
       try {
-        const param = {
-          regionId: currentRegion!,
+        const param: Record<string, string> = {};
+        if (currentRegion) {
+          param.regionId = currentRegion;
         }
   
-        const queryString = new URLSearchParams(param as any).toString();
+        const queryString = new URLSearchParams(param).toString();
   
         // 1. Fetch Reports
         const reportRes = await apiService.get<{ data: IReportListResponse[] }>(
           `/user/report?${queryString}`
         );
-        setReports(reportRes.data);
+        setReports(reportRes.data || []);
   
         // 2. Extract Rescuers from Reports (Optimized: No extra API calls)
         // Only needed for USER role seeing who is coming
         if (user?.role === ENUM_USER_ROLE.USER) {
-            const activeReports = reportRes.data.filter(r => 
+            const activeReports = (reportRes.data || []).filter(r => 
                 r.status === ENUM_REPORT_STATUS.IN_PROGRESS && r.rescuer
             );
             
@@ -259,11 +260,12 @@ import { calculateDistance } from "@/utils/geo";
                 userLocation.longitude,
                 10000 // 10km
              );
-             setShelters(sheltersData);
+             setShelters(sheltersData || []);
           }
 
        } catch (error) {
           console.error("Error fetching map data:", error);
+          // showError("Lỗi tải dữ liệu", "Không thể cập nhật danh sách báo cáo.");
        } finally {
           setIsLoading(false);
        }
@@ -801,7 +803,8 @@ import { calculateDistance } from "@/utils/geo";
         onPickLocation={handlePickLocation}
       />
 
-      <ReportDetailSheet
+      {selectedReport && (
+        <ReportDetailSheet
           selectedReport={selectedReport}
           onClose={() => setSelectedReport(null)}
           isVolunteerMode={!!isVolunteerMode}
@@ -814,7 +817,8 @@ import { calculateDistance } from "@/utils/geo";
           isActionLoading={isActionLoading}
           handleReportAction={handleReportAction}
           handleCall={handleCall}
-      />
+        />
+      )}
       
       {selectedRescuer && (
         <RescuerDetailSheet
@@ -824,11 +828,13 @@ import { calculateDistance } from "@/utils/geo";
         />
       )}
 
-      <ShelterDetailSheet
-         shelter={selectedShelter}
-         onClose={() => setSelectedShelter(null)}
-         userLocation={userLocation ? { lat: userLocation.latitude, lng: userLocation.longitude } : null}
-      />
+      {selectedShelter && (
+        <ShelterDetailSheet
+           shelter={selectedShelter}
+           onClose={() => setSelectedShelter(null)}
+           userLocation={userLocation ? { lat: userLocation.latitude, lng: userLocation.longitude } : null}
+        />
+      )}
     </View>
   );
 }
