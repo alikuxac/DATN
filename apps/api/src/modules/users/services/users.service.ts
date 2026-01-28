@@ -473,13 +473,11 @@ export class UsersService {
   ) {
     const lastAt = this.helperDateService.create();
     return this.userRepository.updateRaw(
-      { _id: new Types.ObjectId(userId) },
+      { _id: new Types.ObjectId(userId) as any },
       {
         $set: {
-          location: {
-            type: 'Point',
-            coordinates: [longitude, latitude],
-          },
+          'location.type': 'Point',
+          'location.coordinates': [longitude, latitude],
           lastLocationAt: lastAt,
           lastOnlineAt: lastAt,
         }
