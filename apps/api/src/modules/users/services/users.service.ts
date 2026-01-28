@@ -101,7 +101,7 @@ export class UsersService {
 
       if (!exists) {
         // Update MongoDB
-        await this.userRepository.updateRaw({ _id: userId }, {
+        await this.userRepository.updateRaw({ _id: new Types.ObjectId(userId) as any }, {
           lastOnlineAt: this.helperDateService.create()
         });
 

@@ -138,12 +138,15 @@ export class ReportService {
     // 1. Tách 'q' xử lý riêng
     const { restFind, textQuery } = this.extractTextSearch(find);
 
-    // 2. Lấy Logic User/Volunteer (Cần regionId từ find để lọc tin xung quanh)
-    const logicFilter = this.buildAppLogicFilter(user, restFind.regionId);
+    // 2. Tách regionId để xử lý riêng trong logicFilter (Tránh bị AND toàn cục làm mất tin riêng/nhiệm vụ)
+    const { regionId, ...remainingRestFind } = restFind;
 
-    // 3. Merge tất cả
+    // 3. Lấy Logic User/Volunteer
+    const logicFilter = this.buildAppLogicFilter(user, regionId);
+
+    // 4. Merge tất cả
     return {
-      $and: [restFind, textQuery, logicFilter].filter(f => Object.keys(f).length > 0)
+      $and: [remainingRestFind, textQuery, logicFilter].filter(f => Object.keys(f).length > 0)
     };
   }
 
