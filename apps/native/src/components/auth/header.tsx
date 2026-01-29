@@ -19,7 +19,7 @@ export default function AuthHeader() {
       {/* Hero Image & Title Center */}
       <View className="items-center">
         <Image 
-          source={require('../../../assets/flood_relief_hero.png')} 
+          source={require('../../../assets/flood_relief_hero.jpg')} 
           className="w-full h-40 rounded-2xl mb-4"
           resizeMode="cover"
         />
