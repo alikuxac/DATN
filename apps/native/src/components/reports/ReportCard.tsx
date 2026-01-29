@@ -40,7 +40,7 @@ export const ReportCard = ({
   // Use prop if available, otherwise fallback to check
   const isOwner = isOwnerProp ?? (item.by === currentUserId || item.user === currentUserId || item.user?._id === currentUserId || item.by?._id === currentUserId);
   const isAdmin = user?.role === ENUM_USER_ROLE.ADMIN;
-  const isVolunteer = user?.isVolunteer;
+  const isVolunteer = user?.isRescueMode || user?.role === ENUM_USER_ROLE.VOLUNTEER;
 
   // Fix: Check rescuers array
   let isMyMission = false;
@@ -370,19 +370,26 @@ export const ReportCard = ({
 
       {/* Action Buttons Grid */}
       <View className="flex-row gap-3 mt-4 flex-wrap">
-        {!isOwner && (
+        {/* Always show Map buttons if coordinates exist */}
+        {(item.location?.coordinates || item.coordinates) && (
           <View className="flex-row gap-2">
             <TouchableOpacity
-              onPress={() => item.location?.coordinates && handleViewOnMap(item.location.coordinates[1], item.location.coordinates[0])}
-              onLongPress={() => showToast?.({ title: t('REPORT.CARD.BTN_MAP'), message: 'Xem vị trí trên bản đồ', type: 'info' })}
+              onPress={() => {
+                  const lat = item.location?.coordinates?.[1] ?? item.coordinates?.[1];
+                  const lng = item.location?.coordinates?.[0] ?? item.coordinates?.[0];
+                  if (lat && lng) handleViewOnMap(lat, lng);
+              }}
               className="w-12 h-12 bg-gray-100 dark:bg-neutrals800 rounded-xl items-center justify-center border border-gray-200 dark:border-neutrals700"
             >
               <Icon name="LocateFixed" className="w-5 h-5 text-foreground" />
             </TouchableOpacity>
             
             <TouchableOpacity
-              onPress={() => item.location?.coordinates && Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${item.location.coordinates[1]},${item.location.coordinates[0]}`)}
-              onLongPress={() => showToast?.({ title: t('REPORT.CARD.BTN_DIRECTIONS'), message: 'Dẫn đường qua Google Maps', type: 'info' })}
+              onPress={() => {
+                  const lat = item.location?.coordinates?.[1] ?? item.coordinates?.[1];
+                  const lng = item.location?.coordinates?.[0] ?? item.coordinates?.[0];
+                  if (lat && lng) Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`);
+              }}
               className="w-12 h-12 bg-gray-100 dark:bg-neutrals800 rounded-xl items-center justify-center border border-gray-200 dark:border-neutrals700"
             >
               <Icon name="Navigation" className="w-5 h-5 text-foreground" />

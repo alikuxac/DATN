@@ -168,6 +168,7 @@ import { calculateDistance } from "@/utils/geo";
                  
                  // Mark that we have already handled the initial camera positioning
                  hasCenteredRef.current = true;
+                 userHasMovedMapRef.current = true; // Treat programmatic focus as a move to prevent auto-return
                  
                  // Small timeout to ensure Map is ready for the animation
                  setTimeout(() => {
@@ -198,6 +199,9 @@ import { calculateDistance } from "@/utils/geo";
         // Skip if we are currently handling a navigation focus (wait for that fly-to)
         if (params.focus && params.lat && params.long) return;
 
+        // CRITICAL: Do not auto-center if user has selected a marker
+        if (selectedReport || selectedRescuer || selectedShelter) return;
+
         if (userLocation) {
             // Set to true immediately to prevent duplicate triggers
             hasCenteredRef.current = true;
@@ -214,7 +218,7 @@ import { calculateDistance } from "@/utils/geo";
 
             return () => clearTimeout(timeoutId);
         }
-    }, [userLocation, params.focus]);
+    }, [userLocation, params.focus, selectedReport, selectedRescuer, selectedShelter]);
   
     // --- MAP STYLE ---
     const getMapStyleUrl = () =>
@@ -245,13 +249,20 @@ import { calculateDistance } from "@/utils/geo";
       if (!token) return;
       setIsLoading(true);
       try {
-        const param: Record<string, string> = {};
-        if (currentRegion) {
-          param.regionId = currentRegion;
-        }
+        const param: Record<string, string> = {
+            limit: '1000',
+            orderBy: 'createdAt',
+            orderDirection: 'desc'
+        };
+        // Remove strict region filtering to allow seeing reports across region borders (client filters by 50km)
+        // if (currentRegion) {
+        //   param.regionId = currentRegion;
+        // }
   
         const queryString = new URLSearchParams(param).toString();
   
+        console.log("Query String:", queryString);
+
         // 1. Fetch Reports
         const reportRes = await apiService.get<{ data: IReportListResponse[] }>(
           `/user/report?${queryString}`
@@ -614,7 +625,7 @@ import { calculateDistance } from "@/utils/geo";
           }
       } 
 
-      // 2. Normal / Search mode -> Apply 30km filter
+      // 2. Normal / Search mode -> Apply 50km filter
       const filtered = reports.filter(r => {
            // ALWAYS show my active missions regardless of distance
            if (r.status === ENUM_REPORT_STATUS.IN_PROGRESS && (isMyRescuerTask(r) || isMyOwnReport(r))) {
@@ -623,11 +634,14 @@ import { calculateDistance } from "@/utils/geo";
 
            if (!userLocation) return true;
 
-           // Coordinate extraction
-           const rLat = r.location?.coordinates?.[1] ?? r.coordinates?.[1] ?? (r as any).lat;
-           const rLng = r.location?.coordinates?.[0] ?? r.coordinates?.[0] ?? (r as any).lng;
+           // Coordinate extraction - Prioritize flat coordinates like reports.tsx
+           const rLat = r.coordinates?.[1] ?? r.location?.coordinates?.[1] ?? (r as any).lat;
+           const rLng = r.coordinates?.[0] ?? r.location?.coordinates?.[0] ?? (r as any).lng;
            
-           if (typeof rLat !== 'number' || typeof rLng !== 'number') return false;
+           if (typeof rLat !== 'number' || typeof rLng !== 'number') {
+               console.log("Invalid coords for report:", r._id, rLat, rLng);
+               return false;
+           }
            
            const dist = calculateDistance(
                userLocation.latitude, 
@@ -635,9 +649,14 @@ import { calculateDistance } from "@/utils/geo";
                rLat, 
                rLng
            );
-           return dist <= 30000; // 30km
+           
+           // DEBUG: Print diff for close reports to verify
+           if (dist < 60000 && dist > 40000) console.log(`Report ${r._id} dist: ${dist}`);
+
+           return dist <= 50000; // 50km
       });
 
+      console.log(`[Map] Total: ${reports.length}, Displayed: ${filtered.length}. Focus: ${isFocusMode}`);
       return filtered;
     }, [reports, user, filterStatus, isVolunteerMode, userLocation, isFocusMode]);
 

@@ -18,7 +18,7 @@ export class ApiError extends Error {
 }
 
 class ApiService {
-  private baseUrl = `https://${process.env.EXPO_PUBLIC_API_URL}/api`;
+  private baseUrl = `${process.env.EXPO_PUBLIC_API_URL}/api`;
   private accessToken: string | null = null;
 
   constructor() {

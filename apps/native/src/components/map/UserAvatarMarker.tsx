@@ -11,6 +11,8 @@ interface UserAvatarMarkerProps {
   avatarUrl?: string;
   userName?: string; // For DiceBear fallback
   heading?: number; // Device heading in degrees (0-360, 0 = North)
+  isVolunteer?: boolean;
+  isBusy?: boolean;
   onSelected?: () => void;
 }
 
@@ -20,6 +22,8 @@ export const UserAvatarMarker = ({
   avatarUrl,
   userName = 'User',
   heading = 0,
+  isVolunteer = false,
+  isBusy = false,
   id,
   onSelected,
 }: UserAvatarMarkerProps) => {
@@ -83,8 +87,14 @@ export const UserAvatarMarker = ({
 
         {/* Pin Container (Avatar + Tail) - Positioned to float ABOVE the center */}
         <View style={styles.pinWrapper}>
-            {/* Avatar circle with white border */}
-            <View style={styles.avatarContainer}>
+            {/* Avatar circle with status border */}
+            <View 
+              style={[
+                styles.avatarContainer,
+                isVolunteer && styles.volunteerBorder,
+                isBusy && styles.busyBorder
+              ]}
+            >
               <View style={styles.avatarBorder}>
                 {displayAvatar ? (
                   <Image
@@ -100,14 +110,17 @@ export const UserAvatarMarker = ({
                     }}
                   />
                 ) : (
-                  <View style={styles.initialsContainer}>
+                  <View style={[styles.initialsContainer, isVolunteer && { backgroundColor: isBusy ? '#dc2626' : '#22c55e' }]}>
                     <Text style={styles.initialsText}>{getInitials(userName)}</Text>
                   </View>
                 )}
               </View>
             </View>
             {/* Triangle Tail */}
-            <View style={styles.triangle} />
+            <View style={[
+              styles.triangle, 
+              isVolunteer && { borderTopColor: isBusy ? '#dc2626' : '#22c55e' }
+            ]} />
         </View>
       </View>
     </PointAnnotation>
@@ -154,6 +167,12 @@ const styles = StyleSheet.create({
     borderWidth: 2, // Reduced from 3
     borderColor: '#fff',
     zIndex: 2,
+  },
+  volunteerBorder: {
+    borderColor: '#22c55e', // green-500
+  },
+  busyBorder: {
+    borderColor: '#dc2626', // red-600
   },
   avatarBorder: {
     width: 32, // Reduced from 38
