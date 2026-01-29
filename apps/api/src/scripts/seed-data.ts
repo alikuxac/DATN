@@ -28,6 +28,7 @@ import { DATABASE_CONNECTION_NAME } from '@common/database/constants/database.co
 
 const VIETNAM_CLUSTERS = [
   // Major Cities
+  { name: 'Khu vực Báo cáo (Test)', lat: 10.8459647, lng: 106.7942706, regionId: 'tp-ho-chi-minh' },
   { name: 'Hà Nội', lat: 21.0285, lng: 105.8542, regionId: 'ha-noi' },
   { name: 'TP. Hồ Chí Minh', lat: 10.8231, lng: 106.6297, regionId: 'tp-ho-chi-minh' },
   { name: 'Đà Nẵng', lat: 16.0544, lng: 108.2022, regionId: 'da-nang' },
@@ -161,6 +162,8 @@ function randomDate(daysAgo: number, peakHours = true): Date {
 }
 
 function getRandomCluster() {
+  // 30% chance to pick the reporting area (first cluster) for demo purposes
+  if (Math.random() < 0.3) return VIETNAM_CLUSTERS[0];
   return VIETNAM_CLUSTERS[Math.floor(Math.random() * VIETNAM_CLUSTERS.length)];
 }
 
@@ -329,10 +332,10 @@ async function generateUsers(
       },
       location: {
         type: 'Point',
-        coordinates: [
-          cluster.lng + (Math.random() - 0.5) * 0.1,
-          cluster.lat + (Math.random() - 0.5) * 0.1
-        ],
+        coordinates: (() => {
+          const coords = randomCoordinatesInCluster(cluster.lat, cluster.lng, 5);
+          return [coords.lng, coords.lat];
+        })(),
       },
       lastOnlineAt: randomDate(1),
       lastLocationAt: randomDate(1),
@@ -388,10 +391,10 @@ async function generateUsers(
       },
       location: {
         type: 'Point',
-        coordinates: [
-          cluster.lng + (Math.random() - 0.5) * 0.1,
-          cluster.lat + (Math.random() - 0.5) * 0.1
-        ],
+        coordinates: (() => {
+          const coords = randomCoordinatesInCluster(cluster.lat, cluster.lng, 8);
+          return [coords.lng, coords.lat];
+        })(),
       },
       lastOnlineAt: randomDate(7),
       lastLocationAt: randomDate(7),
@@ -429,8 +432,20 @@ async function generateReports(
 
     for (let i = 0; i < reportCount; i++) {
       const cluster = getRandomCluster();
-      // Increase radius for reports to specific cluster
-      const coords = randomCoordinatesInCluster(cluster.lat, cluster.lng, 8);
+
+      // 10% chance to create a "Stacked Report" (identical location to a previous one in the same cluster)
+      let coords;
+      const existingInCluster = reports.filter(r => r.regionId === cluster.regionId);
+      if (existingInCluster.length > 0 && Math.random() < 0.15) {
+        const prevReport = existingInCluster[Math.floor(Math.random() * existingInCluster.length)];
+        coords = {
+          lng: prevReport.location.coordinates[0],
+          lat: prevReport.location.coordinates[1]
+        };
+      } else {
+        coords = randomCoordinatesInCluster(cluster.lat, cluster.lng, 6);
+      }
+
       const createdAt = randomDate(30);
 
       const status = weightedRandom(
@@ -514,12 +529,28 @@ async function assignVolunteersToReports(
   for (const report of assignableReports) {
     if (Math.random() > 0.7) continue;
 
-    const volunteer = volunteers[Math.floor(Math.random() * volunteers.length)];
+    const numberOfRescuers = 1 + Math.floor(Math.random() * 3); // 1-3 rescuers
+    const selectedVolunteers: any[] = [];
+
+    // Pick unique volunteers
+    for (let i = 0; i < numberOfRescuers; i++) {
+      let v;
+      let attempts = 0;
+      do {
+        v = volunteers[Math.floor(Math.random() * volunteers.length)];
+        attempts++;
+      } while (selectedVolunteers.includes(v) && attempts < 10);
+
+      if (!selectedVolunteers.includes(v)) {
+        selectedVolunteers.push(v);
+      }
+    }
+
     const responseMinutes = 5 + Math.floor(Math.random() * 50);
     const acceptedAt = new Date(report.createdAt.getTime() + responseMinutes * 60 * 1000);
 
     const updateData: any = {
-      rescuers: [volunteer._id],
+      rescuers: selectedVolunteers.map(v => v._id),
       acceptedAt,
     };
 

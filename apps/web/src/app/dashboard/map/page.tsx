@@ -112,21 +112,30 @@ export default function MapPage() {
 
   // Filter & Search State
   // Helper to safely get rescuer ID
-  const getRescuerId = (r: Report) => typeof r.rescuer === 'string' ? r.rescuer : (r.rescuer as any)?._id || (r.rescuer as any)?.id;
+  // Helper to safely get rescuer IDs
+  const getRescuerIds = (r: Report): string[] => {
+      if (!r.rescuers) return [];
+      return r.rescuers.map((res: any) => typeof res === 'string' ? res : res._id || res.id);
+  };
 
   // Filter Data for Display
   const displayData = useMemo(() => {
     const items: { type: 'report' | 'user' | 'volunteer'; data: any, coords: [number, number] }[] = [];
 
-    // Identify Related ID based on Selected Entity
-    let relatedId: string | null = null;
+    // Identify Related IDs based on Selected Entity
+    const relatedIds = new Set<string>();
     if (selectedEntity && reportsData) {
         if (selectedEntity.type === 'report') {
             const report = reportsData.find(r => r._id === selectedEntity.id);
-            if (report?.status === ReportStatus.IN_PROGRESS) relatedId = getRescuerId(report);
+            if (report?.status === ReportStatus.IN_PROGRESS) {
+                getRescuerIds(report).forEach(id => relatedIds.add(id));
+            }
         } else if (selectedEntity.type === 'volunteer') {
-             const report = reportsData.find(r => getRescuerId(r) === selectedEntity.id && r.status === ReportStatus.IN_PROGRESS);
-             if (report) relatedId = report._id;
+             const reports = reportsData.filter(r => 
+                r.status === ReportStatus.IN_PROGRESS && 
+                getRescuerIds(r).includes(selectedEntity.id)
+             );
+             reports.forEach(r => relatedIds.add(r._id));
         }
     }
 
@@ -137,7 +146,7 @@ export default function MapPage() {
         if (r.status === ReportStatus.RESOLVED || r.status === ReportStatus.REJECTED) return;
 
         const isModeMatch = mapMode === "reports" || mapMode === "all";
-        const isRelated = r._id === relatedId;
+        const isRelated = relatedIds.has(r._id);
         const isSelected = selectedEntity?.id === r._id;
 
         if ((isModeMatch || isRelated || isSelected) && r.location?.coordinates?.length === 2) {
@@ -154,7 +163,7 @@ export default function MapPage() {
               const uId = (u as any)._id || (u as any).id;
               
               const isModeMatch = mapMode === "all" || (mapMode === "users" && role === "user") || (mapMode === "volunteers" && role === "volunteer");
-              const isRelated = uId === relatedId;
+              const isRelated = relatedIds.has(uId);
               const isSelected = selectedEntity?.id === uId;
 
               if (isModeMatch || isRelated || isSelected) {
@@ -304,10 +313,8 @@ export default function MapPage() {
     const busyVolunteerIds = new Set<string>();
     if (reportsData) {
         reportsData.forEach(r => {
-            if (r.status === ReportStatus.IN_PROGRESS && r.rescuer) {
-                // Safely get volunteer ID - handles string or populated object
-                const volId = typeof r.rescuer === 'string' ? r.rescuer : (r.rescuer as any)?._id || (r.rescuer as any)?.id;
-                if (volId) busyVolunteerIds.add(volId);
+            if (r.status === ReportStatus.IN_PROGRESS) {
+                getRescuerIds(r).forEach(id => busyVolunteerIds.add(id));
             }
         });
     }
@@ -393,10 +400,10 @@ export default function MapPage() {
                     </span>
                 </div>
 
-                ${report.status === ReportStatus.IN_PROGRESS && report.rescuer ? `
+                ${report.status === ReportStatus.IN_PROGRESS && report.rescuers && report.rescuers.length > 0 ? `
                      <div class="mt-3 pt-2 border-t border-gray-100 text-xs">
                         <p class="font-semibold text-orange-600 flex items-center gap-1">
-                          <span class="animate-pulse">●</span> ${processingText}
+                          <span class="animate-pulse">●</span> ${report.rescuers.length} Volunteers Assigned
                         </p>
                      </div>
                 ` : ''}
@@ -506,47 +513,49 @@ export default function MapPage() {
     // Optional: Fit bounds logic (skipped for brevity, can reuse previous logic if needed)
 
 
-    // Draw Connection Line Logic
+    // Draw Connection Lines Logic (Updated for multiple)
     if (mapRef.current) {
         const map = mapRef.current;
         const lineSourceId = 'related-connection-line';
         const lineLayerId = 'related-connection-layer';
 
-        // Find coords
-        let startCoords: [number, number] | null = null;
-        let endCoords: [number, number] | null = null;
+        const lines: any[] = [];
 
         if (selectedEntity && displayData) {
             const selectedItem = displayData.find(i => {
                 const id = (i.data as any)._id || (i.data as any).id;
                 return id === selectedEntity.id;
             });
-            if (selectedItem) startCoords = selectedItem.coords;
-
-            // Find related item in displayData
-            // Logic: if selected is report, find rescuer. If selected is volunteer, find report.
-            let relatedId: string | null = null;
-            if (selectedEntity.type === 'report') {
-                const r = selectedItem?.data as Report;
-                if (r?.status === ReportStatus.IN_PROGRESS) relatedId = typeof r.rescuer === 'string' ? r.rescuer : (r.rescuer as any)?._id;
-            } else if (selectedEntity.type === 'volunteer') {
-                 // The displayData logic already ensured the pair is present if connected
-                 // We just need to find the IN_PROGRESS report assigned to this volunteer
-                 const volId = selectedEntity.id;
-                 const linkedReport = displayData.find(d => 
-                    d.type === 'report' && 
-                    (d.data as Report).status === ReportStatus.IN_PROGRESS && 
-                    (typeof (d.data as Report).rescuer === 'string' ? (d.data as Report).rescuer === volId : ((d.data as Report).rescuer as any)?._id === volId)
-                 );
-                 if (linkedReport) relatedId = linkedReport.data._id;
-            }
             
-            if (relatedId) {
-                const relatedItem = displayData.find(i => {
-                     const id = (i.data as any)._id || (i.data as any).id;
-                     return id === relatedId;
-                });
-                if (relatedItem) endCoords = relatedItem.coords;
+            if (selectedItem) {
+                 const startCoords = selectedItem.coords;
+                 let relatedTargetIds = new Set<string>();
+
+                 if (selectedEntity.type === 'report') {
+                    const r = selectedItem.data as Report;
+                    if (r?.status === ReportStatus.IN_PROGRESS) {
+                        getRescuerIds(r).forEach(id => relatedTargetIds.add(id));
+                    }
+                 } else if (selectedEntity.type === 'volunteer') {
+                    const volId = selectedEntity.id;
+                    displayData.forEach(d => {
+                        if (d.type === 'report') {
+                            const r = d.data as Report;
+                            if (r.status === ReportStatus.IN_PROGRESS && getRescuerIds(r).includes(volId)) {
+                                relatedTargetIds.add(r._id);
+                            }
+                        }
+                    });
+                 }
+
+                 if (relatedTargetIds.size > 0) {
+                     displayData.forEach(item => {
+                         const id = (item.data as any)._id || (item.data as any).id;
+                         if (relatedTargetIds.has(id)) {
+                             lines.push([startCoords, item.coords]);
+                         }
+                     });
+                 }
             }
         }
 
@@ -554,15 +563,14 @@ export default function MapPage() {
             type: 'Feature',
             properties: {},
             geometry: {
-                type: 'LineString',
-                coordinates: startCoords && endCoords ? [startCoords, endCoords] : []
+                type: 'MultiLineString',
+                coordinates: lines
             }
         };
 
         if (map.getSource(lineSourceId)) {
             (map.getSource(lineSourceId) as any).setData(geojson);
         } else {
-            // Wait for style load if needed, but usually map is loaded here
             if (map.isStyleLoaded()) {
                 map.addSource(lineSourceId, { type: 'geojson', data: geojson });
                 map.addLayer({

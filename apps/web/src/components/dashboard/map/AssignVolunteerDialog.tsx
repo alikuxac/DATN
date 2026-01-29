@@ -16,7 +16,7 @@ interface AssignVolunteerDialogProps {
 export function AssignVolunteerDialog({ reportId, onClose }: AssignVolunteerDialogProps) {
   const queryClient = useQueryClient();
   const { t } = useLanguage();
-  const [selectedVolunteerId, setSelectedVolunteerId] = useState<string | null>(null);
+  const [selectedVolunteerIds, setSelectedVolunteerIds] = useState<string[]>([]);
 
   // Fetch Volunteers (Idle preferred)
   const { data: volunteers, isLoading } = useQuery({
@@ -32,8 +32,8 @@ export function AssignVolunteerDialog({ reportId, onClose }: AssignVolunteerDial
 
   const assignMutation = useMutation({
       mutationFn: async () => {
-          if (!reportId || !selectedVolunteerId) return;
-          await api.post(`/admin/report/${reportId}/assign`, { volunteerId: selectedVolunteerId });
+          if (!reportId || selectedVolunteerIds.length === 0) return;
+          await api.post(`/admin/report/${reportId}/assign`, { volunteerIds: selectedVolunteerIds });
       },
       onSuccess: () => {
           toast.success(t("DISPATCH.SUCCESS"));
@@ -45,6 +45,12 @@ export function AssignVolunteerDialog({ reportId, onClose }: AssignVolunteerDial
       }
   });
 
+  const toggleVolunteer = (id: string) => {
+      setSelectedVolunteerIds(prev => 
+          prev.includes(id) ? prev.filter(v => v !== id) : [...prev, id]
+      );
+  };
+
   return (
     <Dialog open={!!reportId} onOpenChange={(open) => !open && onClose()}>
         <DialogContent className="sm:max-w-[425px]">
@@ -54,23 +60,29 @@ export function AssignVolunteerDialog({ reportId, onClose }: AssignVolunteerDial
             <div className="py-4">
                  {isLoading ? <Loader2 className="animate-spin mx-auto" /> : (
                      <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                        {volunteers?.map((vol: any) => (
-                            <div 
-                                key={vol._id || vol.id} 
-                                className={`flex items-center justify-between p-2 rounded border cursor-pointer hover:bg-muted ${selectedVolunteerId === (vol._id || vol.id) ? 'border-primary bg-primary/10' : ''}`}
-                                onClick={() => setSelectedVolunteerId(vol._id || vol.id)}
-                            >
-                                <div className="flex items-center gap-2">
-                                    <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center">
-                                        <User className="h-4 w-4" />
-                                    </div>
-                                    <div>
-                                        <div className="font-semibold text-sm">{vol.firstName} {vol.lastName}</div>
-                                        <div className="text-xs text-muted-foreground">{vol.mobileNumber}</div>
+                        {volunteers?.map((vol: any) => {
+                            const isSelected = selectedVolunteerIds.includes(vol._id || vol.id);
+                            return (
+                                <div 
+                                    key={vol._id || vol.id} 
+                                    className={`flex items-center justify-between p-2 rounded border cursor-pointer hover:bg-muted ${isSelected ? 'border-primary bg-primary/10' : ''}`}
+                                    onClick={() => toggleVolunteer(vol._id || vol.id)}
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <div className={`h-4 w-4 rounded border flex items-center justify-center mr-1 ${isSelected ? 'bg-primary border-primary' : 'border-gray-400'}`}>
+                                            {isSelected && <span className="text-white text-[10px] font-bold">✓</span>}
+                                        </div>
+                                        <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center">
+                                            <User className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                            <div className="font-semibold text-sm">{vol.firstName} {vol.lastName}</div>
+                                            <div className="text-xs text-muted-foreground">{vol.mobileNumber}</div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                         {volunteers?.length === 0 && <div className="text-center text-muted-foreground py-4">{t("DISPATCH.NO_VOLUNTEERS")}</div>}
                      </div>
                  )}
@@ -78,11 +90,11 @@ export function AssignVolunteerDialog({ reportId, onClose }: AssignVolunteerDial
             <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={onClose}>{t("COMMON.CANCEL")}</Button>
                 <Button 
-                    disabled={!selectedVolunteerId || assignMutation.isPending} 
+                    disabled={selectedVolunteerIds.length === 0 || assignMutation.isPending} 
                     onClick={() => assignMutation.mutate()}
                 >
                     {assignMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {t("DISPATCH.CONFIRM")}
+                    {t("DISPATCH.CONFIRM")} ({selectedVolunteerIds.length})
                 </Button>
             </div>
         </DialogContent>

@@ -386,13 +386,19 @@ export class ReportUserController {
         throw new BadRequestException('report.error.notFound');
       }
 
-      // Check ownership to prevent self-reject (except for Admin/SuperAdmin)
+      // 1. Check ownership to prevent self-reject (except for Admin/SuperAdmin)
+      // 2. Check if user is a valid rescuer (must be in 'rescuers' list) if they are resolving it as a rescuer
       if (user.role !== ENUM_USER_ROLE.ADMIN && user.role !== ENUM_USER_ROLE.SUPER_ADMIN) {
-        if (
-          (report.by && report.by.toString() === user._id.toString()) ||
-          (report.user && report.user.toString() === user._id.toString())
-        ) {
+        const isOwner = (report.by && report.by.toString() === user._id.toString()) ||
+          (report.user && report.user.toString() === user._id.toString());
+
+        if (isOwner) {
           throw new BadRequestException('report.error.cannotRejectOwn');
+        }
+
+        const isRescuer = report.rescuers && report.rescuers.some(r => r.toString() === user._id.toString());
+        if (!isRescuer) {
+          throw new BadRequestException('report.error.notRescuer');
         }
       }
 
@@ -440,6 +446,14 @@ export class ReportUserController {
       const report = await this.reportService.findOneById(id);
       if (!report) {
         throw new BadRequestException('report.error.notFound');
+      }
+
+      // Check if user is assigned rescuer
+      if (user.role !== ENUM_USER_ROLE.ADMIN && user.role !== ENUM_USER_ROLE.SUPER_ADMIN) {
+        const isRescuer = report.rescuers && report.rescuers.some(r => r.toString() === user._id.toString());
+        if (!isRescuer) {
+          throw new BadRequestException('report.error.notRescuer');
+        }
       }
 
       await this.reportService.completeReport(report, { session });

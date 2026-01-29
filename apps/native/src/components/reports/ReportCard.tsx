@@ -3,6 +3,7 @@ import { View, TouchableOpacity, Linking } from "react-native";
 import { AppText, Icon, Badge } from "@/components/ui";
 import { ENUM_REPORT_SEVERITY, ENUM_REPORT_STATUS, ENUM_USER_ROLE } from "@repo/shared";
 import { useTranslation } from "react-i18next";
+import { useToast } from "@/components/ui/ToastProvider";
 
 interface ReportCardProps {
   item: any;
@@ -30,6 +31,7 @@ export const ReportCard = ({
   isOwner: isOwnerProp,
 }: ReportCardProps) => {
   const { t } = useTranslation();
+  const { showToast } = useToast();
   const currentUserId = user?._id?.toString();
   
   // Logic to identify Guest Report (Source or Content)
@@ -367,33 +369,34 @@ export const ReportCard = ({
       </View>
 
       {/* Action Buttons Grid */}
-      <View className="flex-row gap-2 mt-2 flex-wrap">
+      <View className="flex-row gap-3 mt-4 flex-wrap">
         {!isOwner && (
-          <>
+          <View className="flex-row gap-2">
             <TouchableOpacity
               onPress={() => item.location?.coordinates && handleViewOnMap(item.location.coordinates[1], item.location.coordinates[0])}
-              className="flex-1 bg-gray-100 dark:bg-neutrals800 px-3 py-2.5 rounded-xl flex-row items-center justify-center gap-2"
+              onLongPress={() => showToast?.({ title: t('REPORT.CARD.BTN_MAP'), message: 'Xem vị trí trên bản đồ', type: 'info' })}
+              className="w-12 h-12 bg-gray-100 dark:bg-neutrals800 rounded-xl items-center justify-center border border-gray-200 dark:border-neutrals700"
             >
-              <Icon name="LocateFixed" className="w-4 h-4 text-foreground" />
-              <AppText className="text-xs font-sans-bold text-foreground">{t('REPORT.CARD.BTN_MAP')}</AppText>
+              <Icon name="LocateFixed" className="w-5 h-5 text-foreground" />
             </TouchableOpacity>
             
             <TouchableOpacity
               onPress={() => item.location?.coordinates && Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${item.location.coordinates[1]},${item.location.coordinates[0]}`)}
-              className="flex-1 bg-gray-100 dark:bg-neutrals800 px-3 py-2.5 rounded-xl flex-row items-center justify-center gap-2"
+              onLongPress={() => showToast?.({ title: t('REPORT.CARD.BTN_DIRECTIONS'), message: 'Dẫn đường qua Google Maps', type: 'info' })}
+              className="w-12 h-12 bg-gray-100 dark:bg-neutrals800 rounded-xl items-center justify-center border border-gray-200 dark:border-neutrals700"
             >
-              <Icon name="Navigation" className="w-4 h-4 text-foreground" />
-              <AppText className="text-xs font-sans-bold text-foreground">{t('REPORT.CARD.BTN_DIRECTIONS')}</AppText>
+              <Icon name="Navigation" className="w-5 h-5 text-foreground" />
             </TouchableOpacity>
-          </>
+          </View>
         )}
 
         {canAccept && (
           <TouchableOpacity
             onPress={() => handleAccept(item._id)}
-            className="flex-1 bg-blue-600 px-3 py-2.5 rounded-xl flex-row items-center justify-center gap-2"
+            onLongPress={() => showToast?.({ title: t('REPORT.CARD.BTN_ACCEPT'), message: 'Tiếp nhận nhiệm vụ này', type: 'info' })}
+            className="flex-1 min-w-[48px] h-12 bg-blue-600 rounded-xl flex-row items-center justify-center gap-2 px-3"
           >
-            <Icon name="HandHelping" className="w-4 h-4 text-white" />
+            <Icon name="HandHelping" className="w-5 h-5 text-white" />
             <AppText className="text-white font-sans-bold text-xs">
               {t('REPORT.CARD.BTN_ACCEPT')}
             </AppText>
@@ -402,9 +405,10 @@ export const ReportCard = ({
         {canResolve && (
           <TouchableOpacity
             onPress={() => handleResolve(item._id)}
-            className="flex-1 bg-green-600 px-3 py-2.5 rounded-xl flex-row items-center justify-center gap-2"
+            onLongPress={() => showToast?.({ title: t('REPORT.CARD.BTN_RESOLVE'), message: 'Hoàn thành nhiệm vụ cứu trợ', type: 'info' })}
+            className="flex-1 min-w-[48px] h-12 bg-green-600 rounded-xl flex-row items-center justify-center gap-2 px-3"
           >
-            <Icon name="CircleCheck" className="w-4 h-4 text-white" />
+            <Icon name="CircleCheck" className="w-5 h-5 text-white" />
             <AppText className="text-white font-sans-bold text-xs">
               {t('REPORT.CARD.BTN_RESOLVE')}
             </AppText>
@@ -413,48 +417,46 @@ export const ReportCard = ({
         {canCancel && (
           <TouchableOpacity
             onPress={() => handleCancel!(item._id)}
-            className="flex-1 bg-orange-100 dark:bg-orange-500/10 px-3 py-2.5 rounded-xl flex-row items-center justify-center gap-2"
+            onLongPress={() => showToast?.({ title: t('REPORT.CARD.BTN_CANCEL'), message: 'Hủy tiếp nhận nhiệm vụ', type: 'info' })}
+            className="w-12 h-12 bg-orange-100 dark:bg-orange-500/10 rounded-xl items-center justify-center border border-orange-200 dark:border-orange-500/20"
           >
-            <Icon name="CircleX" className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-            <AppText className="text-orange-600 dark:text-orange-400 font-sans-bold text-xs">
-              {t('REPORT.CARD.BTN_CANCEL') || 'Cancel'}
-            </AppText>
+            <Icon name="CircleX" className="w-5 h-5 text-orange-600 dark:text-orange-400" />
           </TouchableOpacity>
         )}
         {canReject && (
           <TouchableOpacity
             onPress={() => handleReject(item._id)}
-            className="flex-1 bg-red-100 dark:bg-red-500/10 px-3 py-2.5 rounded-xl flex-row items-center justify-center gap-2"
+            onLongPress={() => showToast?.({ title: t('REPORT.CARD.BTN_REJECT'), message: 'Từ chối báo cáo (Dành cho Admin)', type: 'info' })}
+            className="w-12 h-12 bg-red-100 dark:bg-red-500/10 rounded-xl items-center justify-center border border-red-200 dark:border-red-500/20"
           >
-            <Icon name="CircleX" className="w-4 h-4 text-red-600 dark:text-red-400" />
-            <AppText className="text-red-600 dark:text-red-400 font-sans-bold text-xs">
-              {t('REPORT.CARD.BTN_REJECT')}
-            </AppText>
+            <Icon name="CircleX" className="w-5 h-5 text-red-600 dark:text-red-400" />
           </TouchableOpacity>
+        )}
+
+        {/* Owner Actions (Secondary) */}
+        {(canEdit || canDelete) && (
+          <View className="flex-row gap-2 ml-auto">
+             {canEdit && (
+              <TouchableOpacity
+                onPress={() => setEditingReport(item)}
+                onLongPress={() => showToast?.({ title: t('REPORT.CARD.BTN_EDIT'), message: 'Chỉnh sửa nội dung báo cáo', type: 'info' })}
+                className="w-10 h-10 bg-gray-50 dark:bg-neutrals800 rounded-lg items-center justify-center border border-gray-100 dark:border-neutrals700"
+              >
+                <Icon name="Pencil" className="w-4 h-4 text-neutrals500" />
+              </TouchableOpacity>
+            )}
+            {canDelete && (
+              <TouchableOpacity
+                onPress={() => handleDelete(item._id)}
+                onLongPress={() => showToast?.({ title: t('REPORT.CARD.BTN_DELETE'), message: 'Xóa báo cáo này', type: 'info' })}
+                className="w-10 h-10 bg-red-50 dark:bg-red-500/5 rounded-lg items-center justify-center border border-red-100 dark:border-red-500/10"
+              >
+                <Icon name="Trash2" className="w-4 h-4 text-red-400" />
+              </TouchableOpacity>
+            )}
+          </View>
         )}
       </View>
-      
-      {/* Edit/Delete Actions (Smaller, secondary) */}
-      {(canEdit || canDelete) && (
-        <View className="flex-row justify-end gap-2 mt-2 pt-2 border-t border-gray-50 dark:border-neutrals800/50">
-           {canEdit && (
-          <TouchableOpacity
-            onPress={() => setEditingReport(item)}
-            className="p-2"
-          >
-            <AppText className="text-xs text-neutrals400 font-sans-medium">{t('REPORT.CARD.BTN_EDIT')}</AppText>
-          </TouchableOpacity>
-        )}
-        {canDelete && (
-          <TouchableOpacity
-            onPress={() => handleDelete(item._id)}
-            className="p-2"
-          >
-             <AppText className="text-xs text-red-400 font-sans-medium">{t('REPORT.CARD.BTN_DELETE')}</AppText>
-          </TouchableOpacity>
-        )}
-        </View>
-      )}
     </View>
   );
 };

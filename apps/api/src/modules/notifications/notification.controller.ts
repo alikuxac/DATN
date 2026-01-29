@@ -9,6 +9,7 @@ import { UserParsePipe } from '@modules/users/pipes/user.parse.pipe';
 import { UserDocument } from '@modules/users/repository/entities/user.entity';
 import { PaginationQuery } from '@common/pagination/decorators/pagination.decorator';
 import { ResponsePaging } from '@common/response/decorators/response.decorator';
+import { ENUM_USER_ROLE } from '@repo/shared';
 
 @ApiTags('modules.notifications')
 @ApiBearerAuth('accessToken')
@@ -35,13 +36,25 @@ export class NotificationController {
       ..._search,
     };
 
-    const notifications = await this.notificationService.findAllByUser(user._id.toString(), {
-      limit: _limit,
-      skip: _offset,
-      sort: _order,
-    });
+    let notifications;
+    let total;
 
-    const total = await this.notificationService.getTotalByUser(user._id.toString(), find);
+    if (user.role === ENUM_USER_ROLE.ADMIN || user.role === ENUM_USER_ROLE.SUPER_ADMIN) {
+      notifications = await this.notificationService.findAll(find, {
+        limit: _limit,
+        skip: _offset,
+        sort: _order,
+      });
+      total = await this.notificationService.getTotal(find);
+    } else {
+      notifications = await this.notificationService.findAllByUser(user._id.toString(), {
+        limit: _limit,
+        skip: _offset,
+        sort: _order,
+      });
+      total = await this.notificationService.getTotalByUser(user._id.toString(), find);
+    }
+
     const totalPage = this.paginationService.totalPage(
       total,
       _limit

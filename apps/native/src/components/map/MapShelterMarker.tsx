@@ -49,16 +49,14 @@ export const MapShelterMarker: React.FC<MapShelterMarkerProps> = ({
       coordinate={coordinate}
       onSelected={onPress}
     >
-      <TouchableOpacity 
+      <View
         style={[
             styles.container, 
             { backgroundColor: getMarkerColor(), borderColor: colors.background }
-        ]} 
-        activeOpacity={0.8}
-        onPress={onPress}
+        ]}
       >
         {getIcon()}
-      </TouchableOpacity>
+      </View>
       
       {/* Callout is tricky in VietMap GL specific versions, often better to rely on onSelected + Sheet */}
     </PointAnnotation>

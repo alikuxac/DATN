@@ -131,9 +131,16 @@ export default function NotificationPage() {
                   
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center justify-between gap-2">
-                      <p className={cn("font-medium leading-none", !notification.isRead && "text-blue-600 dark:text-blue-400")}>
-                        {notification.title}
-                      </p>
+                      <div className="flex flex-col">
+                        <p className={cn("font-medium leading-none", !notification.isRead && "text-blue-600 dark:text-blue-400")}>
+                          {notification.title}
+                        </p>
+                        {notification.user && (
+                           <p className="text-[10px] text-muted-foreground mt-0.5">
+                              To: {notification.user.firstName ? `${notification.user.firstName} ${notification.user.lastName}` : (typeof notification.user === 'string' ? notification.user : 'Unknown')}
+                           </p>
+                        )}
+                      </div>
                       <span className="text-xs text-muted-foreground whitespace-nowrap">
                         {format(new Date(notification.createdAt), "PPp")}
                       </span>

@@ -1,6 +1,5 @@
-import React, { useMemo, useRef, useEffect } from "react";
+import React, { useMemo } from "react";
 import { View, Text, StyleSheet, Linking, Platform, TouchableOpacity, ScrollView } from "react-native";
-import BottomSheet, { BottomSheetView, BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { useColors } from "@/hooks/useColors";
 import { AppButton as Button, Icon } from "@/components/ui";
 import { useTranslation } from "react-i18next";
@@ -32,22 +31,8 @@ export const ShelterDetailSheet: React.FC<ShelterDetailSheetProps> = ({
 }) => {
   const { t } = useTranslation();
   const colors = useColors();
-  const bottomSheetRef = useRef<BottomSheet>(null);
-  const snapPoints = useMemo(() => ["35%", "80%"], []);
 
-  useEffect(() => {
-    if (shelter) {
-      bottomSheetRef.current?.expand();
-    } else {
-      bottomSheetRef.current?.close();
-    }
-  }, [shelter]);
-
-  const handleSheetChanges = (index: number) => {
-    if (index === -1) {
-      onClose();
-    }
-  };
+  if (!shelter) return null;
 
   const openDirections = () => {
     if (!shelter) return;
@@ -68,34 +53,35 @@ export const ShelterDetailSheet: React.FC<ShelterDetailSheetProps> = ({
     }
   };
 
-  if (!shelter) return null;
-
   return (
-    <BottomSheet
-      ref={bottomSheetRef}
-      index={-1}
-      snapPoints={snapPoints}
-      onChange={handleSheetChanges}
-      enablePanDownToClose
-      backgroundStyle={{ backgroundColor: colors.card }}
-      handleIndicatorStyle={{ backgroundColor: colors.border }}
-    >
-      <BottomSheetScrollView contentContainerStyle={styles.contentContainer}>
+    <View style={[styles.sheetContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <ScrollView contentContainerStyle={styles.contentContainer}>
         {/* Header Section */}
         <View style={styles.header}>
-            <View style={styles.titleContainer}>
-                <Text style={[styles.title, { color: colors.foreground }]}>
-                    {shelter.name}
-                </Text>
-                <View style={[styles.badge, { backgroundColor: getStatusColor(shelter.status) }]}>
-                    <Text style={styles.badgeText}>
-                        {t(`SHELTERS.STATUS.${shelter.status}`)}
+            <View style={styles.headerTop}>
+                 <View style={{ flex: 1 }}>
+                    <View style={styles.titleContainer}>
+                        <Text style={[styles.title, { color: colors.foreground }]}>
+                            {shelter.name}
+                        </Text>
+                        <View style={[styles.badge, { backgroundColor: getStatusColor(shelter.status) }]}>
+                            <Text style={styles.badgeText}>
+                                {t(`SHELTERS.STATUS.${shelter.status}`)}
+                            </Text>
+                        </View>
+                    </View>
+                    <Text style={[styles.type, { color: colors.neutrals200 }]}>
+                        {t(`SHELTERS.TYPE.${shelter.type}`)}
                     </Text>
-                </View>
+                 </View>
+                 
+                 <TouchableOpacity
+                    onPress={onClose}
+                    style={[styles.closeButton, { backgroundColor: colors.neutrals800 }]}
+                 >
+                    <Icon name="X" size={20} color={colors.foreground} />
+                 </TouchableOpacity>
             </View>
-            <Text style={[styles.type, { color: colors.neutrals200 }]}>
-                {t(`SHELTERS.TYPE.${shelter.type}`)}
-            </Text>
         </View>
 
         {/* Action Buttons */}
@@ -189,8 +175,8 @@ export const ShelterDetailSheet: React.FC<ShelterDetailSheetProps> = ({
         )}
 
         <View style={{ height: 40 }} />
-      </BottomSheetScrollView>
-    </BottomSheet>
+      </ScrollView>
+    </View>
   );
 };
 
@@ -229,12 +215,39 @@ const getStatusColor = (status: string) => {
 };
 
 const styles = StyleSheet.create({
+  sheetContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 20, // Increased elevation
+    zIndex: 999, // Increased zIndex to be safe
+    maxHeight: '60%',
+    paddingBottom: 20,
+    borderWidth: 1,
+  },
   contentContainer: {
     paddingHorizontal: 20,
-    paddingTop: 10,
+    paddingTop: 20,
   },
   header: {
     marginBottom: 16,
+  },
+  headerTop: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+  },
+  closeButton: {
+      padding: 6,
+      borderRadius: 20,
+      marginLeft: 8,
   },
   titleContainer: {
     flexDirection: "row",
@@ -245,7 +258,8 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: "bold",
-    flex: 1,
+    // flex: 1, // Remove flex: 1 here to let container handle width
+    flexShrink: 1,
   },
   type: {
       fontSize: 14,

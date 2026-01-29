@@ -521,8 +521,30 @@ export default function ReportsPage() {
                    <p className="text-foreground font-medium">{selectedReport.isPublic ? 'Public' : 'Private'}</p>
                  </div>
                  <div>
-                   <h4 className="font-medium text-sm text-muted-foreground">Rescuer</h4>
-                   <p className="text-foreground font-medium">{(selectedReport as any).rescuer ? 'Assigned' : 'Unassigned'}</p> 
+                   <h4 className="font-medium text-sm text-muted-foreground">Rescuers</h4>
+                   <div className="text-foreground font-medium text-sm">
+                      {selectedReport.rescuers && selectedReport.rescuers.length > 0 
+                        ? (
+                            <div className="flex flex-col gap-1 mt-1">
+                                {selectedReport.rescuers.map((r: any) => (
+                                     <div key={typeof r === 'string' ? r : r._id || r.id} className="flex items-center gap-1.5 bg-gray-50 p-1.5 rounded border">
+                                          <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-600">
+                                              V
+                                          </div>
+                                          <span className="text-xs">
+                                              {typeof r === 'string' ? r : `${r.firstName} ${r.lastName}`}
+                                          </span>
+                                          {typeof r === 'object' && r.mobileNumber && (
+                                              <a href={`tel:${r.mobileNumber}`} className="ml-auto text-xs text-blue-500 hover:underline">
+                                                  {r.mobileNumber}
+                                              </a>
+                                          )}
+                                     </div>
+                                ))}
+                            </div>
+                        )
+                        : 'Unassigned'}
+                   </div>
                  </div>
               </div>
 

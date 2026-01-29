@@ -661,15 +661,17 @@ export class ReportService {
     return saved;
   }
 
-  async assignReport(report: ReportDocument, volunteer: UserDocument, assigner: UserDocument, options?: IDatabaseUpdateOptions) {
+  async assignReport(report: ReportDocument, volunteers: UserDocument[], assigner: UserDocument, options?: IDatabaseUpdateOptions) {
     if (report.status !== ENUM_REPORT_STATUS.PENDING && report.status !== ENUM_REPORT_STATUS.IN_PROGRESS) {
       throw new BadRequestException('report.error.notPendingOrInProgress');
     }
 
+    const volunteerIds = volunteers.map(v => v._id);
+
     const updated = await this.reportRepository.updateRaw(
       { _id: report._id },
       {
-        $addToSet: { rescuers: volunteer._id },
+        $addToSet: { rescuers: { $each: volunteerIds } },
         $set: {
           status: ENUM_REPORT_STATUS.IN_PROGRESS,
           acceptedAt: new Date(),
@@ -681,20 +683,22 @@ export class ReportService {
     if (updated) {
       await this.cacheManager.del(`report:detail:${report._id}`);
 
-      this.eventEmitter.emit('report.assigned', {
-        reportId: updated._id.toString(),
-        rescuerId: volunteer._id.toString(),
-        assignerId: assigner._id.toString(),
-        regionId: updated.regionId,
-        report: updated
-      });
+      for (const volunteer of volunteers) {
+        this.eventEmitter.emit('report.assigned', {
+          reportId: updated._id.toString(),
+          rescuerId: volunteer._id.toString(),
+          assignerId: assigner._id.toString(),
+          regionId: updated.regionId,
+          report: updated
+        });
 
-      this.eventEmitter.emit('report.accepted', {
-        reportId: updated._id.toString(),
-        rescuerId: volunteer._id.toString(),
-        regionId: updated.regionId,
-        report: updated
-      });
+        this.eventEmitter.emit('report.accepted', {
+          reportId: updated._id.toString(),
+          rescuerId: volunteer._id.toString(),
+          regionId: updated.regionId,
+          report: updated
+        });
+      }
     }
     return updated;
   }

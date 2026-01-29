@@ -47,8 +47,16 @@ export class NotificationService {
     return this.notificationRepository.findAll({ user: userId }, options);
   }
 
+  async findAll(find?: Record<string, any>, options?: any) {
+    return this.notificationRepository.findAll(find, options);
+  }
+
   async getTotalByUser(userId: string, find?: Record<string, any>) {
     return this.notificationRepository.getTotal({ ...find, user: userId });
+  }
+
+  async getTotal(find?: Record<string, any>) {
+    return this.notificationRepository.getTotal(find);
   }
 
   async countUnread(userId: string): Promise<number> {

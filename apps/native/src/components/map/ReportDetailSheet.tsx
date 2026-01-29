@@ -60,7 +60,8 @@ export const ReportDetailSheet = ({
       const response = await apiService.get<{ data: any[] }>(
         `/user/report/${selectedReport._id}/history?lat=${lat}&lng=${lng}`
       );
-      setHistory(response.data || []);
+      const allHistory = response.data || [];
+      setHistory(allHistory.filter((h: any) => h._id !== selectedReport._id));
     } catch (error) {
        console.error("Failed to fetch history:", error);
     } finally {
@@ -155,7 +156,7 @@ export const ReportDetailSheet = ({
     : selectedReport.notes;
 
   return (
-    <View className="absolute bottom-0 left-0 right-0 bg-white dark:bg-neutrals900 rounded-t-3xl shadow-2xl z-50 max-h-[85%] flex-1">
+    <View className="absolute bottom-0 left-0 right-0 bg-white dark:bg-neutrals900 rounded-t-3xl shadow-2xl" style={{ zIndex: 100, maxHeight: '85%', elevation: 10 }}>
       <ScrollView contentContainerStyle={{ padding: 20 }}>
         {/* Header */}
         <View className="flex-row justify-between items-start mb-2">

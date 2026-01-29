@@ -1,16 +1,19 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, Text } from "react-native";
 import { PointAnnotation } from "@vietmap/vietmap-gl-react-native";
 import { ENUM_REPORT_STATUS, ENUM_REPORT_TYPE } from "@repo/shared";
 import {
-  Waves,
-  Droplets,
-  CloudRainWind,
+  Stethoscope,
+  Utensils,
+  Droplet,
+  LifeBuoy,
   CircleHelp,
+  Activity
 } from "lucide-react-native";
 
 interface MapReportMarkerProps {
   report: any;
+  count?: number;
   onSelected: (report: any) => void;
 }
 
@@ -25,18 +28,21 @@ const ReportIcon = ({
 }) => {
   switch (type) {
     case ENUM_REPORT_TYPE.MEDICAL:
-      return <Waves size={size} color={color} />;
+      return <Stethoscope size={size} color={color} fill={color} fillOpacity={0.2} />;
     case ENUM_REPORT_TYPE.FOOD:
-      return <Droplets size={size} color={color} />;
-    case "FLOOD" as any:
-      return <CloudRainWind size={size} color={color} />;
+      return <Utensils size={size} color={color} fill={color} fillOpacity={0.2} />;
+    case ENUM_REPORT_TYPE.WATER:
+      return <Droplet size={size} color={color} fill={color} fillOpacity={0.2} />;
+    case ENUM_REPORT_TYPE.EVACUATION:
+      return <LifeBuoy size={size} color={color} />;
+    case ENUM_REPORT_TYPE.OTHER:
     default:
       return <CircleHelp size={size} color={color} />;
   }
 };
 
 export const MapReportMarker = React.memo(
-  ({ report, onSelected }: MapReportMarkerProps) => {
+  ({ report, count = 1, onSelected }: MapReportMarkerProps) => {
     const getStatusStyle = (status: ENUM_REPORT_STATUS) => {
       switch (status) {
         case ENUM_REPORT_STATUS.PENDING:
@@ -50,16 +56,25 @@ export const MapReportMarker = React.memo(
       }
     };
 
+    const getStatusColor = (status: ENUM_REPORT_STATUS) => {
+        switch (status) {
+          case ENUM_REPORT_STATUS.PENDING: return "#ef4444";
+          case ENUM_REPORT_STATUS.IN_PROGRESS: return "#eab308";
+          case ENUM_REPORT_STATUS.RESOLVED: return "#22c55e";
+          default: return "#6b7280";
+        }
+    };
+
     // Safe coordinate extraction with fallbacks
-    // GeoJSON pattern: location: { coordinates: [lng, lat] }
     const lng = report.location?.coordinates?.[0] ?? report.coordinates?.[0] ?? report.location?.lng;
     const lat = report.location?.coordinates?.[1] ?? report.coordinates?.[1] ?? report.location?.lat;
     
-    // Validate if we have valid numbers for coordinates
     const isValidCoords = typeof lng === 'number' && typeof lat === 'number';
     const coords: [number, number] = [lng ?? 0, lat ?? 0];
 
     if (!isValidCoords) return null;
+
+    const mainColor = getStatusColor(report.status);
 
     return (
       <PointAnnotation
@@ -68,12 +83,23 @@ export const MapReportMarker = React.memo(
         onSelected={() => onSelected(report)}
       >
         <View style={styles.markerContainer}>
-          <View style={[styles.markerPin, getStatusStyle(report.status)]}>
-            <View style={styles.iconWrapper}>
-              <ReportIcon type={report.type} size={28} color="white" />
-            </View>
+          {/* Main Pin Shape */}
+          <View style={[styles.markerPin, { backgroundColor: mainColor, borderColor: 'white' }]}>
+             <ReportIcon type={report.type} size={20} color="white" />
           </View>
-          <View style={[styles.pinTip, { borderTopColor: getStatusColor(report.status) }]} />
+          
+          {/* Count Badge for stacked reports */}
+          {count > 1 && (
+              <View style={styles.badgeContainer}>
+                  <Text style={styles.badgeText}>{count > 9 ? '9+' : count}</Text>
+              </View>
+          )}
+
+          {/* Pin Tip (Triangle) */}
+          <View style={[styles.pinTip, { borderTopColor: mainColor }]} />
+          
+          {/* Shadow (Optional separate view for better separation) */}
+          <View style={styles.shadowBase} />
         </View>
       </PointAnnotation>
     );
@@ -83,76 +109,78 @@ export const MapReportMarker = React.memo(
       prev.report._id === next.report._id &&
       prev.report.status === next.report.status &&
       prev.report.type === next.report.type &&
-      prev.report.location?.lat === next.report.location?.lat &&
-      prev.report.location?.lng === next.report.location?.lng
+      prev.count === next.count &&
+      prev.report.location?.coordinates?.[0] === next.report.location?.coordinates?.[0] &&
+      prev.report.location?.coordinates?.[1] === next.report.location?.coordinates?.[1]
     );
   }
 );
 
-const getStatusColor = (status: ENUM_REPORT_STATUS) => {
-  switch (status) {
-    case ENUM_REPORT_STATUS.PENDING: return "#ef4444";
-    case ENUM_REPORT_STATUS.IN_PROGRESS: return "#eab308";
-    case ENUM_REPORT_STATUS.RESOLVED: return "#22c55e";
-    default: return "#6b7280";
-  }
-};
-
 const styles = StyleSheet.create({
   markerContainer: {
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-end",
     width: 60,
     height: 70,
-    paddingBottom: 15,
   },
   markerPin: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "white",
+    width: 40,
+    height: 40,
+    borderRadius: 20, // Circle
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 4,
-    borderColor: "white",
+    borderWidth: 3,
+    zIndex: 2,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 6,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 8,
   },
-  iconWrapper: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 22,
-    justifyContent: "center",
-    alignItems: "center",
+  badgeContainer: {
+    position: 'absolute',
+    top: 0,
+    right: 10, // Adjust relative to markerContainer width
+    backgroundColor: '#DC2626', // Red-600
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'white',
+    zIndex: 10,
+    paddingHorizontal: 4
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
+    textAlign: 'center'
   },
   pinTip: {
     width: 0,
     height: 0,
     backgroundColor: 'transparent',
     borderStyle: 'solid',
-    borderLeftWidth: 10,
-    borderRightWidth: 10,
-    borderTopWidth: 15,
+    borderLeftWidth: 8,
+    borderRightWidth: 8,
+    borderTopWidth: 12,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
-    marginTop: -6,
+    marginTop: -2, // Slight overlap
+    zIndex: 1,
   },
-  pending: {
-    backgroundColor: "#ef4444",
+  shadowBase: {
+    width: 10,
+    height: 4,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    borderRadius: 5,
+    marginTop: 2,
   },
-  inProgress: {
-    backgroundColor: "#eab308",
-  },
-  verified: {
-    backgroundColor: "#3b82f6",
-  },
-  resolved: {
-    backgroundColor: "#22c55e",
-  },
-  default: {
-    backgroundColor: "#6b7280",
-  },
+  // Status Colors (kept for reference, but used dynamically above)
+  pending: { backgroundColor: "#ef4444" },
+  inProgress: { backgroundColor: "#eab308" },
+  resolved: { backgroundColor: "#22c55e" },
+  default: { backgroundColor: "#6b7280" },
 });

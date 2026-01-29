@@ -66,6 +66,11 @@ import { calculateDistance } from "@/utils/geo";
   const rawKey = process.env.EXPO_PUBLIC_VIETMAP_API_KEY || "";
   const VIETMAP_API_KEY = rawKey.trim();
 
+  const DEFAULT_CAMERA_SETTINGS = {
+    centerCoordinate: [106.660172, 10.762622],
+    zoomLevel: 13
+  };
+
   // No local ReportData interface needed anymore
   
   
@@ -149,57 +154,65 @@ import { calculateDistance } from "@/utils/geo";
     // Params handling
     const params = useLocalSearchParams<{ lat: string; long: string; focus: string }>();
   
+    // --- NAVIGATION FOCUS LOGIC (Fly to report from other screens) ---
+    const lastHandledFocusRef = useRef<string | null>(null);
+
     useEffect(() => {
-        // Only fly to location if focus param changes and is present
-        if (params.focus && params.lat && params.long && cameraRef.current) {
+        // Only fly to location if focus param is new and valid
+        if (params.focus && params.focus !== lastHandledFocusRef.current && cameraRef.current) {
             const lat = parseFloat(params.lat);
             const long = parseFloat(params.long);
             
             if (!isNaN(lat) && !isNaN(long)) {
-                 // Use a shorter timeout or none if possible.
-                 // Also, we can clear the params using router.setParams({ focus: null }) to avoid re-triggering?
-                 // But router.setParams works on current route.
+                 lastHandledFocusRef.current = params.focus;
                  
-                 const timeoutId = setTimeout(() => {
+                 // Mark that we have already handled the initial camera positioning
+                 hasCenteredRef.current = true;
+                 
+                 // Small timeout to ensure Map is ready for the animation
+                 setTimeout(() => {
                      cameraRef.current?.setCamera({
                           centerCoordinate: [long, lat],
                           zoomLevel: 16,
-                          animationDuration: 1000,
+                          animationDuration: 1200,
                           animationMode: "flyTo"
                      });
-                     // Optional: Clear focus param so it doesn't trigger again on component re-renders if params persist
-                     // router.setParams({ focus: "" }); 
                  }, 500);
-                 
-                 return () => clearTimeout(timeoutId);
+
+                 // Silently clear params so they don't re-trigger on state changes
+                 router.setParams({ focus: "", lat: "", long: "" });
             }
         }
     }, [params.focus, params.lat, params.long]);
   
     // Auto-center on user location when first loaded (if not focused/navigated to specific report)
+    // --- REFACTOR: CAMERA CONTROL ---
     const hasCenteredRef = useRef(false);
-    useEffect(() => {
-        // Stop auto-centering if:
-        // 1. Already centered once
-        // 2. We have a focus param from navigation
-        // 3. User has a selection active (don't interrupt them)
-        // 4. User has already manually moved the map
-        const shouldCenter = 
-            userLocation && 
-            !hasCenteredRef.current && 
-            !params.focus && 
-            !selectedReport && 
-            !selectedShelter && 
-            !selectedRescuer &&
-            !userHasMovedMapRef.current;
 
-        if (shouldCenter) {
+    // 1. Initial Auto-Center on User Location
+    // Only runs ONCE when userLocation is first available, unless user has already moved the map or focused elsewhere.
+    useEffect(() => {
+        // Stop if we already centered once OR user interacted with the map
+        if (hasCenteredRef.current || userHasMovedMapRef.current) return;
+
+        // Skip if we are currently handling a navigation focus (wait for that fly-to)
+        if (params.focus && params.lat && params.long) return;
+
+        if (userLocation) {
+            // Set to true immediately to prevent duplicate triggers
             hasCenteredRef.current = true;
-            cameraRef.current?.setCamera({
-                centerCoordinate: [userLocation!.longitude, userLocation!.latitude],
-                zoomLevel: 15,
-                animationMode: "flyTo"
-            });
+
+            // 1s delay to allow Map View stable after render/login
+            const timeoutId = setTimeout(() => {
+                cameraRef.current?.setCamera({
+                    centerCoordinate: [userLocation.longitude, userLocation.latitude],
+                    zoomLevel: 15,
+                    animationDuration: 2000, // Smooth fly-in effect
+                    animationMode: "flyTo"
+                });
+            }, 1000);
+
+            return () => clearTimeout(timeoutId);
         }
     }, [userLocation, params.focus]);
   
@@ -485,13 +498,14 @@ import { calculateDistance } from "@/utils/geo";
                 type={shelter.type}
                 status={shelter.status}
                 onPress={() => {
+                   userHasMovedMapRef.current = true; // User interacted
                    setSelectedReport(null);
                    setSelectedRescuer(null);
                    setSelectedShelter(shelter);
                 }}
             />
         ));
-    }, [shelters, userLocation]);
+    }, [shelters]);
 
     const busyRescuerIds = useMemo(() => {
       const ids = new Set<string>();
@@ -571,78 +585,98 @@ import { calculateDistance } from "@/utils/geo";
       if (!user) return [];
       
       const currentUserId = user._id?.toString();
-
-      // Check if Filter override is applied manually
-      // If user manually selects "PENDING" or "IN_PROGRESS" etc, we respect that.
-      // But if "ALL", we apply the "Focus Mode" logic.
       const isManualFilter = filterStatus !== "ALL";
 
       if (isManualFilter) {
           return reports.filter(r => r.status === filterStatus);
       }
 
-      // "Focus Mode" Logic:
-      // 1. Volunteer in Rescue Mode: If I have an active mission (In Progress && I am a rescuer), SHOW ONLY THAT.
-      if (isFocusMode && isVolunteerMode) {
+      // Helper to match rescuer
+      const isMyRescuerTask = (r: any) => 
+          r.rescuers && Array.isArray(r.rescuers) && r.rescuers.some((resc: any) => {
+              const rid = typeof resc === 'string' ? resc : (resc?._id || resc?.id)?.toString();
+              return rid === currentUserId;
+          });
+
+      // Helper to match owner
+      const isMyOwnReport = (r: any) => 
+          (typeof r.user === 'object' ? r.user?._id : r.user)?.toString() === currentUserId;
+
+      // 1. "Focus Mode" logic -> Prioritize Active mission
+      if (isFocusMode) {
           const myActiveTask = reports.find(r => 
               r.status === ENUM_REPORT_STATUS.IN_PROGRESS && 
-              r.rescuers && 
-              r.rescuers.some((resc: any) => {
-                  const rid = typeof resc === 'string' ? resc : resc?._id?.toString();
-                  return rid === currentUserId;
-              })
+              (isVolunteerMode ? isMyRescuerTask(r) : isMyOwnReport(r))
           );
           
           if (myActiveTask) {
               return [myActiveTask];
           }
       } 
-      // 2. Normal User: If I have an active report (In Progress), SHOW ONLY THAT.
-      else if (isFocusMode && user.role === ENUM_USER_ROLE.USER) {
-          const myActiveReport = reports.find(r => 
-              r.status === ENUM_REPORT_STATUS.IN_PROGRESS &&
-              (typeof r.user === 'object' ? r.user?._id : r.user)?.toString() === currentUserId
-          );
 
-          if (myActiveReport) {
-              return [myActiveReport];
-          }
-      }
+      // 2. Normal / Search mode -> Apply 30km filter
+      const filtered = reports.filter(r => {
+           // ALWAYS show my active missions regardless of distance
+           if (r.status === ENUM_REPORT_STATUS.IN_PROGRESS && (isMyRescuerTask(r) || isMyOwnReport(r))) {
+               return true;
+           }
 
-      // 3. Fallback: Show everything nearby (30km)
-      if (userLocation) {
-        return reports.filter(r => {
-             // Handle both [long, lat] generic structure
-             const rLat = r.coordinates?.[1] ?? (r as any).location?.coordinates?.[1];
-             const rLng = r.coordinates?.[0] ?? (r as any).location?.coordinates?.[0];
-             
-             if (!rLat || !rLng) return false;
-             
-             const dist = calculateDistance(
-                 userLocation.latitude, 
-                 userLocation.longitude, 
-                 rLat, 
-                 rLng
-             );
-             return dist <= 30000; // 30km
-        });
-      }
+           if (!userLocation) return true;
 
-      return reports;
-    }, [reports, user, filterStatus, isVolunteerMode, userLocation]);
+           // Coordinate extraction
+           const rLat = r.location?.coordinates?.[1] ?? r.coordinates?.[1] ?? (r as any).lat;
+           const rLng = r.location?.coordinates?.[0] ?? r.coordinates?.[0] ?? (r as any).lng;
+           
+           if (typeof rLat !== 'number' || typeof rLng !== 'number') return false;
+           
+           const dist = calculateDistance(
+               userLocation.latitude, 
+               userLocation.longitude, 
+               rLat, 
+               rLng
+           );
+           return dist <= 30000; // 30km
+      });
+
+      return filtered;
+    }, [reports, user, filterStatus, isVolunteerMode, userLocation, isFocusMode]);
 
     const getReportMarkers = useMemo(() => {
-      return displayedReports.map((report) => (
-        <MapReportMarker
-          key={`report-${report._id}`}
-          report={report}
-          onSelected={(r) => {
-            setSelectedRescuer(null);
-            setSelectedReport(r);
-            setSelectedShelter(null);
-          }}
-        />
-      ));
+      // 1. Group reports by location to handle stacking
+      const groupedReports = new Map<string, typeof displayedReports>();
+      
+      displayedReports.forEach(report => {
+         const lat = report.location?.coordinates?.[1] ?? report.coordinates?.[1] ?? (report as any).lat;
+         const lng = report.location?.coordinates?.[0] ?? report.coordinates?.[0] ?? (report as any).lng;
+         
+         if (lat !== undefined && lng !== undefined) {
+             // Create a unique key for this location (rounded slightly to catch near-exact matches if needed, but exact is fine for overlaps)
+             // Using exact distinct coordinates for now.
+             const key = `${lat},${lng}`;
+             if (!groupedReports.has(key)) {
+                 groupedReports.set(key, []);
+             }
+             groupedReports.get(key)?.push(report);
+         }
+      });
+
+      // 2. Render Markers for each Group
+      return Array.from(groupedReports.entries()).map(([key, group]) => {
+          const report = group[0]; // Representative report (the top one)
+          return (
+            <MapReportMarker
+              key={`report-group-${key}-${report._id}`}
+              report={report}
+              count={group.length} // Pass count for badge
+              onSelected={(r) => {
+                userHasMovedMapRef.current = true; // User interacted
+                setSelectedRescuer(null);
+                setSelectedReport(r); // Select the representative
+                setSelectedShelter(null);
+              }}
+            />
+          );
+      });
     }, [displayedReports]);
   
     const displayedRescuers = useMemo(() => {
@@ -745,11 +779,10 @@ import { calculateDistance } from "@/utils/geo";
   
     const handleRecenter = () => {
       if (userLocation && cameraRef.current) {
-        userHasMovedMapRef.current = false;
         cameraRef.current.setCamera({
           centerCoordinate: [userLocation.longitude, userLocation.latitude],
-          zoomLevel: 15, // Zoom gần lại chút cho dễ nhìn
-          animationDuration: 2000, // Hiệu ứng bay trong 1 giây
+          zoomLevel: 15,
+          animationDuration: 1000,
           animationMode: "flyTo",
         });
       } else {
@@ -757,6 +790,23 @@ import { calculateDistance } from "@/utils/geo";
       }
     };
   
+    const onMapPress = useCallback(() => {
+        userHasMovedMapRef.current = true;
+        setSelectedReport(null);
+        setSelectedRescuer(null);
+        setSelectedShelter(null);
+        fetchData();
+    }, []);
+
+    const onRegionChanged = useCallback((event: any) => {
+        if (event?.properties?.isUserInteraction) {
+            userHasMovedMapRef.current = true;
+        }
+        if (event?.geometry?.coordinates) {
+            centerCoordinateRef.current = event.geometry.coordinates as [number, number];
+        }
+    }, []);
+
     return (
       <View style={styles.container}>
         <StatusBar
@@ -766,45 +816,24 @@ import { calculateDistance } from "@/utils/geo";
         />
   
         <MapView
-          key={`${theme}-${mountKey}`} // Force remount if theme/key changes to fix GL context issues
+          key={`${theme}-${mountKey}`}
           style={styles.map}
           mapStyle={getMapStyleUrl()}
           logoEnabled={false}
           attributionEnabled={false}
-          onPress={() => {
-            // Clear selections
-            setSelectedReport(null);
-            setSelectedRescuer(null);
-            setSelectedShelter(null);
-            
-            // Re-fetch
-            fetchData();
-          }}
-          onRegionIsChanging={() => {
-              // User is manually moving the map
-              if (!userHasMovedMapRef.current) {
-                  userHasMovedMapRef.current = true;
-              }
-          }}
-          onRegionDidChange={(event) => {
-              if (event && event.geometry && event.geometry.coordinates) {
-                  centerCoordinateRef.current = event.geometry.coordinates as [number, number];
-              }
-          }}
+          onPress={onMapPress}
+          onRegionDidChange={onRegionChanged}
         >
         <Camera
           ref={cameraRef}
-          defaultSettings={{
-             centerCoordinate: [106.660172, 10.762622],
-             zoomLevel: 13
-          }}
+          defaultSettings={DEFAULT_CAMERA_SETTINGS}
           animationMode="flyTo"
         />
-        
-        {/* Render Markers */}
-        {getReportMarkers}
-        {getRescuerMarkers}
+
+        {/* Render Markers - Order: Shelter (Low) -> Rescuer -> Report (High) */}
         {getShelterMarkers}
+        {getRescuerMarkers}
+        {getReportMarkers}
 
         {/* 4. ACTIVE REPORTER (For Volunteer view) */}
         {activeReporter && isVolunteerMode && (
@@ -815,11 +844,12 @@ import { calculateDistance } from "@/utils/geo";
             coordinate={[activeReporter.location.lng, activeReporter.location.lat]}
             avatarUrl={(activeReporter as any).avatar}
             userName={`${activeReporter.firstName || ''} ${activeReporter.lastName || ''}`}
-            onSelected={() => {
-              setSelectedReport(null);
-              setSelectedRescuer(activeReporter);
-              setSelectedShelter(null);
-            }}
+              onSelected={() => {
+                userHasMovedMapRef.current = true; // User interacted
+                setSelectedReport(null);
+                setSelectedRescuer(activeReporter);
+                setSelectedShelter(null);
+              }}
           />
         )}
 

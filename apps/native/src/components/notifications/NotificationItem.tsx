@@ -38,6 +38,12 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ item, onPress, onMa
           </Text>
         </View>
 
+        {item.user && (
+           <Text style={styles.recipient}>
+              To: {item.user.firstName ? `${item.user.firstName} ${item.user.lastName}` : (typeof item.user === 'string' ? item.user : 'Unknown')}
+           </Text>
+        )}
+
         <Text style={[styles.body, isRead && styles.readBody]} numberOfLines={2}>
           {item.body}
         </Text>
@@ -107,6 +113,12 @@ const styles = StyleSheet.create({
   time: {
     fontSize: 12,
     color: '#999',
+  },
+  recipient: {
+    fontSize: 12,
+    color: '#888',
+    marginBottom: 2,
+    fontStyle: 'italic',
   },
   body: {
     fontSize: 14,

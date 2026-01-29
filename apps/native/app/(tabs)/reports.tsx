@@ -14,6 +14,7 @@ import { useTranslation } from "react-i18next";
 import { useAppSelector } from "@/store/hooks";
 import { apiService } from "@/services/api.service";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useToast } from "@/components/ui/ToastProvider";
 
 // Components
 import { AppInput, AppText, Chip, Icon } from "@/components/ui";
@@ -78,6 +79,7 @@ export default function ReportsScreen() {
   const { t } = useTranslation();
   const { user, token, theme } = useAppSelector((state) => state.app);
   const { currentRegion, userLocation } = useLocationContext();
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<"list" | "map">("list");
   // --- STATE ---
   const [data, setData] = useState<any[]>([]);
@@ -588,6 +590,7 @@ export default function ReportsScreen() {
         />
         <TouchableOpacity
           onPress={() => setShowFilterModal(true)}
+          onLongPress={() => showToast?.({ title: t('COMMON.FILTER') || 'Bộ lọc', message: 'Lọc danh sách báo cáo', type: 'info' })}
           className={`w-12 h-12 rounded-xl items-center justify-center ${appliedTypeFilter !== "all" ? "bg-emerald-500" : "bg-gray-100 dark:bg-neutrals800"}`}
         >
           <Icon

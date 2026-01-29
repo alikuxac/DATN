@@ -190,31 +190,40 @@ export class ReportAdminController {
   async assign(
     @AuthJwtPayload('user', UserParsePipe) user: UserDocument,
     @Param('id') id: string,
-    @Body('volunteerId') volunteerId: string
+    @Body() body: { volunteerId?: string; volunteerIds?: string[] }
   ) {
-    if (!volunteerId) {
+    const ids = body.volunteerIds || (body.volunteerId ? [body.volunteerId] : []);
+
+    if (ids.length === 0) {
       throw new BadRequestException('report.assign.error.volunteerIdRequired');
     }
 
     const report = await this.reportService.findOneById(id);
     if (!report) throw new BadRequestException('report.error.notFound');
 
-    const volunteer = await this.userService.findOneById(volunteerId);
-    if (!volunteer) throw new BadRequestException('user.error.notFound');
+    const volunteers = await this.userService.findAll({
+      _id: { $in: ids }
+    });
 
-    if (volunteer.role !== ENUM_USER_ROLE.VOLUNTEER) {
+    if (!volunteers || volunteers.length === 0) {
+      throw new BadRequestException('user.error.notFound');
+    }
+
+    // Check if all found are volunteers (optional strict check, or just filter)
+    const nonVolunteers = volunteers.filter(v => v.role !== ENUM_USER_ROLE.VOLUNTEER);
+    if (nonVolunteers.length > 0) {
       throw new BadRequestException('user.error.notVolunteer');
     }
 
-    const assigned = await this.reportService.assignReport(report, volunteer, user);
+    const assigned = await this.reportService.assignReport(report, volunteers as UserDocument[], user);
 
     this.eventEmitter.emit(
       'activity.create',
       new ActivityCreateEvent({
         user: user._id,
-        type: ENUM_ACTIVITY_TYPE.REPORT_ACCEPT, // Reuse accept for now
-        description: `Admin assigned report ${id} to volunteer ${volunteerId}`,
-        properties: { reportId: String(id), volunteerId: String(volunteerId) }
+        type: ENUM_ACTIVITY_TYPE.REPORT_ACCEPT, // Reuse accept or NEW TYPE
+        description: `Admin assigned report ${id} to ${volunteers.length} volunteers`,
+        properties: { reportId: String(id), volunteerIds: ids }
       })
     );
 

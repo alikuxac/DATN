@@ -321,20 +321,19 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
     const { reportId, report, reason } = payload;
     this.logger.log(`Report ${reportId} rejected.`);
 
-    if (report?.source === 'app') {
-      this.server.to(`report_${reportId}`).emit('report_rejected', {
-        reportId,
-        status: 'REJECTED',
-        reason: reason || 'Báo cáo đã bị từ chối'
-      });
-    } else {
-      // Guest: Admin needs to know. 
-      this.server.to('admin_room').emit('report_rejected', {
-        reportId,
-        status: 'REJECTED',
-        reason: reason,
-        isGuest: true
-      });
+    const rejectedData = {
+      reportId,
+      status: 'REJECTED',
+      reason: reason || 'Báo cáo đã bị từ chối',
+      isGuest: report?.source !== 'app'
+    };
+
+    // Always notify report room (Rescuers are here)
+    this.server.to(`report_${reportId}`).emit('report_rejected', rejectedData);
+
+    if (report?.source !== 'app') {
+      // Guest: Admin needs to know explicitly if not in report room
+      this.server.to('admin_room').emit('report_rejected', rejectedData);
     }
   }
 
