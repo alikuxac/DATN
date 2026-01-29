@@ -74,6 +74,7 @@ export class ReportAdminController {
       defaultPerPage: 20,
       availableSearch: REPORT_DEFAULT_AVAILABLE_SEARCH,
       availableOrderBy: REPORT_DEFAULT_AVAILABLE_ORDER_BY,
+      defaultOrderBy: 'desc'
     })
     { _search, _limit, _offset, _order, search }: PaginationListDto,
 

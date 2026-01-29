@@ -48,6 +48,7 @@ export class ReportUserController {
       defaultPerPage: 20,
       availableSearch: ['q', 'address', 'notes', 'regionId'], // User app cũng có 'q'
       availableOrderBy: ['createdAt', 'peopleCount'],
+      defaultOrderBy: 'desc'
     })
     { _search, _limit, _offset, _order }: PaginationListDto,
     @PaginationQueryFilterInEnum('severity', ENUM_REPORT_SEVERITY.MEDIUM, ENUM_REPORT_SEVERITY)
