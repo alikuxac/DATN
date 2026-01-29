@@ -22,7 +22,7 @@ interface AppState {
   isLoading: boolean;
   token: string | null;
   refreshToken: string | null;
-  user: IUserGetResponse | null;
+  user: any | null; // Profile can be different from base user entity
   regionId: string;
 }
 
@@ -50,10 +50,13 @@ export const fetchUserPreferences = createAsyncThunk(
     const { apiService } = await import('@/services/api.service');
     try {
       const response = await apiService.get<any>("/shared/user/profile");
-      const prefs = response?.data?.preferences;
-      if (prefs) {
-        if (prefs.theme) dispatch(setTheme(prefs.theme));
-        if (prefs.language) dispatch(setLanguage(prefs.language));
+      if (response?.data) {
+        dispatch(setUser(response.data));
+        const prefs = response.data.preferences;
+        if (prefs) {
+          if (prefs.theme) dispatch(setTheme(prefs.theme));
+          if (prefs.language) dispatch(setLanguage(prefs.language));
+        }
         return prefs;
       }
     } catch (error) {
@@ -122,7 +125,7 @@ const appSlice = createSlice({
       // state.language = 'vi';
       state.regionId = 'unknown';
     },
-    setUser: (state, action: PayloadAction<IUserGetResponse | null>) => {
+    setUser: (state, action: PayloadAction<any | null>) => {
       state.user = action.payload;
     },
     setRegionId: (state, action: PayloadAction<string>) => {

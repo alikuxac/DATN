@@ -233,6 +233,11 @@ async function generateUsers(
       activityUpdates: true,
       newsLetters: true,
     },
+    location: {
+      type: 'Point',
+      coordinates: [105.8542, 21.0285], // Hanoi center
+    },
+    lastOnlineAt: new Date(),
   });
 
   // 2 Admins
@@ -272,6 +277,11 @@ async function generateUsers(
         activityUpdates: true,
         newsLetters: true,
       },
+      location: {
+        type: 'Point',
+        coordinates: [106.6297, 10.8231], // HCM center
+      },
+      lastOnlineAt: new Date(),
     });
   }
 
@@ -281,6 +291,7 @@ async function generateUsers(
     const emailVerified = Math.random() > 0.1; // 90% verified email
     const phoneVerified = emailVerified && Math.random() > 0.2; // 80% verified phone if email verified
     const { firstName, lastName } = getVietnameseName();
+    const cluster = getRandomCluster();
 
     users.push({
       email: `volunteer${i + 1}${emailDomain}`,
@@ -316,6 +327,15 @@ async function generateUsers(
         activityUpdates: Math.random() > 0.3,
         newsLetters: Math.random() > 0.5,
       },
+      location: {
+        type: 'Point',
+        coordinates: [
+          cluster.lng + (Math.random() - 0.5) * 0.1,
+          cluster.lat + (Math.random() - 0.5) * 0.1
+        ],
+      },
+      lastOnlineAt: randomDate(1),
+      lastLocationAt: randomDate(1),
     });
   }
 
@@ -330,6 +350,7 @@ async function generateUsers(
     const emailVerified = verificationState !== 'none';
     const phoneVerified = verificationState === 'both';
     const { firstName, lastName } = getVietnameseName();
+    const cluster = getRandomCluster();
 
     users.push({
       email: `user${i + 1}${emailDomain}`,
@@ -365,6 +386,15 @@ async function generateUsers(
         activityUpdates: Math.random() > 0.4,
         newsLetters: Math.random() > 0.6,
       },
+      location: {
+        type: 'Point',
+        coordinates: [
+          cluster.lng + (Math.random() - 0.5) * 0.1,
+          cluster.lat + (Math.random() - 0.5) * 0.1
+        ],
+      },
+      lastOnlineAt: randomDate(7),
+      lastLocationAt: randomDate(7),
     });
   }
 
@@ -489,7 +519,7 @@ async function assignVolunteersToReports(
     const acceptedAt = new Date(report.createdAt.getTime() + responseMinutes * 60 * 1000);
 
     const updateData: any = {
-      rescuer: volunteer._id,
+      rescuers: [volunteer._id],
       acceptedAt,
     };
 

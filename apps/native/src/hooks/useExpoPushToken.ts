@@ -17,7 +17,10 @@ export const useExpoPushToken = () => {
     if (!authToken) return;
 
     registerForPushNotificationsAsync().then(token => {
-      if (token) apiService.put('/shared/user/push-token/update', { token }).catch(console.error);
+      if (token) {
+        apiService.put('/shared/user/push-token/update', { pushToken: token })
+          .catch(err => console.error('[PushToken] Failed to update on server:', err));
+      }
     });
   }, [authToken]);
 };

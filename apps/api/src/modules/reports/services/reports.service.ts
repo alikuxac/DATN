@@ -4,7 +4,7 @@ import { Cache } from 'cache-manager';
 import { ReportRepository } from '@modules/reports/repository/repositories/report.repository';
 import { ReportCreateRequestDto } from '@modules/reports/dtos/request/report.create.request.dto';
 import { ReportDocument, ReportEntity } from '@modules/reports/repository/entities/report.entity';
-import { ENUM_REPORT_LOCATION_TYPE, ENUM_REPORT_SEVERITY, ENUM_REPORT_SOURCE, ENUM_REPORT_STATUS, ENUM_USER_ROLE } from '@repo/shared';
+import { ENUM_PAGINATION_ORDER_DIRECTION_TYPE, ENUM_REPORT_LOCATION_TYPE, ENUM_REPORT_SEVERITY, ENUM_REPORT_SOURCE, ENUM_REPORT_STATUS, ENUM_USER_ROLE } from '@repo/shared';
 import { IDatabaseCreateOptions, IDatabaseDeleteManyOptions, IDatabaseDeleteOptions, IDatabaseFindAllOptions, IDatabaseFindOneOptions, IDatabaseGetTotalOptions, IDatabaseUpdateOptions } from '@common/database/interfaces/database.interface';
 import { IReportDocument, IReportEntity } from '../interfaces/report.interface';
 import { ReportListResponseDto } from '../dtos/response/report.list.reponse.dto';
@@ -56,7 +56,7 @@ export class ReportService {
 
       // B. Nhiệm vụ mình đang thực hiện hoặc đã làm xong
       {
-        rescuer: userId,
+        rescuers: userId,
         status: {
           $in: [ENUM_REPORT_STATUS.IN_PROGRESS, ENUM_REPORT_STATUS.RESOLVED],
         },
@@ -67,7 +67,7 @@ export class ReportService {
       volunteerConditions.push({
         regionId: regionId,
         status: { $in: [ENUM_REPORT_STATUS.PENDING] },
-        rescuer: null,
+        rescuers: { $size: 0 },
       });
     }
 
@@ -96,48 +96,61 @@ export class ReportService {
     user: UserDocument,
     regionId?: string,
   ): Record<string, any> {
-    if (
-      user.role === ENUM_USER_ROLE.ADMIN ||
-      user.role === ENUM_USER_ROLE.SUPER_ADMIN
-    ) {
-      // Nếu Admin dùng App -> Có thể xem hết hoặc xử lý theo mode (như bài trước ta bàn)
-      // Ở đây giữ logic cũ của bạn: Admin thấy hết -> return rỗng
-      return {};
-    }
+    const userId = new Types.ObjectId(user._id.toString());
+    const isRescueMode = user.isRescueMode || user.role === ENUM_USER_ROLE.VOLUNTEER;
 
-    const userId = user._id;
-    const isVolunteer = user.role === ENUM_USER_ROLE.VOLUNTEER || user.isRescueMode;
+    // Logic:
+    // 1. User Normal (Role User OR Admin without RescueMode):
+    //    - Own reports (user/by)
+    //    - Reports where they are a rescuer
+    // 2. Volunteer (Role Volunteer OR Admin with RescueMode):
+    //    - Own reports (user/by)
+    //    - Reports where they are a rescuer
+    //    - Status PENDING (in region if specified)
+    //    - Status IN_PROGRESS (in region if specified) - to allow multi-rescuer joining
 
-    // A. USER THƯỜNG: Chỉ xem tin của mình
-    if (!isVolunteer) {
-      return { user: new Types.ObjectId(userId.toString()) };
-    }
+    // Check if effective role is Volunteer/Rescuer
+    // Note: Admin falls into User logic if !isRescueMode, Volunteer logic if isRescueMode
+    const effectiveIsVolunteer = isRescueMode;
 
-    // B. VOLUNTEER
-    const volunteerConditions: Record<string, any>[] = [
-      { user: userId }, // Tin mình tạo
-      {
-        rescuer: userId, // Tin mình đang cứu
-        status: { $in: [ENUM_REPORT_STATUS.IN_PROGRESS, ENUM_REPORT_STATUS.RESOLVED] },
-      },
+    // Conditions common to everyone (See own/assigned)
+    const personalConditions: Record<string, any>[] = [
+      { user: userId },
+      { by: userId },
+      { rescuers: userId }
     ];
 
-    // C. Tin SOS xung quanh (Chưa ai nhận)
+    if (!effectiveIsVolunteer) {
+      // Only personal
+      return { $or: personalConditions };
+    }
+
+    // Is Volunteer/Rescue Mode -> Add Public Tasks
+    const publicConditions: Record<string, any>[] = [];
+
+    // PENDING & IN_PROGRESS reports (Available to join or view)
+    // If regionId is present, we restrict these public reports to the region.
+    // Use $and inside the $or branch if needed, or just flat properties.
     if (regionId) {
-      volunteerConditions.push({
+      publicConditions.push({
         regionId: regionId,
-        status: { $in: [ENUM_REPORT_STATUS.PENDING] },
-        rescuer: null,
+        status: { $in: [ENUM_REPORT_STATUS.PENDING, ENUM_REPORT_STATUS.IN_PROGRESS] }
+      });
+    } else {
+      // If no region filter, technically they could see all Pending/InProgress? 
+      // Or we strictly require region for public stuff to avoid dump?
+      // Usually App sends regionId. If not, maybe show all (or limit elsewhere).
+      // Let's allow all if region is missing, assuming pagination limits it.
+      publicConditions.push({
+        status: { $in: [ENUM_REPORT_STATUS.PENDING, ENUM_REPORT_STATUS.IN_PROGRESS] }
       });
     }
 
     return {
-      $or: volunteerConditions.map(c => {
-        // Ensure IDs are ObjectIds for $or operations
-        if (c.user) c.user = new Types.ObjectId(c.user.toString());
-        if (c.rescuer) c.rescuer = new Types.ObjectId(c.rescuer.toString());
-        return c;
-      })
+      $or: [
+        ...personalConditions,
+        ...publicConditions
+      ]
     };
   }
 
@@ -345,6 +358,31 @@ export class ReportService {
     );
   }
 
+  async getNearbyHistory(
+    reportId: string,
+    lat: number,
+    lng: number,
+    radiusInMeters: number = 200, // Small radius for "same spot"
+    limit: number = 10
+  ): Promise<IReportDocument[]> {
+    return this.reportRepository.findAll<IReportDocument>(
+      {
+        _id: { $ne: reportId },
+        status: { $in: [ENUM_REPORT_STATUS.RESOLVED, ENUM_REPORT_STATUS.REJECTED, ENUM_REPORT_STATUS.IN_PROGRESS, ENUM_REPORT_STATUS.PENDING] },
+        'location.coordinates': {
+          $nearSphere: {
+            $geometry: {
+              type: 'Point',
+              coordinates: [Number(lng), Number(lat)],
+            },
+            $maxDistance: radiusInMeters,
+          },
+        },
+      },
+      { join: true, paging: { limit, offset: 0 }, order: { createdAt: ENUM_PAGINATION_ORDER_DIRECTION_TYPE.DESC } }
+    );
+  }
+
   // 3. Find One By ID
   async findOneById(
     _id: string,
@@ -511,7 +549,7 @@ export class ReportService {
   ) {
     // 1. Check if rescuer already has an active report
     const activeReport = await this.reportRepository.findOne({
-      rescuer: rescuer._id.toString(),
+      rescuers: rescuer._id,
       status: ENUM_REPORT_STATUS.IN_PROGRESS
     });
 
@@ -542,22 +580,25 @@ export class ReportService {
       }
     }
 
+    // 3. Update using $addToSet to avoid duplicates and handle concurrent updates
+    // Use updateRaw with $addToSet and $set
     const updated = await this.reportRepository.updateRaw(
       {
         _id: new Types.ObjectId(reportId) as any,
-        status: ENUM_REPORT_STATUS.PENDING, // Chỉ nhận khi còn Pending
+        status: { $in: [ENUM_REPORT_STATUS.PENDING, ENUM_REPORT_STATUS.IN_PROGRESS] },
       },
       {
-        status: ENUM_REPORT_STATUS.IN_PROGRESS,
-        rescuer: rescuer._id,
-        acceptedAt: new Date(),
+        $set: {
+          status: ENUM_REPORT_STATUS.IN_PROGRESS,
+          acceptedAt: new Date(), // Update accepted time if needed, or keep original? Logic: If new person joins, maybe we don't overwrite if existing? But simplified: update it.
+        },
+        $addToSet: { rescuers: rescuer._id }
       },
-      options // Trả về data mới sau khi update
+      options
     );
 
     if (updated) {
       await this.cacheManager.del(`report:detail:${reportId}`);
-
 
       this.eventEmitter.emit('report.accepted', {
         reportId: updated._id.toString(),
@@ -588,10 +629,24 @@ export class ReportService {
     return saved;
   }
 
-  async cancelReport(report: ReportDocument, options?: IDatabaseUpdateOptions) {
-    report.status = ENUM_REPORT_STATUS.PENDING;
-    report.rescuer = null;
-    report.acceptedAt = null;
+  async cancelReport(report: ReportDocument, user: UserDocument, options?: IDatabaseUpdateOptions) {
+    // Remove user from rescuers
+    // Convert identifiers to strings for comparison
+    const userIdStr = user._id.toString();
+
+    // Check if user is in rescuers
+    if (!report.rescuers || !report.rescuers.some(r => r.toString() === userIdStr)) {
+      throw new BadRequestException('report.error.notRescuer');
+    }
+
+    // Filter out the user
+    report.rescuers = report.rescuers.filter(r => r.toString() !== userIdStr) as any;
+
+    // If no rescuers left, revert to PENDING
+    if (report.rescuers.length === 0) {
+      report.status = ENUM_REPORT_STATUS.PENDING;
+      report.acceptedAt = null;
+    }
 
     const saved = await this.reportRepository.save(report, options);
     await this.cacheManager.del(`report:detail:${report._id}`);
@@ -600,22 +655,25 @@ export class ReportService {
       reportId: saved._id.toString(),
       regionId: saved.regionId,
       report: saved,
+      rescuerId: userIdStr
     });
 
     return saved;
   }
 
   async assignReport(report: ReportDocument, volunteer: UserDocument, assigner: UserDocument, options?: IDatabaseUpdateOptions) {
-    if (report.status !== ENUM_REPORT_STATUS.PENDING) {
-      throw new BadRequestException('report.error.notPending');
+    if (report.status !== ENUM_REPORT_STATUS.PENDING && report.status !== ENUM_REPORT_STATUS.IN_PROGRESS) {
+      throw new BadRequestException('report.error.notPendingOrInProgress');
     }
 
     const updated = await this.reportRepository.updateRaw(
       { _id: report._id },
       {
-        status: ENUM_REPORT_STATUS.IN_PROGRESS,
-        rescuer: volunteer._id,
-        acceptedAt: new Date(),
+        $addToSet: { rescuers: volunteer._id },
+        $set: {
+          status: ENUM_REPORT_STATUS.IN_PROGRESS,
+          acceptedAt: new Date(),
+        }
       },
       options
     );
@@ -800,7 +858,7 @@ export class ReportService {
     const reports = await this.reportRepository.findAll(find, {
       join: [
         { path: 'user' },
-        { path: 'rescuer' }
+        { path: 'rescuers' }
       ]
     });
 
@@ -815,7 +873,7 @@ export class ReportService {
       { header: 'Notes', key: 'notes', width: 40 },
       { header: 'Reporter Name', key: 'reporterName', width: 25 },
       { header: 'Reporter Phone', key: 'reporterPhone', width: 15 },
-      { header: 'Rescuer Name', key: 'rescuerName', width: 25 },
+      { header: 'Rescuers', key: 'rescuers', width: 30 },
       { header: 'People Count', key: 'peopleCount', width: 10 },
       { header: 'Severity', key: 'severity', width: 10 },
       { header: 'Created At', key: 'createdAt', width: 20 },
@@ -823,7 +881,11 @@ export class ReportService {
 
     reports.forEach((report) => {
       const reporter = report.user as any;
-      const rescuer = report.rescuer as any;
+      const rescuers = (report.rescuers as any[]) || [];
+
+      const rescuerNames = rescuers.length > 0
+        ? rescuers.map(r => `${r.firstName} ${r.lastName}`).join(', ')
+        : 'Unassigned';
 
       worksheet.addRow({
         id: report._id.toString(),
@@ -832,7 +894,7 @@ export class ReportService {
         notes: report.notes || '',
         reporterName: reporter ? `${reporter.firstName} ${reporter.lastName}` : 'N/A',
         reporterPhone: reporter ? reporter.mobileNumber : 'N/A',
-        rescuerName: rescuer ? `${rescuer.firstName} ${rescuer.lastName}` : 'Unassigned',
+        rescuers: rescuerNames,
         peopleCount: report.peopleCount,
         severity: report.severity,
         createdAt: new Date(report.createdAt).toLocaleString('vi-VN'),

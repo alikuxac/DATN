@@ -5,7 +5,7 @@ import { OnEvent } from "@nestjs/event-emitter";
 
 import { NotificationRepository } from "./repository/repositories/notification.repository";
 import { NotificationEntity } from "./repository/entities/notification.entity";
-import { ENUM_NOTIFICATION_TYPE, ENUM_REPORT_SOURCE } from "@repo/shared";
+import { ENUM_NOTIFICATION_TYPE, ENUM_REPORT_SOURCE, ENUM_REPORT_SEVERITY } from "@repo/shared";
 import { Expo, ExpoPushMessage } from 'expo-server-sdk';
 import { UserEntity } from "@modules/users/repository/entities/user.entity";
 import { HelperGeoService } from "@common/helper/services/helper.geo.service";
@@ -106,32 +106,50 @@ export class NotificationService {
 
   @OnEvent('report.created')
   async handleReportCreated(payload: { reportId: string; regionId: string; data: any }) {
-    // 1. Gửi event 'new_sos' vào room region (Real-time cho app đang mở)
+    // 1. Send socket event 'new_sos' to region room (Real-time for active app)
     this.notificationGateway.sendToRegion(payload.regionId, 'new_sos', payload.data);
 
-    // 1b. Gửi Global cho Admin Dashboard (để Admin thấy ngay lập tức mà không cần join region)
-    // admin room should be joined by admin clients
+    // 1b. Global broadcast to Admin Dashboard
     this.notificationGateway.server.to('admin_room').emit('new_sos', payload.data);
 
-    // 2. Logic tìm user xung quanh để gửi Push + Lưu Noti
-    // Lấy tọa độ report
+    // 2. Logic to find volunteers for Push Notifications + DB Storage
     const reportCoordinates = payload.data.location?.coordinates; // [lng, lat]
     if (reportCoordinates) {
       const [lng, lat] = reportCoordinates;
-      // Tìm Rescuers/User gần đó (Ví dụ 5km)
-      const nearbyUsers = await this.userService.findRescuersNearby(lat, lng, 5000);
+      const severity = payload.data.severity;
+      const isUrgent = severity === ENUM_REPORT_SEVERITY.HIGH || severity === ENUM_REPORT_SEVERITY.CRITICAL;
 
-      // Gửi Notification cho từng người
+      // Find Rescuers/Volunteers nearby
+      // If urgent: send to everyone in 5km
+      // If regular: limit to 25 closest volunteers to avoid spam
+      const options: any = isUrgent ? {} : { paging: { limit: 25, offset: 0 } };
+
+      const nearbyUsers = await this.userService.findRescuersNearby(
+        lat,
+        lng,
+        5000,
+        {}, // Optional filters logic already inside findRescuersNearby
+        options
+      );
+
+      // Notify each selected volunteer
       for (const user of nearbyUsers) {
-        // Skip chính người tạo report
+        // Skip creator
         if (user._id.toString() === payload.data.user) continue;
+
+        const distance = this.helperGeoService.calculateDistance(
+          lat,
+          lng,
+          user.location.coordinates[1],
+          user.location.coordinates[0]
+        );
 
         await this.sendToUser(
           user._id.toString(),
           ENUM_NOTIFICATION_TYPE.SOS,
-          'SOS: Cần hỗ trợ khẩn cấp!', // Title ngắn gọn, gây chú ý
-          `Cách bạn ~${this.helperGeoService.calculateDistance(lat, lng, user.location.coordinates[1], user.location.coordinates[0]) | 0}m. Nhấn để xem chi tiết.`,
-          { reportId: payload.reportId, type: 'SOS_NEARBY' }
+          isUrgent ? '🆘 KHẨN CẤP: Cần cứu trợ ngay!' : '🔔 SOS: Cần hỗ trợ gần bạn',
+          `Cách bạn ~${distance | 0}m. Nhấn để xem chi tiết.`,
+          { reportId: payload.reportId, type: 'SOS_NEARBY', severity }
         );
       }
     }

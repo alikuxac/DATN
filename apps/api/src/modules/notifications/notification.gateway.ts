@@ -32,45 +32,50 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
 
   async handleConnection(client: Socket) {
     try {
-      let userId = client.handshake.query.userId as string;
+      const token = client.handshake.auth?.token || client.handshake.query?.token;
+      let userId: string = client.handshake.query?.userId as string;
 
-      // Fallback: Verify Token if userId is not in query
-      if (!userId && client.handshake.auth?.token) {
+      if (token) {
         try {
-          const payload = this.authService.verifyAccessToken(client.handshake.auth.token);
+          const payload = this.authService.verifyAccessToken(token);
           userId = payload.user || payload.sub;
         } catch (err) {
-          this.logger.warn(`Invalid token for client ${client.id}`);
+          this.logger.warn(`Invalid JWT token for client ${client.id}`);
         }
       }
 
       if (userId) {
-
-        await client.join(`user_${userId}`);
         client.data.userId = userId;
+        await client.join(`user_${userId}`);
 
         // Track Online User
         await this.usersService.userConnected(userId);
-        await this.broadcastOnlineCount();
+        this.scheduleBroadcastOnlineCount();
 
-        // Fetch user to check role
+        // Fetch user once for all role checks
         const user = await this.usersService.findOneById(userId);
-        if (user && (user.role === ENUM_USER_ROLE.ADMIN || user.role === ENUM_USER_ROLE.SUPER_ADMIN)) {
-          await client.join('admin_room');
-          this.logger.log(`Admin joined admin_room: ${userId}`);
+        if (user) {
+          client.data.role = user.role;
 
-          // Send immediate count to admin upon join
-          const count = await this.usersService.getOnlineCount();
-          client.emit('stats.online_users', { count });
+          if (user.role === ENUM_USER_ROLE.ADMIN || user.role === ENUM_USER_ROLE.SUPER_ADMIN) {
+            await client.join('admin_room');
+            this.logger.log(`Admin ${userId} connected`);
+
+            // Initial stats for admin
+            const count = await this.usersService.getOnlineCount();
+            client.emit('stats.online_users', { count });
+          } else if (user.role === ENUM_USER_ROLE.VOLUNTEER) {
+            await client.join('volunteers_room');
+          }
         }
 
-        this.logger.log(`User connected: ${userId}`);
+        this.logger.log(`User connected: ${userId} (${client.id})`);
       } else {
-        // Optional: disconnect if unidentified?
-        // client.disconnect();
+        this.logger.warn(`Unauthenticated connection attempt: ${client.id}`);
+        client.disconnect();
       }
     } catch (error) {
-      this.logger.error('Connection error', error);
+      this.logger.error('Socket connection error', error);
       client.disconnect();
     }
   }
@@ -79,16 +84,24 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
     const userId = client.data.userId;
     if (userId) {
       await this.usersService.userDisconnected(userId);
-      // Update last seen one last time on disconnect
       await this.usersService.updateLastOnline(userId);
-      await this.broadcastOnlineCount();
+      this.scheduleBroadcastOnlineCount();
       this.logger.log(`User disconnected: ${userId}`);
     }
   }
 
-  private async broadcastOnlineCount() {
-    const count = await this.usersService.getOnlineCount();
-    this.server.to('admin_room').emit('stats.online_users', { count });
+  private broadcastTimeout: NodeJS.Timeout | null = null;
+  private scheduleBroadcastOnlineCount() {
+    if (this.broadcastTimeout) return;
+
+    this.broadcastTimeout = setTimeout(async () => {
+      try {
+        const count = await this.usersService.getOnlineCount();
+        this.server.to('admin_room').emit('stats.online_users', { count });
+      } finally {
+        this.broadcastTimeout = null;
+      }
+    }, 5000); // Throttle broadcast to every 5s
   }
 
   @SubscribeMessage('update_location')
@@ -97,40 +110,40 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
     @MessageBody() payload: { lat: number; lng: number, reportId?: string }
   ) {
     const userId = client.data.userId;
-    this.logger.log(`update_location received from user ${userId}: ${payload.lat}, ${payload.lng} (Report: ${payload.reportId})`);
     if (!userId || !payload.lat || !payload.lng) return;
 
     try {
-      // 1. Fetch User to update location
-      const user = await this.usersService.findOneById(userId);
-      if (user) {
-        await this.usersService.updateLocation(userId, payload.lat, payload.lng);
-        // updateLocation already handles lastOnlineAt if implemented in service
-        // But if we just want lightweight ping?
-      } else {
-        // If for some reason user not found (rare if guarded), but still valid token
-        await this.usersService.updateLastOnline(userId);
-      }
+      // 1. Update DB (Asynchronous, don't block socket emit)
+      this.usersService.updateLocation(userId, payload.lat, payload.lng)
+        .catch(err => this.logger.error(`DB Update failed for ${userId}`, err));
 
-      // 2. Realtime Tracking (Like Grab)
+      // 2. Prepare Realtime move data
       const moveData = {
-        rescuerId: userId,
+        rescuerId: userId, // Legacy naming support
+        userId: userId,    // Standard naming
         lat: payload.lat,
-        lng: payload.lng
+        lng: payload.lng,
+        timestamp: new Date().toISOString()
       };
 
+      // 3. Broadcast efficiently (deduplicated by socket.io)
+      let broadcaster = client.broadcast; // Emits to everyone EXCEPT the sender
+
       if (payload.reportId) {
-        client.to(`report_${payload.reportId}`).emit('rescuer_moved', moveData);
+        broadcaster = broadcaster.to(`report_${payload.reportId}`);
       }
 
-      // Broadcast to region rooms as well
+      // Broadcast to all regions this user is currently in (usually 1, but safe)
       client.rooms.forEach(room => {
         if (room.startsWith('region_')) {
-          client.to(room).emit('rescuer_moved', moveData);
+          broadcaster = broadcaster.to(room);
         }
       });
+
+      broadcaster.emit('rescuer_moved', moveData);
+
     } catch (error) {
-      this.logger.error(`Error updating location for user ${userId}`, error);
+      this.logger.error(`Socket processing error for user ${userId}`, error);
     }
   }
 

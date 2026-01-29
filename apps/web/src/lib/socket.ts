@@ -6,19 +6,20 @@ export interface SocketEvents {
   notification: (data: unknown) => void;
   new_notification: (data: any) => void;
   new_sos: (data: any) => void;
-  location_updated: (data: { userId: string; lat: number; lng: number }) => void;
+  rescuer_moved: (data: { rescuerId: string; lat: number; lng: number }) => void;
   region_alert: (data: unknown) => void;
   'stats.online_users': (data: { count: number }) => void;
+  force_logout: (data: any) => void;
 
   // Client -> Server events
-  update_location: (data: { lat: number; lng: number }) => void;
+  update_location: (data: { lat: number; lng: number, reportId?: string }) => void;
   mark_read: (data: { id: string }) => void;
   join_region: (data: { regionId: string }) => void;
 }
 
 let socket: Socket | null = null;
 
-export const initializeSocket = (userId: string): Socket => {
+export const initializeSocket = (userId: string, token?: string): Socket => {
   if (socket?.connected) {
     return socket;
   }
@@ -30,11 +31,12 @@ export const initializeSocket = (userId: string): Socket => {
 
   socket = io(url, {
     query: { userId },
-    transports: ['websocket', 'polling'],
+    auth: { token },
+    transports: ['websocket'],
     reconnection: true,
     reconnectionDelay: 1000,
     reconnectionDelayMax: 5000,
-    reconnectionAttempts: 5,
+    reconnectionAttempts: Infinity,
   });
 
   socket.on('connect', () => {

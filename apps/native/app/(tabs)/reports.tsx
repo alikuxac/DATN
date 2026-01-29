@@ -46,7 +46,7 @@ export interface IReport {
   images?: string[];
   createdAt: string;
   updatedAt: string;
-  volunteer?: string;
+  rescuers?: any[];
 }
 
 // --- CONSTANTS ---
@@ -156,21 +156,79 @@ export default function ReportsScreen() {
           if (authorId === currentUserId || creatorId === currentUserId) return true;
 
           // 2. Rescued by me
-          const rescuerId = (typeof item.rescuer === 'object' ? item.rescuer?._id : item.rescuer)?.toString();
-          if (rescuerId === currentUserId) return true;
+          if (item.rescuers && Array.isArray(item.rescuers)) {
+              const isMyRescue = item.rescuers.some((r: any) => {
+                  const rId = (typeof r === 'object' ? r._id : r)?.toString();
+                  return rId === currentUserId;
+              });
+              if (isMyRescue) return true;
+          }
 
           // 3. Pending & Unassigned (Available for volunteers)
-          if (item.status === ENUM_REPORT_STATUS.PENDING && !rescuerId) return true;
+          // OR In Progress (Available for MORE volunteers) - Requirement: "1 report can be received by multiple volunteers"
+          // So we show it if status is PENDING or IN_PROGRESS (unless I'm already in it, handled above)
+          // But typically we show PENDING to everyone. IN_PROGRESS might be shown if we allow joining?
+          // If the report status is PENDING, anyone can join.
+          // If IN_PROGRESS, others can still join? Yes, per "1 report can be received by multiple volunteers".
+          
+          if (item.status === ENUM_REPORT_STATUS.PENDING) return true;
+          
+          // Show IN_PROGRESS reports that I haven't joined yet?
+          if (item.status === ENUM_REPORT_STATUS.IN_PROGRESS) {
+             const amIGuiding = item.rescuers?.some((r: any) => ((typeof r === 'object' ? r._id : r)?.toString() === currentUserId));
+             if (!amIGuiding) return true; 
+          }
 
           return false;
       });
 
+      // Process & Sort Reports
+      const processedReports = filteredReports.sort((a: any, b: any) => {
+          const currentUserId = user?._id?.toString();
+          
+          // Helper to check if "My Active Mission"
+          const isMyActiveA = a.status === ENUM_REPORT_STATUS.IN_PROGRESS && (
+              // Use safe optional chaining and type checks
+              (a.rescuers && Array.isArray(a.rescuers) && a.rescuers.some((r: any) => (typeof r === 'object' ? r._id : r)?.toString() === currentUserId)) ||
+              ((typeof a.user === 'object' ? a.user?._id : a.user)?.toString() === currentUserId)
+          );
+          
+          const isMyActiveB = b.status === ENUM_REPORT_STATUS.IN_PROGRESS && (
+               (b.rescuers && Array.isArray(b.rescuers) && b.rescuers.some((r: any) => (typeof r === 'object' ? r._id : r)?.toString() === currentUserId)) ||
+               ((typeof b.user === 'object' ? b.user?._id : b.user)?.toString() === currentUserId)
+          );
+
+          if (isMyActiveA && !isMyActiveB) return -1; // A comes first
+          if (!isMyActiveA && isMyActiveB) return 1;  // B comes first
+          
+          // Default sort by CreatedAt Desc
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+
       if (pageNum === 1) {
-        setData(filteredReports);
+        setData(processedReports);
       } else {
         setData(prev => {
-          const combined = [...prev, ...filteredReports];
-          return Array.from(new Map(combined.map(r => [r._id, r])).values());
+          const combined = [...prev, ...processedReports];
+          // Re-sort entire list to ensure priority is kept even with pagination (though less likely to shift drastically)
+          // Actually, pagination fetch might break "pinned top" if page 2 has my report (unlikely with sorting by date on backend?).
+          // But here we do client side pinning.
+          const unique = Array.from(new Map(combined.map(r => [r._id, r])).values());
+          
+          return unique.sort((a: any, b: any) => {
+              const currentUserId = user?._id?.toString();
+              const isMyActiveA = a.status === ENUM_REPORT_STATUS.IN_PROGRESS && (
+                  (a.rescuers?.some((r: any) => (typeof r === 'object' ? r._id : r)?.toString() === currentUserId)) ||
+                  ((typeof a.user === 'object' ? a.user?._id : a.user)?.toString() === currentUserId)
+              );
+              const isMyActiveB = b.status === ENUM_REPORT_STATUS.IN_PROGRESS && (
+                   (b.rescuers?.some((r: any) => (typeof r === 'object' ? r._id : r)?.toString() === currentUserId)) ||
+                   ((typeof b.user === 'object' ? b.user?._id : b.user)?.toString() === currentUserId)
+              );
+              if (isMyActiveA && !isMyActiveB) return -1;
+              if (!isMyActiveA && isMyActiveB) return 1;
+              return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          });
         });
       }
       
@@ -228,10 +286,27 @@ export default function ReportsScreen() {
       const handleReportUpdate = (payload: { reportId: string, status: ENUM_REPORT_STATUS, rescuerId?: string }) => {
            setData(prev => prev.map(r => {
                if (r._id === payload.reportId) {
+                   // Ensure rescuers is array
+                   let currentRescuers = r.rescuers || [];
+                   if (payload.rescuerId) {
+                       // Add if not exists
+                       const exists = currentRescuers.some((ex: any) => {
+                           const exId = typeof ex === 'object' ? ex._id : ex;
+                           return exId === payload.rescuerId;
+                       });
+                       if (!exists) {
+                           // Ideally we need full rescuer object, but for ID check string is ok or partial object
+                           // For UI display might be issue if we only have ID. 
+                           // But usually fetchReports refresh eventually.
+                           // Helper: just push ID if string, or create partial
+                           currentRescuers = [...currentRescuers, payload.rescuerId];
+                       }
+                   }
+                   
                    return { 
                       ...r, 
                       status: payload.status,
-                      rescuer: payload.rescuerId ? payload.rescuerId : r.rescuer
+                      rescuers: currentRescuers
                    };
                }
                return r;
@@ -239,17 +314,30 @@ export default function ReportsScreen() {
       };
 
       const handleReportCancelled = (payload: { reportId: string, status: string }) => {
-           console.log("Report cancelled via socket (List):", payload.reportId);
-           setData(prev => prev.map(r => {
-               if (r._id === payload.reportId) {
-                   return { 
-                      ...r, 
-                      status: ENUM_REPORT_STATUS.PENDING,
-                      rescuer: undefined
-                   };
-               }
-               return r;
-           }));
+            console.log("Report cancelled via socket (List):", payload.reportId);
+            setData(prev => prev.map(r => {
+                if (r._id === payload.reportId) {
+                    // Logic: If cancelled, it means *someone* cancelled.
+                    // If the payload has `rescuerId`, it means THAT rescuer left.
+                    // If status becomes PENDING, it means everyone left.
+                    
+                    // We need to look at payload structure. Service emits: { reportId, regionId, report, rescuerId }
+                    // But here payload type is generic. Let's assume we receive updated report or we handle logic.
+                    // The service emits: this.eventEmitter.emit('report.cancelled', { ... });
+                    // Socket Gateway forwards it.
+                    
+                    // Simplified: just update status and let UI refresh or simple toggle if PENDING.
+                    
+                    const isPending = payload.status === ENUM_REPORT_STATUS.PENDING;
+                    
+                    return { 
+                       ...r, 
+                       status: payload.status, // use status from payload
+                       rescuers: isPending ? [] : r.rescuers // Clear if pending
+                    };
+                }
+                return r;
+            }));
       };
 
       socket.on('report_created', handleNewReport);

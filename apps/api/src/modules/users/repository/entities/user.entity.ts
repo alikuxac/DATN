@@ -24,7 +24,6 @@ export class PointLocation {
 
   @DatabaseProp({
     type: [Number], // [longitude, latitude]
-    required: true,
   })
   coordinates: number[];
 }

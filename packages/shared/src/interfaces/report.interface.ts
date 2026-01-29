@@ -31,7 +31,7 @@ export interface IReportListResponse extends IDatabaseDto {
   status: string;
   peopleCount: number;
   isPublic: boolean;
-  rescuer?: string | IUserShortResponse;
+  rescuers?: (string | IUserShortResponse)[];
   images: string[];
   acceptedAt?: Date | string;
   resolvedAt?: Date | string;

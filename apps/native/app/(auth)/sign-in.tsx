@@ -114,7 +114,7 @@ export default function SignInScreen() {
         showSuccess(t("AUTH.MSG_WELCOME_BACK"), t("AUTH.MSG_LOGIN_SUCCESS"));
 
         setTimeout(() => {
-          router.replace("/(tabs)");
+          router.replace("/(tabs)/account");
         }, 500);
       } else {
         // Trường hợp API trả về 200 nhưng không có token (logic lạ)

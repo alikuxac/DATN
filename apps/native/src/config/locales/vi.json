@@ -140,7 +140,8 @@
       "BTN_COMPLETE": "ĐÃ HOÀN THÀNH",
       "BTN_DIRECTIONS": "Chỉ đường",
       "BTN_DENY": "TỪ CHỐI",
-      "WARNING_UNVERIFIED": "Người dùng này chưa xác thực Email/SĐT. Cẩn thận thông tin giả."
+      "WARNING_UNVERIFIED": "Người dùng này chưa xác thực Email/SĐT. Cẩn thận thông tin giả.",
+      "HISTORY_TITLE": "Lịch sử báo cáo khu vực này"
     },
     "REJECTION_REASON": "Lý do từ chối",
     "REJECT_REASON": {

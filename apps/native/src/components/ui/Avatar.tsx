@@ -96,6 +96,9 @@ export default function Avatar({
     if (imageError) return null;
 
     if (source) {
+      if (typeof source === "string" && (source === "null" || source === "undefined")) {
+        return text ? { uri: getDiceBearUrl(text) } : null;
+      }
       return typeof source === "string" ? { uri: source } : source;
     }
 

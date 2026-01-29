@@ -22,11 +22,13 @@ const REPORT_TYPES = [
   { label: "Khác", value: ENUM_REPORT_TYPE.OTHER, icon: CircleHelp },
 ];
 
+import { useLocationContext } from "@/context/LocationContext";
+
 export default function GuestSOS() {
   const router = useRouter();
   const { t } = useTranslation();
   const colors = useColors();
-  const [location, setLocation] = useState<Location.LocationObject | null>(null);
+  const { userLocation, currentRegion } = useLocationContext();
   const [loading, setLoading] = useState(false);
   const [deviceId, setDeviceId] = useState<string>("");
   
@@ -35,25 +37,9 @@ export default function GuestSOS() {
   const [notes, setNotes] = useState("");
   const [phone, setPhone] = useState("");
   const [errors, setErrors] = useState<{ phone?: string }>({});
-  const [regionId, setRegionId] = useState<string>("");
 
   useEffect(() => {
     (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert("Quyền truy cập vị trí bị từ chối", "Chúng tôi cần vị trí của bạn để gửi cứu hộ.");
-        return;
-      }
-
-      try {
-        let location = await Location.getCurrentPositionAsync({});
-        setLocation(location);
-        const regionId = getRegionFromGeoJSON(location.coords.latitude, location.coords.longitude);
-        setRegionId(regionId);
-      } catch (error) {
-        console.warn('Failed to get location in Guest SOS:', error);
-      }
-
       let id = Platform.OS === 'android' ? Application.getAndroidId() : await Application.getIosIdForVendorAsync();
       setDeviceId(id || "unknown-device");
     })();
@@ -69,7 +55,7 @@ export default function GuestSOS() {
 
   const onSubmit = async () => {
     if (!validate()) return;
-    if (!location) {
+    if (!userLocation) {
       Alert.alert("Lỗi", "Không thể lấy vị trí hiện tại. Vui lòng thử lại.");
       return;
     }
@@ -80,9 +66,9 @@ export default function GuestSOS() {
         type,
         notes,
         phone,
-        coordinates: [location.coords.longitude, location.coords.latitude],
+        coordinates: [userLocation.longitude, userLocation.latitude],
         severity: ENUM_REPORT_SEVERITY.HIGH, // Default strict high severity for SOS
-        regionId: regionId, // Default or detect region
+        regionId: currentRegion, // Default or detect region
         deviceId: deviceId, // Ensure device Id is sent in body too
       }, {
         headers: {
@@ -194,16 +180,16 @@ export default function GuestSOS() {
               labelClassName="font-sans-bold"
           />
 
-          {location && (
+          {userLocation && (
               <AppText className="text-center mb-6 text-green-600 dark:text-green-400 font-sans-medium">
-                  Vị trí của bạn: {location.coords.latitude.toFixed(5)}, {location.coords.longitude.toFixed(5)}
+                  Vị trí của bạn: {userLocation.latitude.toFixed(5)}, {userLocation.longitude.toFixed(5)}
               </AppText>
           )}
 
           <AppButton
             onPress={onSubmit}
             loading={loading}
-            disabled={!location}
+            disabled={!userLocation}
             className="w-full bg-red-600 dark:bg-red-700 rounded-full py-4 shadow-lg"
             textClassname="text-white font-bold text-lg"
           >

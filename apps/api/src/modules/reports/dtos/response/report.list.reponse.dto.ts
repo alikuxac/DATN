@@ -15,7 +15,7 @@ export class ReportListResponseDto extends DatabaseObjectIdDto {
 
   @Expose()
   @Type(() => UserShortResponseDto)
-  rescuer: UserShortResponseDto;
+  rescuers: UserShortResponseDto[];
 
   @Expose()
   @Type(() => Object)

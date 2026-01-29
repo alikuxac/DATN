@@ -40,9 +40,16 @@ export const ReportCard = ({
   const isAdmin = user?.role === ENUM_USER_ROLE.ADMIN;
   const isVolunteer = user?.isVolunteer;
 
-  // Fix: Check rescuer field
-  const rescuerId = typeof item.rescuer === 'object' ? item.rescuer?._id : item.rescuer;
-  const isMyMission = isVolunteer && item.status === ENUM_REPORT_STATUS.IN_PROGRESS && rescuerId === currentUserId;
+  // Fix: Check rescuers array
+  let isMyMission = false;
+  if (isVolunteer && item.status === ENUM_REPORT_STATUS.IN_PROGRESS) {
+      if (item.rescuers && Array.isArray(item.rescuers)) {
+          isMyMission = item.rescuers.some((r: any) => {
+               const rId = (typeof r === 'object' ? r._id : r)?.toString();
+               return rId === currentUserId;
+          });
+      }
+  }
 
   const canEdit =
     (isOwner || isAdmin) && item.status === ENUM_REPORT_STATUS.PENDING;
@@ -50,8 +57,10 @@ export const ReportCard = ({
     (isOwner || isAdmin) && item.status === ENUM_REPORT_STATUS.PENDING;
   const canAccept =
     isVolunteer &&
-    item.status === ENUM_REPORT_STATUS.PENDING &&
-    !isOwner; // Cannot accept own report
+    (item.status === ENUM_REPORT_STATUS.PENDING || item.status === ENUM_REPORT_STATUS.IN_PROGRESS) && // Allow joining in-progress
+    !isOwner &&
+    !isMyMission; // Not already my mission
+  
   const canReject =
     isAdmin && item.status === ENUM_REPORT_STATUS.PENDING; // Only admin can reject PENDING reports
   const canResolve = isMyMission; // Rescuer can resolve

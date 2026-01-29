@@ -78,4 +78,9 @@ export enum ENUM_STATUS_CODE_ERROR {
 
   RESET_PASSWORD_EXPIRED = 40033,
   RESET_PASSWORD_INACTIVE = 40034,
+
+  // =======================================================
+  // 6. REPORT ENTITY
+  // =======================================================
+  REPORT_NOT_FOUND = 40410,
 }

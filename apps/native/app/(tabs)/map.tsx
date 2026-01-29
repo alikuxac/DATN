@@ -74,6 +74,7 @@ import { calculateDistance } from "@/utils/geo";
     firstName: string;
     lastName: string;
     phone?: string;
+    avatar?: string;
     location: { lat: number; lng: number, coordinates?: [number, number] }; // Vị trí hiện tại của Rescuer
     coordinates?: [number, number];
     isOnline: boolean;
@@ -114,9 +115,13 @@ import { calculateDistance } from "@/utils/geo";
   
     // --- STATE ---
     const [reports, setReports] = useState<IReportListResponse[]>([]);
-    const [nearbyRescuers, setNearbyRescuers] = useState<RescuerData[]>([]);
+    // Derived State instead of manual sync
+    // const [nearbyRescuers, setNearbyRescuers] = useState<RescuerData[]>([]); // REPLACED BY MEMO
+    // const [activeReporter, setActiveReporter] = useState<RescuerData | null>(null); // REPLACED BY MEMO
+    
+    // Real-time location overrides from Socket
+    const [rescuerLocations, setRescuerLocations] = useState<Record<string, { lat: number, lng: number, lastLocationAt: string }>>({});
     const [shelters, setShelters] = useState<Shelter[]>([]);
-    const [activeReporter, setActiveReporter] = useState<RescuerData | null>(null);
 
     const isVolunteerMode = useMemo(() => {
       return user?.role === ENUM_USER_ROLE.VOLUNTEER || user?.isRescueMode;
@@ -133,10 +138,13 @@ import { calculateDistance } from "@/utils/geo";
     const [isActionLoading, setIsActionLoading] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
     
+    const [isFocusMode, setIsFocusMode] = useState(true);
+    
     // Location Picker State
     const [isPickingLocation, setIsPickingLocation] = useState(false);
     const [pickedLocation, setPickedLocation] = useState<{ lat: number; long: number } | null>(null);
     const centerCoordinateRef = useRef<[number, number] | null>(null);
+    const userHasMovedMapRef = useRef(false);
     
     // Params handling
     const params = useLocalSearchParams<{ lat: string; long: string; focus: string }>();
@@ -171,10 +179,24 @@ import { calculateDistance } from "@/utils/geo";
     // Auto-center on user location when first loaded (if not focused/navigated to specific report)
     const hasCenteredRef = useRef(false);
     useEffect(() => {
-        if (userLocation && !hasCenteredRef.current && !params.focus) {
+        // Stop auto-centering if:
+        // 1. Already centered once
+        // 2. We have a focus param from navigation
+        // 3. User has a selection active (don't interrupt them)
+        // 4. User has already manually moved the map
+        const shouldCenter = 
+            userLocation && 
+            !hasCenteredRef.current && 
+            !params.focus && 
+            !selectedReport && 
+            !selectedShelter && 
+            !selectedRescuer &&
+            !userHasMovedMapRef.current;
+
+        if (shouldCenter) {
             hasCenteredRef.current = true;
             cameraRef.current?.setCamera({
-                centerCoordinate: [userLocation.longitude, userLocation.latitude],
+                centerCoordinate: [userLocation!.longitude, userLocation!.latitude],
                 zoomLevel: 15,
                 animationMode: "flyTo"
             });
@@ -223,68 +245,6 @@ import { calculateDistance } from "@/utils/geo";
         );
         const uniqueReports = Array.from(new Map((reportRes.data || []).map(r => [r._id, r])).values());
         setReports(uniqueReports);
-  
-        // 2. Extract Rescuers from Reports (Optimized: No extra API calls)
-        // Only needed for USER role seeing who is coming
-        if (user?.role === ENUM_USER_ROLE.USER) {
-            const activeReports = uniqueReports.filter(r => 
-                r.status === ENUM_REPORT_STATUS.IN_PROGRESS && r.rescuer
-            );
-            
-            if (activeReports.length > 0) {
-                 const extractedRescuers: RescuerData[] = [];
-                 
-                 activeReports.forEach((r) => {
-                     const rescuer: any = r.rescuer;
-                     // Ensure rescuer is a populated object
-                     if (rescuer && typeof rescuer === 'object' && rescuer._id) {
-                         const coords = rescuer.location?.coordinates;
-                         extractedRescuers.push({
-                            _id: rescuer._id.toString(),
-                            firstName: rescuer.firstName,
-                            lastName: rescuer.lastName,
-                            phone: rescuer.mobileNumber, // Taken from populated user
-                            location: coords ? { lat: coords[1], lng: coords[0] } : { lat: 0, lng: 0 },
-                            coordinates: coords,
-                            isOnline: true,
-                            lastLocationAt: rescuer.lastLocationAt 
-                        });
-                     }
-                 });
-
-                 // Deduplicate based on ID
-                 const uniqueRescuers = Array.from(new Map(extractedRescuers.map(item => [item._id, item])).values());
-                 setNearbyRescuers(uniqueRescuers);
-            } else {
-               setNearbyRescuers([]);
-            }
-        }
-
-        // Extract Reporter for Volunteers (So they can see moving target)
-        const isVolunteer = user?.role === ENUM_USER_ROLE.VOLUNTEER || user?.isRescueMode;
-        if (isVolunteer && user) {
-            const myActiveReport = uniqueReports.find(r => 
-                r.status === ENUM_REPORT_STATUS.IN_PROGRESS && 
-                (typeof r.rescuer === 'string' ? r.rescuer : r.rescuer?._id?.toString()) === user._id?.toString()
-            );
-
-            if (myActiveReport && myActiveReport.user && typeof myActiveReport.user === 'object') {
-                const reporter = myActiveReport.user as any;
-                const coords = reporter.location?.coordinates;
-                setActiveReporter({
-                    _id: reporter._id.toString(),
-                    firstName: reporter.firstName,
-                    lastName: reporter.lastName,
-                    phone: reporter.mobileNumber,
-                    location: coords ? { lat: coords[1], lng: coords[0] } : { lat: 0, lng: 0 },
-                    coordinates: coords,
-                    isOnline: true,
-                    lastLocationAt: reporter.lastOnlineAt
-                });
-            } else {
-                setActiveReporter(null);
-            }
-        }
 
           // 3. Fetch all shelters
           const sheltersData = await shelterService.getAllShelters();
@@ -299,139 +259,214 @@ import { calculateDistance } from "@/utils/geo";
        }
     };
   
-    // --- SOCKET TRACKING ---
+    // --- SOCKET LOGIC ---
     
-    // 1. Listener for movement (Stable, depends only on socket)
-    useEffect(() => {
-      if (!socket) return;
-      
-      const handleRescuerMoved = (data: { rescuerId: string; lat: number; lng: number }) => {
-        // console.log("Rescuer moved:", data);
-        setNearbyRescuers((prev) => {
-          const exists = prev.find(r => r._id === data.rescuerId);
-          if (exists) {
-              return prev.map((r) => 
-                r._id === data.rescuerId 
-                  ? { 
-                      ...r, 
-                      location: { ...r.location, lat: data.lat, lng: data.lng }, 
-                      coordinates: [data.lng, data.lat],
-                      lastLocationAt: new Date().toISOString()
-                    } 
-                  : r
-              );
-          } else if (activeReporter && activeReporter._id === data.rescuerId) {
-             // It's the reporter moving
-             setActiveReporter(prevRep => prevRep ? {
-                ...prevRep,
-                location: { ...prevRep.location, lat: data.lat, lng: data.lng },
-                coordinates: [data.lng, data.lat],
-                lastLocationAt: new Date().toISOString()
-             } : null);
-             return prev;
-          } else {
-             // Optional: If we want to add new rescuers dynamically without fetch
-             // But we need name/phone, so maybe better to trigger refetch or ignore
-             return prev; 
-          }
-        });
-      };
-  
-      socket.on('rescuer_moved', handleRescuerMoved);
-      socket.on('reconnect', () => {
-         // Re-fetching data on reconnect might be good
-         fetchData();
-      });
-  
-      return () => {
-        socket.off('rescuer_moved', handleRescuerMoved);
-        socket.off('reconnect');
-      };
-    }, [socket]); // Clean dependency list
+    // Stable function to join rooms based on current state
+    const joinedRoomsRef = useRef<Set<string>>(new Set());
 
-    // 2. Join Rooms logic (Join report rooms to hear movement)
-    useEffect(() => {
-        if (!socket || !user) return;
+    const syncSocketRooms = useCallback(() => {
+        if (!socket || !socket.connected) return;
 
-        let reportsToJoin: IReportListResponse[] = [];
-
-        if (user.role === ENUM_USER_ROLE.USER) {
-            reportsToJoin = reports.filter(r => r.user?._id?.toString() === user._id?.toString() && r.status === ENUM_REPORT_STATUS.IN_PROGRESS);
-        } else if (isVolunteerMode) {
-            reportsToJoin = reports.filter(r => {
-                const rRescuerId = typeof r.rescuer === 'string' ? r.rescuer : r.rescuer?._id?.toString();
-                return rRescuerId === user._id?.toString() && r.status === ENUM_REPORT_STATUS.IN_PROGRESS;
-            });
+        // 1. Join Region Room
+        if (currentRegion) {
+            const regionRoom = `region_${currentRegion}`;
+            if (!joinedRoomsRef.current.has(regionRoom)) {
+                socket.emit('join_region', { regionId: currentRegion });
+                joinedRoomsRef.current.add(regionRoom);
+            }
         }
+
+        // 2. Join Report Rooms (Active ones)
+        const activeReports = reports.filter(r => 
+            r.status === ENUM_REPORT_STATUS.PENDING || 
+            r.status === ENUM_REPORT_STATUS.IN_PROGRESS
+        );
         
-        reportsToJoin.forEach(report => {
-             socket.emit('join_report_room', { reportId: report._id });
+        activeReports.forEach(report => {
+            const reportRoom = `report_${report._id}`;
+            if (!joinedRoomsRef.current.has(reportRoom)) {
+                socket.emit('join_report_room', { reportId: report._id });
+                joinedRoomsRef.current.add(reportRoom);
+            }
         });
-    }, [socket, reports, user?._id, user?.role, isVolunteerMode]);
+    }, [socket, currentRegion, reports]);
 
-    // 3. Listen for Region Updates (New Reports, Status Updates)
+    // Handle Connection & Global Listeners
     useEffect(() => {
-        if (!socket || !currentRegion) return;
+        if (!socket) return;
 
-        // Join Region Room to hear about new reports in this area
-        socket.emit('join_region', { regionId: currentRegion });
+        const handleConnect = () => {
+            console.log("Socket connected/reconnected - syncing rooms...");
+            joinedRoomsRef.current.clear(); // Clear local tracking to force re-joins
+            syncSocketRooms();
+            fetchData();
+        };
+
+        const handleUserMoved = (data: { userId: string, lat: number, lng: number }) => {
+            setRescuerLocations(prev => ({
+                ...prev,
+                [data.userId]: {
+                    lat: data.lat,
+                    lng: data.lng,
+                    lastLocationAt: new Date().toISOString()
+                }
+            }));
+        };
 
         const handleNewReport = (data: { report: IReportListResponse }) => {
-             console.log("New report received via socket:", data.report._id);
-             setReports(prev => {
-                 if (prev.find(r => r._id === data.report._id)) return prev;
-                 return [data.report, ...prev];
-             });
+            setReports(prev => {
+                if (prev.find(r => r._id === data.report._id)) return prev;
+                return [data.report, ...prev];
+            });
         };
-        
+
         const handleReportUpdate = (data: { reportId: string, status: ENUM_REPORT_STATUS, rescuerId?: string }) => {
-             setReports(prev => prev.map(r => {
-                 if (r._id === data.reportId) {
-                     return { 
-                        ...r, 
-                        status: data.status,
-                        rescuer: data.rescuerId ? data.rescuerId : r.rescuer
-                     };
-                 }
-                 return r;
-             }));
+            setReports(prev => prev.map(r => {
+                if (r._id === data.reportId) {
+                    let currentRescuers = r.rescuers || [];
+                    if (data.rescuerId) {
+                        const exists = currentRescuers.some(ex => {
+                            const exId = typeof ex === 'string' ? ex : ex._id;
+                            return exId === data.rescuerId;
+                        });
+                        if (!exists) {
+                          currentRescuers = [...currentRescuers, data.rescuerId];
+                        }
+                    }
+                    return { ...r, status: data.status, rescuers: currentRescuers };
+                }
+                return r;
+            }));
         };
 
         const handleReportCancelled = (data: { reportId: string, status: string }) => {
-             console.log("Report cancelled via socket:", data.reportId);
-             setReports(prev => prev.map(r => {
-                 if (r._id === data.reportId) {
-                     return { 
+            setReports(prev => prev.map(r => {
+                if (r._id === data.reportId) {
+                    const isPending = data.status === ENUM_REPORT_STATUS.PENDING;
+                    return { 
                         ...r, 
-                        status: ENUM_REPORT_STATUS.PENDING,
-                        rescuer: undefined
-                     };
-                 }
-                 return r;
-             }));
+                        status: data.status as ENUM_REPORT_STATUS,
+                        rescuers: isPending ? [] : r.rescuers
+                    };
+                }
+                return r;
+            }));
         };
 
+        // Attach listeners
+        socket.on('connect', handleConnect);
+        socket.on('reconnect', handleConnect);
         socket.on('report_created', handleNewReport);
-        socket.on('report_accepted', handleReportUpdate);
-        socket.on('report_assigned', handleReportUpdate); // Admin assigned
+        socket.on('report_accepted', (data: any) => { handleReportUpdate(data); fetchData(); });
+        socket.on('report_assigned', handleReportUpdate);
         socket.on('report_completed', handleReportUpdate);
         socket.on('report_rejected', handleReportUpdate);
         socket.on('report_cancelled', handleReportCancelled);
+        socket.on('rescuer_moved', (data: any) => handleUserMoved({ userId: data.rescuerId, ...data }));
+        socket.on('reporter_moved', (data: any) => handleUserMoved({ userId: data.reporterId, ...data }));
+
+        // Initial Sync
+        if (socket.connected) {
+            syncSocketRooms();
+        }
 
         return () => {
-             // Leave region room when unmounting or changing region
-             socket.emit('leave_room', { room: `region_${currentRegion}` });
-
-             socket.off('report_created', handleNewReport);
-             socket.off('report_assigned', handleReportUpdate);
-             socket.off('report_accepted', handleReportUpdate);
-             socket.off('report_completed', handleReportUpdate);
-             socket.off('report_rejected', handleReportUpdate);
-             socket.off('report_cancelled', handleReportCancelled);
+            socket.off('connect', handleConnect);
+            socket.off('reconnect', handleConnect);
+            socket.off('report_created', handleNewReport);
+            socket.off('report_assigned', handleReportUpdate);
+            socket.off('report_accepted');
+            socket.off('report_completed', handleReportUpdate);
+            socket.off('report_rejected', handleReportUpdate);
+            socket.off('report_cancelled', handleReportCancelled);
+            socket.off('rescuer_moved');
+            socket.off('reporter_moved');
         };
-    }, [socket, currentRegion]);
+    }, [socket]); // Listener effect only depends on socket object
 
-  
+    // Sync rooms when reports or region changes
+    useEffect(() => {
+        syncSocketRooms();
+    }, [syncSocketRooms]);
+
+
+    const nearbyRescuers = useMemo(() => {
+         // Lọc các report đang IN_PROGRESS
+         let activeReports = reports.filter(r => 
+             r.status === ENUM_REPORT_STATUS.IN_PROGRESS && r.rescuers && r.rescuers.length > 0
+         );
+
+         // Nếu đang bật Focus Mode, chỉ quan tâm đến những người tham gia cùng report với mình
+         if (isFocusMode && user) {
+             const userId = user._id.toString();
+             activeReports = activeReports.filter(r => {
+                 // Tôi là rescuer của report này
+                 const amIRescuer = r.rescuers?.some((resc: any) => (typeof resc === 'string' ? resc : resc._id) === userId);
+                 // Tôi là tác giả (Reporter) của report này
+                 const amIReporter = (typeof r.user === 'object' ? r.user?._id : r.user)?.toString() === userId;
+                 
+                 return amIRescuer || amIReporter;
+             });
+         }
+         
+         const extracted: RescuerData[] = [];
+         activeReports.forEach((r) => {
+             if (!r.rescuers) return;
+             r.rescuers.forEach((rescuer: any) => {
+                if (rescuer && typeof rescuer === 'object' && rescuer._id) {
+                    const realtime = rescuerLocations[rescuer._id.toString()];
+                    const coords = realtime ? [realtime.lng, realtime.lat] : rescuer.location?.coordinates;
+                    
+                    extracted.push({
+                        _id: rescuer._id.toString(),
+                        firstName: rescuer.firstName,
+                        lastName: rescuer.lastName,
+                        phone: rescuer.mobileNumber,
+                        avatar: rescuer.avatar,
+                        location: coords ? { lat: coords[1], lng: coords[0] } : { lat: 0, lng: 0 },
+                        coordinates: coords,
+                        isOnline: true,
+                        lastLocationAt: realtime?.lastLocationAt || rescuer.lastLocationAt 
+                    });
+                }
+             });
+         });
+         
+         return Array.from(new Map(extracted.map(item => [item._id, item])).values());
+    }, [reports, rescuerLocations, isFocusMode, user?._id]);
+
+    // --- DERIVED STATE: Active Reporter (For Volunteers) ---
+    const activeReporter = useMemo(() => {
+        if (!isVolunteerMode || !user) return null;
+
+        const myActiveReport = reports.find(r => 
+            r.status === ENUM_REPORT_STATUS.IN_PROGRESS && 
+            r.rescuers?.some((resc: any) => {
+                const rid = typeof resc === 'string' ? resc : resc?._id?.toString();
+                return rid === user._id?.toString();
+            })
+        );
+
+        if (myActiveReport && myActiveReport.user && typeof myActiveReport.user === 'object') {
+            const reporter = myActiveReport.user as any;
+            const realtime = rescuerLocations[reporter._id.toString()];
+            const coords = realtime ? [realtime.lng, realtime.lat] : reporter.location?.coordinates;
+            
+            return {
+                _id: reporter._id.toString(),
+                firstName: reporter.firstName,
+                lastName: reporter.lastName,
+                phone: reporter.mobileNumber,
+                avatar: reporter.avatar,
+                location: coords ? { lat: coords[1], lng: coords[0] } : { lat: 0, lng: 0 },
+                coordinates: coords,
+                isOnline: true,
+                lastLocationAt: realtime?.lastLocationAt || reporter.lastOnlineAt
+            };
+        }
+        return null;
+    }, [reports, user, isVolunteerMode, rescuerLocations]);
+
     const getShelterMarkers = useMemo(() => {
         return shelters.map((shelter) => (
             <MapShelterMarker
@@ -450,26 +485,28 @@ import { calculateDistance } from "@/utils/geo";
         ));
     }, [shelters]);
 
-    // Calculate busy rescuer IDs (those assigned to IN_PROGRESS reports)
     const busyRescuerIds = useMemo(() => {
       const ids = new Set<string>();
       reports.forEach(r => {
-        if (r.status === ENUM_REPORT_STATUS.IN_PROGRESS && r.rescuer) {
-          const rescuerId = typeof r.rescuer === 'string' ? r.rescuer : (r.rescuer as any)?._id?.toString();
-          if (rescuerId) ids.add(rescuerId);
+        if (r.status === ENUM_REPORT_STATUS.IN_PROGRESS && r.rescuers) {
+          r.rescuers.forEach((resc: any) => {
+              const rescuerId = typeof resc === 'string' ? resc : resc?._id?.toString();
+              if (rescuerId) ids.add(rescuerId);
+          });
         }
       });
       return ids;
     }, [reports]);
 
     const getRescuerMarkers = useMemo(() => {
-      // Find IDs of rescuers helping MY reports (current user's reports)
       const myRescuerIds = new Set<string>();
       if (user?.role === ENUM_USER_ROLE.USER) {
         reports.forEach(r => {
-          if (r.user?._id === user._id && r.status === ENUM_REPORT_STATUS.IN_PROGRESS && r.rescuer) {
-            const rescuerId = typeof r.rescuer === 'string' ? r.rescuer : (r.rescuer as any)?._id?.toString();
-            if (rescuerId) myRescuerIds.add(rescuerId);
+          if (r.user?._id === user._id && r.status === ENUM_REPORT_STATUS.IN_PROGRESS && r.rescuers) {
+            r.rescuers.forEach((resc: any) => {
+                 const rescuerId = typeof resc === 'string' ? resc : resc?._id?.toString();
+                 if (rescuerId) myRescuerIds.add(rescuerId);
+            });
           }
         });
       }
@@ -484,7 +521,6 @@ import { calculateDistance } from "@/utils/geo";
         .map((rescuer) => {
         const isMyRescuer = myRescuerIds.has(rescuer._id);
         
-        // Use UserAvatarMarker for volunteers helping MY reports (shows their avatar)
         if (isMyRescuer) {
           const coords: [number, number] = [
             rescuer.location?.lng ?? rescuer.coordinates?.[0] ?? 0,
@@ -507,7 +543,6 @@ import { calculateDistance } from "@/utils/geo";
           );
         }
         
-        // Use default MapRescuerMarker for other rescuers
         return (
           <MapRescuerMarker
             key={`rescuer-${rescuer._id}`}
@@ -521,56 +556,54 @@ import { calculateDistance } from "@/utils/geo";
           />
         );
       });
-    }, [nearbyRescuers, busyRescuerIds, reports, user]);
+    }, [nearbyRescuers, busyRescuerIds, reports, user, activeReporter]);
 
     // --- LOGIC FILTER REPORTS ---
     const displayedReports = useMemo(() => {
-      if (!user) return reports; // Fallback show all while loading user
-      const currentUserId = user._id?.toString();
-      const isAdmin = user.role === ENUM_USER_ROLE.ADMIN || user.role === ENUM_USER_ROLE.SUPER_ADMIN;
-  
-      // 1. Volunteer Mode (Higher Priority - Focus on Rescue)
-      if (isVolunteerMode) {
-        // A. Check active task (If has active task, ONLY show it)
-        const myActiveReport = reports.find(r => {
-          if (r.status !== ENUM_REPORT_STATUS.IN_PROGRESS) return false;
-          
-          let rRescuerId: string | undefined;
-          if (typeof r.rescuer === 'string') {
-               rRescuerId = r.rescuer;
-          } else if (typeof r.rescuer === 'object' && r.rescuer) {
-               rRescuerId = (r.rescuer as any)._id?.toString();
-          }
-
-          return rRescuerId === currentUserId;
-        });
-        
-        if (myActiveReport) {
-             return [myActiveReport]; // ONLY show my task
-        }
-
-        // B. If free, show PENDING reports
-        return reports.filter(r => r.status === ENUM_REPORT_STATUS.PENDING);
-      }
+      if (!user) return [];
       
-      // 2. User Mode: Show my reports + PENDING/IN_PROGRESS nearby public
-      if (user.role === ENUM_USER_ROLE.USER) {
-          return reports.filter(r => {
-             const authorId = (typeof r.user === 'object' ? r.user?._id : r.user)?.toString();
-             const isMyReport = authorId === currentUserId;
-             const isActive = [ENUM_REPORT_STATUS.PENDING, ENUM_REPORT_STATUS.IN_PROGRESS].includes(r.status as ENUM_REPORT_STATUS);
-             return isMyReport || isActive;
-          });
+      const currentUserId = user._id?.toString();
+
+      // Check if Filter override is applied manually
+      // If user manually selects "PENDING" or "IN_PROGRESS" etc, we respect that.
+      // But if "ALL", we apply the "Focus Mode" logic.
+      const isManualFilter = filterStatus !== "ALL";
+
+      if (isManualFilter) {
+          return reports.filter(r => r.status === filterStatus);
       }
 
-      // 3. Admin Mode: Show basic filter
-      if (isAdmin) {
-         if (filterStatus === "ALL") return reports;
-         return reports.filter(r => r.status === filterStatus);
+      // "Focus Mode" Logic:
+      // 1. Volunteer in Rescue Mode: If I have an active mission (In Progress && I am a rescuer), SHOW ONLY THAT.
+      if (isFocusMode && isVolunteerMode) {
+          const myActiveTask = reports.find(r => 
+              r.status === ENUM_REPORT_STATUS.IN_PROGRESS && 
+              r.rescuers && 
+              r.rescuers.some((resc: any) => {
+                  const rid = typeof resc === 'string' ? resc : resc?._id?.toString();
+                  return rid === currentUserId;
+              })
+          );
+          
+          if (myActiveTask) {
+              return [myActiveTask];
+          }
+      } 
+      // 2. Normal User: If I have an active report (In Progress), SHOW ONLY THAT.
+      else if (isFocusMode && user.role === ENUM_USER_ROLE.USER) {
+          const myActiveReport = reports.find(r => 
+              r.status === ENUM_REPORT_STATUS.IN_PROGRESS &&
+              (typeof r.user === 'object' ? r.user?._id : r.user)?.toString() === currentUserId
+          );
+
+          if (myActiveReport) {
+              return [myActiveReport];
+          }
       }
 
+      // 3. Fallback: Show everything returned by Backend (which is already filtered restrictedly)
       return reports;
-    }, [reports, user, isVolunteerMode, filterStatus]);
+    }, [reports, user, filterStatus, isVolunteerMode]);
 
     const getReportMarkers = useMemo(() => {
       return displayedReports.map((report) => (
@@ -592,10 +625,10 @@ import { calculateDistance } from "@/utils/geo";
   
       const result = isAdmin ? nearbyRescuers : 
                      user.role === ENUM_USER_ROLE.USER ? (() => {
-                        const myActiveVolunteers = reports
+                      return reports
                           .filter(r => r.user?._id?.toString() === user._id?.toString() && r.status === ENUM_REPORT_STATUS.IN_PROGRESS)
-                          .map(r => typeof r.rescuer === 'string' ? r.rescuer : r.rescuer?._id?.toString());
-                        return nearbyRescuers.filter(res => myActiveVolunteers.includes(res._id.toString()));
+                          .flatMap(r => r.rescuers ? r.rescuers.map(resc => typeof resc === 'string' ? resc : resc._id?.toString()) : []);
+                        // return nearbyRescuers.filter(res => myActiveVolunteers.includes(res._id.toString()));
                      })() : [];
       
       return result;
@@ -613,7 +646,7 @@ import { calculateDistance } from "@/utils/geo";
       if (isVolunteerMode) {
           const activeReport = reports.find(
               r => r.status === ENUM_REPORT_STATUS.IN_PROGRESS && 
-              (typeof r.rescuer === 'string' ? r.rescuer : r.rescuer?._id?.toString()) === user._id?.toString()
+              r.rescuers?.some(resc => (typeof resc === 'string' ? resc : resc?._id?.toString()) === user._id?.toString())
           );
           setActiveReportId(activeReport?._id || null);
       } else if (user.role === ENUM_USER_ROLE.USER) {
@@ -686,6 +719,7 @@ import { calculateDistance } from "@/utils/geo";
   
     const handleRecenter = () => {
       if (userLocation && cameraRef.current) {
+        userHasMovedMapRef.current = false;
         cameraRef.current.setCamera({
           centerCoordinate: [userLocation.longitude, userLocation.latitude],
           zoomLevel: 15, // Zoom gần lại chút cho dễ nhìn
@@ -693,8 +727,6 @@ import { calculateDistance } from "@/utils/geo";
           animationMode: "flyTo",
         });
       } else {
-        // Nếu chưa có vị trí (do chưa load xong hoặc chưa cấp quyền), thử gọi lại hàm lấy vị trí
-        // getUserLocation(); // Gọi hàm này nếu bạn đã define nó như ở bước trước
         showError("Chưa có vị trí", "Đang định vị...");
       }
     };
@@ -721,6 +753,12 @@ import { calculateDistance } from "@/utils/geo";
             
             // Re-fetch
             fetchData();
+          }}
+          onRegionIsChanging={() => {
+              // User is manually moving the map
+              if (!userHasMovedMapRef.current) {
+                  userHasMovedMapRef.current = true;
+              }
           }}
           onRegionDidChange={(event) => {
               if (event && event.geometry && event.geometry.coordinates) {
@@ -826,7 +864,44 @@ import { calculateDistance } from "@/utils/geo";
             showToast({ title: "Đang tải lại...", message: "Đang cập nhật dữ liệu", type: "info" });
             fetchData();
           }}
-          disabled={false} // Maybe add loading state block
+          style={{
+            backgroundColor: theme === "dark" ? colors.neutrals800 : "white",
+            padding: 10,
+            borderRadius: 25,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.25,
+            shadowRadius: 3.84,
+            elevation: 5,
+            marginBottom: 10,
+          }}
+        >
+          <Icon name="RotateCw" size={20} color={colors.primary} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => setIsFocusMode(!isFocusMode)}
+          style={{
+            backgroundColor: isFocusMode ? colors.primary : (theme === "dark" ? colors.neutrals800 : "white"),
+            padding: 10,
+            borderRadius: 25,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.25,
+            shadowRadius: 3.84,
+            elevation: 5,
+            marginBottom: 10,
+          }}
+        >
+          <Icon 
+            name={isFocusMode ? "Crosshair" : "Layers"} 
+            size={20} 
+            color={isFocusMode ? "white" : colors.primary} 
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          onPress={handleRecenter}
           style={{
             backgroundColor: theme === "dark" ? colors.neutrals800 : "white",
             padding: 10,
@@ -838,7 +913,7 @@ import { calculateDistance } from "@/utils/geo";
             elevation: 5,
           }}
         >
-          <Icon name="RotateCw" size={20} color={colors.primary} />
+          <Icon name="Navigation" size={20} color={colors.primary} />
         </TouchableOpacity>
       </View>
 

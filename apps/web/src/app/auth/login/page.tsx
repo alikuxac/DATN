@@ -21,14 +21,14 @@ import Link from "next/link";
 
 const formSchema = z.object({
   email: z.string().min(1, "Username or Email is required"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 
 export default function LoginPage() {
-  const { login, isLoggingIn, loginError } = useAuth();
+  const { loginAsync, isLoggingIn, loginError } = useAuth();
   const { t } = useLanguage();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -39,8 +39,23 @@ export default function LoginPage() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    login(values);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      await loginAsync(values);
+    } catch (error: any) {
+      const msg = error.message;
+      if (msg === 'user.error.notFound') {
+        form.setError("email", { 
+          type: "manual", 
+          message: t("AUTH.ERR_EMAIL_NOT_FOUND") || "Email does not exist"
+        });
+      } else if (msg === 'auth.error.passwordNotMatch') {
+        form.setError("password", { 
+          type: "manual", 
+          message: t("AUTH.ERR_PASSWORD_WRONG") || "Incorrect password"
+        });
+      }
+    }
   }
 
   return (
@@ -84,7 +99,7 @@ export default function LoginPage() {
                   </FormItem>
                 )}
               />
-              {loginError && (
+              {!form.formState.errors.email && !form.formState.errors.password && loginError && (
                 <div className="text-sm text-destructive font-medium">
                   {loginError instanceof Error ? loginError.message : t("AUTH.ERR_LOGIN_FAILED")}
                 </div>

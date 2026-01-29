@@ -68,12 +68,12 @@ export class ReportEntity extends DatabaseObjectIdEntityBase {
 
   @DatabaseProp({
     required: false,
-    trim: true,
-    type: Schema.Types.ObjectId,
-    ref: UserEntity.name,
     index: true,
+    trim: true,
+    type: [Schema.Types.ObjectId],
+    ref: UserEntity.name,
   })
-  rescuer?: string;
+  rescuers?: string[];
 
   @DatabaseProp({
     required: false,

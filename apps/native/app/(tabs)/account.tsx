@@ -10,7 +10,8 @@ import {
 } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { useAppSelector } from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { setUser } from "@/store/slices/appSlice";
 
 import { useColors } from "@/hooks/useColors";
 import { ApiError, apiService } from "@/services/api.service";
@@ -25,6 +26,7 @@ export default function AccountScreen() {
   const { t } = useTranslation();
   const { theme } = useAppSelector((state) => state.app);
   const colors = useColors();
+  const dispatch = useAppDispatch();
   const systemScheme = useColorScheme();
   const { showSuccess, showError } = useToast();
 
@@ -51,7 +53,10 @@ export default function AccountScreen() {
       const response = await apiService.get<IResponse<IUserProfileReponse>>(
         "/shared/user/profile"
       );
-      setUserData(response.data);
+      if (response.data) {
+        setUserData(response.data);
+        dispatch(setUser(response.data));
+      }
     } catch (error) {
       console.error(error);
     } finally {

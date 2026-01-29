@@ -30,13 +30,13 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
-  const connect = useCallback((userId: string) => {
+  const connect = useCallback((userId: string, token?: string) => {
     if (!userId) {
       console.warn('[SocketProvider] Cannot connect without userId');
       return;
     }
 
-    const newSocket = initializeSocket(userId);
+    const newSocket = initializeSocket(userId, token);
     setSocket(newSocket);
 
     const handleConnect = () => setIsConnected(true);
@@ -45,9 +45,23 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     newSocket.on('connect', handleConnect);
     newSocket.on('disconnect', handleDisconnect);
 
+    newSocket.on('new_notification', (data: any) => {
+      console.log('🔔 [Alert] New Notification:', data);
+      // In a real app, we might dispatch a Redux action or show a toast here
+    });
+
+    newSocket.on('force_logout', () => {
+      console.warn('⚠️ Force logout received from server');
+      Cookies.remove('accessToken');
+      Cookies.remove('user');
+      window.location.href = '/auth/login?reason=session_expired';
+    });
+
     return () => {
       newSocket.off('connect', handleConnect);
       newSocket.off('disconnect', handleDisconnect);
+      newSocket.off('new_notification');
+      newSocket.off('force_logout');
     };
   }, []);
 
@@ -73,7 +87,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     }
 
     if (accessToken && userId) {
-      connect(userId);
+      connect(userId, accessToken);
     }
 
     return () => {

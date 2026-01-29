@@ -1,8 +1,8 @@
-import React from 'react';
-import { View, Image, StyleSheet } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, Image, StyleSheet, Text } from 'react-native';
 import { PointAnnotation } from '@vietmap/vietmap-gl-react-native';
 import Svg, { Path } from 'react-native-svg';
-import { getDiceBearUrl } from '@/utils/avatar';
+import { getDiceBearUrl, getInitials } from '@/utils/avatar';
 
 interface UserAvatarMarkerProps {
   userId: string;
@@ -23,8 +23,27 @@ export const UserAvatarMarker = ({
   id,
   onSelected,
 }: UserAvatarMarkerProps) => {
+  const [imageError, setImageError] = useState(false);
+
   // Always use DiceBear as fallback - same logic as Avatar component
-  const displayAvatar = avatarUrl || getDiceBearUrl(userName);
+  const displayAvatar = useMemo(() => {
+    if (imageError) return null;
+    
+    // Safety check for invalid URL strings
+    const isValidUrl = (url: any) => 
+      url && 
+      typeof url === 'string' && 
+      url.trim().length > 0 && 
+      url !== 'null' && 
+      url !== 'undefined' &&
+      url.startsWith('http');
+
+    if (isValidUrl(avatarUrl)) return avatarUrl;
+    
+    // Fallback to DiceBear if name is available or just use "User"
+    const seed = userName && userName.trim().length > 0 ? userName : (userId || 'User');
+    return getDiceBearUrl(seed);
+  }, [avatarUrl, userName, userId, imageError]);
 
   return (
     <PointAnnotation
@@ -53,15 +72,31 @@ export const UserAvatarMarker = ({
           </View>
         )}
 
-        {/* Avatar circle with white border */}
-        <View style={styles.avatarContainer}>
-          <View style={styles.avatarBorder}>
-            <Image
-              source={{ uri: displayAvatar }}
-              style={styles.avatar}
-              resizeMode="cover"
-            />
-          </View>
+        {/* Pin Container (Avatar + Tail) - Positioned to float ABOVE the center */}
+        <View style={styles.pinWrapper}>
+            {/* Avatar circle with white border */}
+            <View style={styles.avatarContainer}>
+              <View style={styles.avatarBorder}>
+                {displayAvatar ? (
+                  <Image
+                    key={displayAvatar} // Force reload when URL changes
+                    source={{ uri: displayAvatar }}
+                    style={styles.avatar} // Explicit border radius handled by container
+                    resizeMode="cover"
+                    onError={() => {
+                      console.log(`[UserAvatarMarker] Image load error: ${displayAvatar}`);
+                      setImageError(true);
+                    }}
+                  />
+                ) : (
+                  <View style={styles.initialsContainer}>
+                    <Text style={styles.initialsText}>{getInitials(userName)}</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+            {/* Triangle Tail */}
+            <View style={styles.triangle} />
         </View>
       </View>
     </PointAnnotation>
@@ -74,6 +109,7 @@ const styles = StyleSheet.create({
     height: 100,
     alignItems: 'center',
     justifyContent: 'center',
+    // backgroundColor: 'rgba(255,0,0,0.1)' // Debug: See touch area
   },
   directionCone: {
     position: 'absolute',
@@ -81,41 +117,74 @@ const styles = StyleSheet.create({
     height: 100,
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 1,
   },
   svg: {
     position: 'absolute',
   },
+  pinWrapper: {
+    position: 'absolute',
+    bottom: 50, // This aligns the bottom of this wrapper to the center of the 100x100 container (which is the coordinate)
+    alignItems: 'center',
+    zIndex: 10,
+  },
   avatarContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 36, // Reduced from 44
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.25,
     shadowRadius: 3,
-    elevation: 4,
-    borderWidth: 3,
+    elevation: 5,
+    borderWidth: 2, // Reduced from 3
     borderColor: '#fff',
+    zIndex: 2,
   },
   avatarBorder: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 32, // Reduced from 38
+    height: 32,
+    borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: '#f3f4f6',
   },
   avatar: {
     width: '100%',
     height: '100%',
+    borderRadius: 16,
   },
-  avatarPlaceholder: {
+  initialsContainer: {
     width: '100%',
     height: '100%',
+    backgroundColor: '#3b82f6',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#e5e7eb',
+  },
+  initialsText: {
+    color: '#fff',
+    fontSize: 12, // Reduced from 14
+    fontWeight: 'bold',
+  },
+  triangle: {
+    width: 0,
+    height: 0,
+    backgroundColor: 'transparent',
+    borderStyle: 'solid',
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderTopWidth: 8,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: '#fff', // Same as avatar border color
+    marginTop: -1, // Slight overlap to prevent gaps
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2, // Subtle shadow for the tail
+    shadowRadius: 1,
+    elevation: 2,
+    zIndex: 1,
   },
 });

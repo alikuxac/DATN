@@ -31,11 +31,11 @@ export class ReportRepository extends DatabaseObjectIdRepositoryBase<
         select: '_id firstName lastName mobileNumber location avatar'
       },
       {
-        path: 'rescuer',
-        localField: 'rescuer',
+        path: 'rescuers',
+        localField: 'rescuers',
         foreignField: '_id',
         model: UserEntity.name,
-        justOne: true,
+        justOne: false,
         select: '_id firstName lastName mobileNumber location avatar isRescueMode lastLocationAt' // lastLocationAt needed for map
       }
     ]);

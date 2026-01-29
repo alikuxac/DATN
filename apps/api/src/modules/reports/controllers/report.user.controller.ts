@@ -224,14 +224,33 @@ export class ReportUserController {
   @UserProtected([false])
   @AuthJwtAccessProtected()
   @Get(':id')
-  async get(@AuthJwtPayload('user', UserParsePipe) user: UserDocument, @Param('id') id: string) {
+  async get(
+    @Param('id') id: string,
+  ) {
     const report = await this.reportService.findOneByIdJoined(id);
     if (!report) {
-      throw new BadRequestException('report.error.notFound');
+      throw new BadRequestException({
+        statusCode: ENUM_STATUS_CODE_ERROR.REPORT_NOT_FOUND,
+        message: 'report.error.notFound',
+      });
     }
 
     return {
       data: this.reportService.mapDetail(report),
+    };
+  }
+
+  @Response('report.history')
+  @AuthJwtAccessProtected()
+  @Get('/:id/history')
+  async history(
+    @Param('id') id: string,
+    @Query('lat') lat: number,
+    @Query('lng') lng: number,
+  ) {
+    const reports = await this.reportService.getNearbyHistory(id, lat, lng);
+    return {
+      data: this.reportService.mapList(reports),
     };
   }
 
@@ -467,11 +486,7 @@ export class ReportUserController {
         throw new BadRequestException('report.error.notFound');
       }
 
-      if (report.rescuer.toString() !== user._id.toString()) {
-        throw new BadRequestException('report.error.cannotCancelOther');
-      }
-
-      await this.reportService.cancelReport(report, { session });
+      await this.reportService.cancelReport(report, user, { session });
 
       this.eventEmitter.emit(
         'activity.create',

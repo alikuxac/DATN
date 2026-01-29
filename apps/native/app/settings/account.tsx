@@ -22,6 +22,8 @@ import * as ImagePicker from "expo-image-picker";
 import { Camera, Check, AlertCircle, Phone } from "lucide-react-native";
 import { TouchableOpacity } from "react-native";
 import { OTPVerificationModal } from "@/components/ui/OTPVerificationModal";
+import { useAppDispatch } from "@/store/hooks";
+import { setUser } from "@/store/slices/appSlice";
 
 
 export default function EditProfileScreen() {
@@ -29,6 +31,7 @@ export default function EditProfileScreen() {
   const { t } = useTranslation();
   const colors = useColors();
   const { showSuccess, showError } = useToast();
+  const dispatch = useAppDispatch();
 
   const [loading, setLoading] = useState(false);
 
@@ -65,6 +68,7 @@ export default function EditProfileScreen() {
       if (res.data) {
         setUserData(res.data);
         setMobileNumber(res.data.mobileNumber || "");
+        dispatch(setUser(res.data));
       }
     } catch (error) {
       console.error(error);

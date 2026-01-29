@@ -6,6 +6,8 @@ import { ENUM_REPORT_STATUS, ENUM_USER_ROLE, ENUM_REPORT_TYPE, ENUM_REPORT_SEVER
 import { Navigation, Phone, TriangleAlert, Utensils, Droplet, Stethoscope, LifeBuoy, CircleHelp, Activity, Clock, Ban, CheckCircle2, FileText } from "lucide-react-native";
 import { formatTimeAgo, isUserOnline } from "@/utils/date";
 import { useTranslation } from "react-i18next";
+import { apiService } from "@/services/api.service";
+import { History } from "lucide-react-native";
 
 interface ReportDetailSheetProps {
   selectedReport: any;
@@ -40,8 +42,44 @@ export const ReportDetailSheet = ({
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [selectedReason, setSelectedReason] = useState("");
   const [customReason, setCustomReason] = useState("");
+  const [showRescuerModal, setShowRescuerModal] = useState(false);
+  
+  const [history, setHistory] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  React.useEffect(() => {
+    if (selectedReport?._id && selectedReport.location?.coordinates) {
+       fetchHistory();
+    }
+  }, [selectedReport?._id]);
+
+  const fetchHistory = async () => {
+    try {
+      setLoadingHistory(true);
+      const [lng, lat] = selectedReport.location.coordinates;
+      const response = await apiService.get<{ data: any[] }>(
+        `/user/report/${selectedReport._id}/history?lat=${lat}&lng=${lng}`
+      );
+      setHistory(response.data || []);
+    } catch (error) {
+       console.error("Failed to fetch history:", error);
+    } finally {
+       setLoadingHistory(false);
+    }
+  };
 
   const isOwner = user?._id === selectedReport.user?._id || user?._id === selectedReport.user;
+  
+  // Logic identifying if I am one of the rescuers
+  let isMyMission = false;
+  if (selectedReport.status === ENUM_REPORT_STATUS.IN_PROGRESS) {
+      if (selectedReport.rescuers && Array.isArray(selectedReport.rescuers)) {
+          isMyMission = selectedReport.rescuers.some((r: any) => {
+               const rId = (typeof r === 'object' ? r._id : r)?.toString();
+               return rId === user?._id?.toString();
+          });
+      }
+  }
 
   // Check verification (Safe check)
   const isUnverifiedUser = selectedReport.user && 
@@ -325,7 +363,6 @@ export const ReportDetailSheet = ({
                 </View>
               </View>
             </View>
-            {/* Chỉ hiện nút gọi nếu là Volunteer/Admin */}
             {(isVolunteerMode || user?.role === ENUM_USER_ROLE.ADMIN) && (
               <TouchableOpacity
                 onPress={() => handleCall(selectedReport.user?.mobileNumber)}
@@ -336,6 +373,49 @@ export const ReportDetailSheet = ({
             )}
           </View>
         )}
+
+        {/* Rescuers List Section (Correct Placement) */}
+        {selectedReport.status === ENUM_REPORT_STATUS.IN_PROGRESS && selectedReport.rescuers && selectedReport.rescuers.length > 0 && (
+             <View className="mt-4 mb-2">
+                 <AppText className="text-xs text-gray-500 mb-2 font-bold uppercase tracking-wider">
+                     {t('REPORT.DETAIL.RESCUERS_TITLE', 'Đội cứu hộ')} ({selectedReport.rescuers.length})
+                 </AppText>
+                 <View className="flex-row items-center flex-wrap gap-2">
+                     {/* Show first 3 rescuers always */}
+                     {selectedReport.rescuers.slice(0, 3).map((rescuer: any, index: number) => {
+                         const rId = typeof rescuer === 'object' ? rescuer._id : rescuer;
+                         const rName = typeof rescuer === 'object' ? `${rescuer.firstName} ${rescuer.lastName}` : 'Rescuer';
+                         const rAvatar = typeof rescuer === 'object' ? rescuer.avatar : undefined;
+                         const rPhone = typeof rescuer === 'object' ? rescuer.mobileNumber : undefined;
+                         
+                         return (
+                            <View key={rId} className="flex-row items-center bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-full pr-3 pl-1 py-1">
+                                <Avatar size="sm" text={rName} source={rAvatar ? { uri: rAvatar } : undefined} />
+                                <View className="ml-2">
+                                     <AppText className="text-xs font-bold text-blue-700 dark:text-blue-300 max-w-[80px]" numberOfLines={1}>
+                                         {rName}
+                                     </AppText>
+                                </View>
+                                {(isVolunteerMode || user?.role === ENUM_USER_ROLE.ADMIN) && rPhone && (
+                                     <TouchableOpacity onPress={() => handleCall(rPhone)} className="ml-2 bg-white rounded-full p-1">
+                                          <Phone size={10} className="text-green-600" />
+                                     </TouchableOpacity>
+                                )}
+                            </View>
+                         );
+                     })}
+                     {/* Show MORE button if > 3 */}
+                     {selectedReport.rescuers.length > 3 && (
+                          <TouchableOpacity 
+                             onPress={() => setShowRescuerModal(true)}
+                             className="bg-gray-100 dark:bg-neutrals800 rounded-full w-8 h-8 items-center justify-center border border-gray-200 dark:border-neutrals700"
+                          >
+                               <AppText className="text-xs font-bold text-gray-500">+{selectedReport.rescuers.length - 3}</AppText>
+                          </TouchableOpacity>
+                     )}
+                 </View>
+             </View>
+        )}
         
         {/* Warning Message for Unverified */}
         {isUnverifiedUser && (isVolunteerMode || user?.role === ENUM_USER_ROLE.ADMIN) && (
@@ -344,6 +424,53 @@ export const ReportDetailSheet = ({
                     ⚠ {t('REPORT.DETAIL.WARNING_UNVERIFIED')}
                 </AppText>
             </View>
+        )}
+
+        {/* History Section */}
+        {history.length > 0 && (
+          <View className="mt-6 mb-4">
+             <View className="flex-row items-center gap-2 mb-3 px-1">
+                <History size={16} className="text-gray-500" />
+                <AppText className="font-bold text-gray-700 dark:text-gray-400 uppercase text-[10px] tracking-wider">
+                    {t('REPORT.DETAIL.HISTORY_TITLE', 'Lịch sử khu vực này')} ({history.length})
+                </AppText>
+             </View>
+             
+             <View className="bg-gray-50 dark:bg-neutrals800/50 rounded-2xl overflow-hidden border border-gray-100 dark:border-neutrals700">
+                {history.map((h, idx) => (
+                   <View 
+                    key={h._id} 
+                    className={cn(
+                        "p-3 flex-row items-center justify-between",
+                        idx !== history.length - 1 && "border-b border-gray-100 dark:border-neutrals700"
+                    )}
+                   >
+                       <View className="flex-row items-center gap-3 flex-1">
+                          <View className="p-1.5 rounded-lg bg-gray-100 dark:bg-neutrals700/50">
+                             {getTypeIcon(h.type)}
+                          </View>
+                          <View className="flex-1">
+                             <AppText raw className="font-bold text-xs text-foreground" numberOfLines={1}>
+                                {t(`REPORT.TYPE.${h.type.toLowerCase()}`)}
+                             </AppText>
+                             <View className="flex-row items-center gap-1.5 mt-0.5">
+                                <View className={cn("w-1.5 h-1.5 rounded-full", getPinColorClass(h.status).split(" ")[0])} />
+                                <AppText className="text-[10px] text-gray-400">
+                                    {new Date(h.createdAt).toLocaleDateString()} • {t(`REPORT.STATUS.${h.status}`)}
+                                </AppText>
+                             </View>
+                          </View>
+                       </View>
+                       
+                       {h.notes && (
+                           <AppText className="text-[10px] text-gray-400 italic ml-2 max-w-[40%]" numberOfLines={1}>
+                               {h.notes}
+                           </AppText>
+                       )}
+                   </View>
+                ))}
+             </View>
+          </View>
         )}
 
         {/* ACTION BUTTONS (Logic quan trọng) */}
@@ -366,9 +493,10 @@ export const ReportDetailSheet = ({
             <Navigation size={18} className="text-black dark:text-white" />
           </TouchableOpacity>
 
-          {/* 1. Nếu là VOLUNTEER và Report đang PENDING -> Nút NHẬN (Equal part) và Nút TỪ CHỐI (Equal part) */}
+          {/* 1. Nếu là VOLUNTEER và Report đang PENDING hoặc IN_PROGRESS (chưa join) -> Nút NHẬN (Equal part) */}
           {isVolunteerMode &&
-            selectedReport.status === ENUM_REPORT_STATUS.PENDING && (
+            (selectedReport.status === ENUM_REPORT_STATUS.PENDING || selectedReport.status === ENUM_REPORT_STATUS.IN_PROGRESS) &&
+            !isMyMission && (
                 <View className="flex-[2] flex-row gap-2">
                       <AppButton
                         disabled={isActionLoading}
@@ -383,6 +511,8 @@ export const ReportDetailSheet = ({
                         )}
                       </AppButton>
                       
+                     {/* Only SHOW reject if PENDING (Admin logic mostly, or if allowed for vol) - Original logic had reject here */}
+                     {selectedReport.status === ENUM_REPORT_STATUS.PENDING && (
                      <AppButton
                         disabled={isActionLoading}
                         onPress={() => setShowRejectModal(true)} 
@@ -391,13 +521,14 @@ export const ReportDetailSheet = ({
                       >
                         <Ban size={24} className="text-red-600 dark:text-red-400" />
                       </AppButton>
+                     )}
                 </View>
             )}
 
           {/* 2. Nếu là VOLUNTEER và Report đang IN_PROGRESS (của mình) -> Nút HỦY/HOÀN THÀNH */}
           {isVolunteerMode &&
             selectedReport.status === ENUM_REPORT_STATUS.IN_PROGRESS &&
-            ((typeof selectedReport.rescuer === 'object' ? selectedReport.rescuer?._id : selectedReport.rescuer) === user?._id) && (
+            isMyMission && (
               <View className="flex-[2] flex-row gap-2">
                  <AppButton
                   disabled={isActionLoading}
@@ -430,6 +561,7 @@ export const ReportDetailSheet = ({
             )}
         </View>
         )}
+
       </ScrollView>
 
       {/* REJECT REASON MODAL */}
@@ -477,6 +609,55 @@ export const ReportDetailSheet = ({
                           <AppText className="text-white font-bold">{t('COMMON.CONFIRM')}</AppText>
                       </TouchableOpacity>
                   </View>
+              </View>
+          </View>
+      </Modal>
+
+      {/* RESCUER LIST MODAL */}
+      <Modal
+        visible={showRescuerModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowRescuerModal(false)}
+      >
+          <View className="flex-1 bg-black/50 justify-end sm:justify-center p-0 sm:p-4">
+              <View className="bg-white dark:bg-neutrals900 w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-6 max-h-[80%]">
+                  <View className="flex-row justify-between items-center mb-4 border-b border-gray-100 dark:border-neutrals800 pb-2">
+                       <AppText variant="heading4" className="font-bold text-foreground">
+                           {t('REPORT.DETAIL.RESCUERS_TITLE', 'Đội cứu hộ')} ({selectedReport.rescuers?.length})
+                       </AppText>
+                       <TouchableOpacity onPress={() => setShowRescuerModal(false)} className="p-1 bg-gray-100 dark:bg-neutrals800 rounded-full">
+                           <Icon name="X" size={20} className="text-black dark:text-white" />
+                       </TouchableOpacity>
+                  </View>
+
+                  <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
+                       {selectedReport.rescuers?.map((rescuer: any) => {
+                           const rId = typeof rescuer === 'object' ? rescuer._id : rescuer;
+                           const rName = typeof rescuer === 'object' ? `${rescuer.firstName} ${rescuer.lastName}` : 'Rescuer';
+                           const rAvatar = typeof rescuer === 'object' ? rescuer.avatar : undefined;
+                           const rPhone = typeof rescuer === 'object' ? rescuer.mobileNumber : undefined;
+                           const rRole = typeof rescuer === 'object' ? rescuer.role : undefined;
+
+                           return (
+                               <View key={rId} className="flex-row items-center justify-between p-3 mb-2 bg-gray-50 dark:bg-neutrals800 rounded-xl">
+                                   <View className="flex-row items-center gap-3 flex-1">
+                                       <Avatar size="md" text={rName} source={rAvatar ? { uri: rAvatar } : undefined} />
+                                       <View className="flex-1">
+                                           <AppText className="font-bold text-foreground text-sm">{rName}</AppText>
+                                           <AppText className="text-xs text-gray-400 capitalize">{rRole || 'Volunteer'}</AppText>
+                                       </View>
+                                   </View>
+                                   
+                                   {(isVolunteerMode || user?.role === ENUM_USER_ROLE.ADMIN) && rPhone && (
+                                       <TouchableOpacity onPress={() => handleCall(rPhone)} className="bg-green-500 p-2 rounded-full">
+                                            <Phone size={16} color="white" />
+                                       </TouchableOpacity>
+                                   )}
+                               </View>
+                           )
+                       })}
+                  </ScrollView>
               </View>
           </View>
       </Modal>

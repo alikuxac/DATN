@@ -41,8 +41,10 @@ class ApiService {
       'x-custom-lang': language
     };
 
-    if (this.accessToken) {
-      defaultHeaders['Authorization'] = `Bearer ${this.accessToken}`;
+    const accessToken = this.accessToken || state.app.token;
+
+    if (accessToken) {
+      defaultHeaders['Authorization'] = `Bearer ${accessToken}`;
     }
 
     const config: RequestInit = {
@@ -58,7 +60,7 @@ class ApiService {
         // Nếu không có token trong store, đây không phải là lỗi hết phiên -> chỉ là Unauthorized
         const currentToken = state.app.token;
         if (!currentToken) {
-          throw new ApiError(401, 401, "Unauthorized");
+          throw new ApiError(401, 401, "Không có quyền truy cập");
         }
 
         if (options._isRetry) {
@@ -134,7 +136,7 @@ class ApiService {
         const errorMessage =
           Array.isArray(responseBody.message)
             ? responseBody.message[0]
-            : responseBody.message || `HTTP Error ${response.status}`;
+            : responseBody.message || `Lỗi hệ thống (${response.status})`;
 
         throw new ApiError(
           response.status, // HTTP Code (để debug)
@@ -150,7 +152,7 @@ class ApiService {
       if (error instanceof ApiError) throw error;
       console.error('[API Error]:', error);
       // Lỗi mạng hoặc lỗi không xác định -> Code 0 hoặc 5000 (APP_UNKNOWN)
-      throw new ApiError(0, 5000, 'Network Error', error);
+      throw new ApiError(0, 5000, 'Lỗi kết nối mạng', error);
     }
   }
 
@@ -237,7 +239,7 @@ class ApiService {
         const errorMessage =
           Array.isArray(responseBody.message)
             ? responseBody.message[0]
-            : responseBody.message || `HTTP Error ${response.status}`;
+            : responseBody.message || `Lỗi hệ thống (${response.status})`;
 
         throw new ApiError(response.status, appCode, errorMessage, responseBody);
       }
@@ -246,7 +248,7 @@ class ApiService {
     } catch (error) {
       if (error instanceof ApiError) throw error;
       console.error('[Upload Error]:', error);
-      throw new ApiError(0, 5000, 'Network Error', error);
+      throw new ApiError(0, 5000, 'Lỗi kết nối mạng', error);
     }
   }
 }

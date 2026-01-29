@@ -64,16 +64,18 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [token, socket]);
 
   useEffect(() => {
-    if (!token) return;
+    // We START tracking even if NO TOKEN (pre-auth) to warm up GPS
+    // but use a slower rate if guest.
+    const isGuest = !token;
 
     const handleNewLocation = (lat: number, lng: number) => {
       console.log(`[LocationContext] handleNewLocation: ${lat}, ${lng} | isConnected: ${isConnected}`);
       
-      // A. Update UI
+      // A. Update UI state (will center map faster once logged in)
       setUserLocation({ latitude: lat, longitude: lng });
 
-      // B. Emit Socket Location
-      if (isConnected) {
+      // B. Emit Socket Location (only if logged in and connected)
+      if (token && isConnected) {
         console.log(`[LocationContext] Emitting update_location to server...`);
         sendLocationUpdate(lat, lng, activeReportIdRef.current || undefined);
       }
@@ -85,8 +87,8 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (newRegionId && newRegionId !== 'unknown' && newRegionId !== regionRef.current) {
         console.log(`📍 Detected new region: ${newRegionId}`);
 
-        // Join New Room
-        if (socket && isConnected) {
+        // Join New Room (only if logged in)
+        if (token && socket && isConnected) {
             socket.emit('join_region', { regionId: newRegionId });
         }
 
@@ -106,25 +108,32 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           return;
       }
 
-      const lastKnown = await Location.getLastKnownPositionAsync();
-      if (lastKnown) {
-        handleNewLocation(lastKnown.coords.latitude, lastKnown.coords.longitude);
-      }
+      // Configuration: Slower if guest, faster if logged in
+      const trackingOptions = isGuest 
+        ? { accuracy: Location.Accuracy.Balanced, distanceInterval: 50, timeInterval: 30000 }
+        : { accuracy: Location.Accuracy.Balanced, distanceInterval: 10, timeInterval: 5000 };
 
+      // 1. Initial Position
       try {
-        const current = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        const lastKnown = await Location.getLastKnownPositionAsync();
+        if (lastKnown) {
+          handleNewLocation(lastKnown.coords.latitude, lastKnown.coords.longitude);
+        }
+        
+        const current = await Location.getCurrentPositionAsync({ accuracy: trackingOptions.accuracy });
         handleNewLocation(current.coords.latitude, current.coords.longitude);
       } catch (error) {
-        console.warn('[LocationContext] Failed to get initial position:', error);
+        console.warn('[LocationContext] Failed to get positions:', error);
       }
 
-      // 2. Watch Position (Update every 10m or 5s)
+      // 2. Watch Position
       sub = await Location.watchPositionAsync(
-        { accuracy: Location.Accuracy.Balanced, distanceInterval: 10, timeInterval: 5000 },
+        trackingOptions,
         async (location) => {
           handleNewLocation(location.coords.latitude, location.coords.longitude);
         }
       );
+      console.log(`[LocationContext] Tracking started (${isGuest ? 'Guest' : 'User'} Mode)`);
     };
 
     startTracking();
