@@ -47,7 +47,7 @@ export class ShelterAdminController {
     subject: ENUM_POLICY_SUBJECT.SHELTER,
     action: [ENUM_POLICY_ACTION.READ],
   })
-  @UserProtected()
+  @UserProtected([false])
   @AuthJwtAccessProtected()
   @Throttle({ default: { limit: 100, ttl: 60000 } })
   @Get('/list')

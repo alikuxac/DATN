@@ -67,6 +67,7 @@ export class ReportUserController {
   ) {
     const find: Record<string, any> = { ..._search };
 
+    console.log("order", _order);
     if (severity?.length) find.severity = { $in: severity };
     if (status?.length) find.status = { $in: status };
     if (type?.length) find.type = { $in: type };
