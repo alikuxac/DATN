@@ -8,7 +8,7 @@ import { Response, ResponsePaging } from '@common/response/decorators/response.d
 import { UserParsePipe } from '@modules/users/pipes/user.parse.pipe';
 import { IReportDocument } from '../interfaces/report.interface';
 import { ReportUpdateRequestDto } from '../dtos/request/report.update.request.dto';
-import { ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS, ENUM_REPORT_SEVERITY, ENUM_REPORT_STATUS, ENUM_REPORT_TYPE, ENUM_STATUS_CODE_ERROR, ENUM_USER_ROLE, ENUM_REPORT_SOURCE } from '@repo/shared';
+import { ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS, ENUM_REPORT_SEVERITY, ENUM_REPORT_STATUS, ENUM_REPORT_TYPE, ENUM_STATUS_CODE_ERROR, ENUM_USER_ROLE, ENUM_REPORT_SOURCE, ENUM_PAGINATION_ORDER_DIRECTION_TYPE } from '@repo/shared';
 import { DatabaseService } from '@common/database/services/database.service';
 import { ClientSession } from 'mongoose';
 import { PaginationListDto } from '@common/pagination/dtos/pagination.list.dto';
@@ -46,9 +46,10 @@ export class ReportUserController {
   async list(
     @PaginationQuery({
       defaultPerPage: 20,
-      availableSearch: ['q', 'address', 'notes', 'regionId'], // User app cũng có 'q'
+      availableSearch: ['q', 'address', 'notes', 'regionId'],
       availableOrderBy: ['createdAt', 'peopleCount'],
-      defaultOrderBy: 'desc'
+      defaultOrderBy: 'createdAt',
+      defaultOrderDirection: ENUM_PAGINATION_ORDER_DIRECTION_TYPE.DESC
     })
     { _search, _limit, _offset, _order }: PaginationListDto,
     @PaginationQueryFilterInEnum('severity', ENUM_REPORT_SEVERITY.MEDIUM, ENUM_REPORT_SEVERITY)

@@ -249,8 +249,8 @@ import { calculateDistance } from "@/utils/geo";
       if (!token) return;
       setIsLoading(true);
       try {
-        const param: Record<string, string> = {
-            limit: '1000',
+        const param: Record<string, any> = {
+            _limit: 1000,
             orderBy: 'createdAt',
             orderDirection: 'desc'
         };

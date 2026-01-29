@@ -19,7 +19,7 @@ import {
 } from '@common/pagination/decorators/pagination.decorator';
 import { PaginationListDto } from '@common/pagination/dtos/pagination.list.dto';
 import { PaginationService } from '@common/pagination/services/pagination.service';
-import { ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS, ENUM_REPORT_SEVERITY, ENUM_REPORT_STATUS, ENUM_REPORT_TYPE, ENUM_REPORT_SOURCE, ENUM_USER_ROLE } from '@repo/shared';
+import { ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS, ENUM_REPORT_SEVERITY, ENUM_REPORT_STATUS, ENUM_REPORT_TYPE, ENUM_REPORT_SOURCE, ENUM_USER_ROLE, ENUM_PAGINATION_ORDER_DIRECTION_TYPE } from '@repo/shared';
 import { BadRequestException, Param } from '@nestjs/common';
 import { UserDocument } from '@modules/users/repository/entities/user.entity';
 import { UserParsePipe } from '@modules/users/pipes/user.parse.pipe';
@@ -74,7 +74,8 @@ export class ReportAdminController {
       defaultPerPage: 20,
       availableSearch: REPORT_DEFAULT_AVAILABLE_SEARCH,
       availableOrderBy: REPORT_DEFAULT_AVAILABLE_ORDER_BY,
-      defaultOrderBy: 'desc'
+      defaultOrderBy: 'createdAt',
+      defaultOrderDirection: ENUM_PAGINATION_ORDER_DIRECTION_TYPE.DESC
     })
     { _search, _limit, _offset, _order, search }: PaginationListDto,
 

@@ -32,6 +32,7 @@ class ApiService {
     endpoint: string,
     options: RequestInit & { _isRetry?: boolean } = {}
   ): Promise<T> {
+    console.log(this.baseUrl);
     const url = `${this.baseUrl}${endpoint}`;
     const state = store.getState();
     const language = state.app.language;
