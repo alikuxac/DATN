@@ -63,6 +63,8 @@ export function useReports(params: ReportsParams) {
         params: {
           page: params.page || 1,
           perPage: params.limit || 10,
+          _offset: ((params.page || 1) - 1) * (params.limit || 10),
+          _limit: params.limit || 10,
           search: params.q,
           status: statusParam,
           source: (params.source === 'ALL' || !params.source) ? undefined : params.source,

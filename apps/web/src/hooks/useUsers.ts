@@ -58,6 +58,8 @@ export function useUsers(params: UseUsersParams) {
       const queryParams: any = {
         page: params.page,
         perPage: params.limit,
+        _offset: (params.page - 1) * params.limit,
+        _limit: params.limit,
       };
 
       if (params.q) queryParams.search = params.q;
