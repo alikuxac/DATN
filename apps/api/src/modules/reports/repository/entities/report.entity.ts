@@ -30,7 +30,6 @@ export class ReportLocation {
   @DatabaseProp({
     type: [Number], // [longitude, latitude]
     required: true,
-    index: '2dsphere', // Index cho GeoJSON
   })
   coordinates: number[];
 }
@@ -194,4 +193,5 @@ export class ReportEntity extends DatabaseObjectIdEntityBase {
 }
 
 export const ReportSchema = DatabaseSchema(ReportEntity);
+ReportSchema.index({ location: '2dsphere' });
 export type ReportDocument = IDatabaseDocument<ReportEntity>;
