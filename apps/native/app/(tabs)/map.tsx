@@ -468,7 +468,15 @@ import { calculateDistance } from "@/utils/geo";
     }, [reports, user, isVolunteerMode, rescuerLocations]);
 
     const getShelterMarkers = useMemo(() => {
-        return shelters.map((shelter) => (
+        let visibleShelters = shelters;
+        if (userLocation) {
+             visibleShelters = shelters.filter(s => {
+                 const [lng, lat] = s.location.coordinates; // GeoJSON: [lng, lat]
+                 return calculateDistance(userLocation.latitude, userLocation.longitude, lat, lng) <= 30000;
+             });
+        }
+
+        return visibleShelters.map((shelter) => (
             <MapShelterMarker
                 key={`shelter-${shelter._id}`}
                 id={shelter._id}
@@ -483,7 +491,7 @@ import { calculateDistance } from "@/utils/geo";
                 }}
             />
         ));
-    }, [shelters]);
+    }, [shelters, userLocation]);
 
     const busyRescuerIds = useMemo(() => {
       const ids = new Set<string>();
@@ -601,9 +609,27 @@ import { calculateDistance } from "@/utils/geo";
           }
       }
 
-      // 3. Fallback: Show everything returned by Backend (which is already filtered restrictedly)
+      // 3. Fallback: Show everything nearby (30km)
+      if (userLocation) {
+        return reports.filter(r => {
+             // Handle both [long, lat] generic structure
+             const rLat = r.coordinates?.[1] ?? (r as any).location?.coordinates?.[1];
+             const rLng = r.coordinates?.[0] ?? (r as any).location?.coordinates?.[0];
+             
+             if (!rLat || !rLng) return false;
+             
+             const dist = calculateDistance(
+                 userLocation.latitude, 
+                 userLocation.longitude, 
+                 rLat, 
+                 rLng
+             );
+             return dist <= 30000; // 30km
+        });
+      }
+
       return reports;
-    }, [reports, user, filterStatus, isVolunteerMode]);
+    }, [reports, user, filterStatus, isVolunteerMode, userLocation]);
 
     const getReportMarkers = useMemo(() => {
       return displayedReports.map((report) => (
@@ -864,6 +890,7 @@ import { calculateDistance } from "@/utils/geo";
             showToast({ title: "Đang tải lại...", message: "Đang cập nhật dữ liệu", type: "info" });
             fetchData();
           }}
+          onLongPress={() => showToast({ title: "Làm mới", message: "Tải lại dữ liệu bản đồ", type: "info" })}
           style={{
             backgroundColor: theme === "dark" ? colors.neutrals800 : "white",
             padding: 10,
@@ -881,6 +908,11 @@ import { calculateDistance } from "@/utils/geo";
 
         <TouchableOpacity
           onPress={() => setIsFocusMode(!isFocusMode)}
+          onLongPress={() => showToast({ 
+              title: "Chế độ tập trung", 
+              message: isFocusMode ? "Đang bật: Chỉ hiện nhiệm vụ của tôi" : "Đang tắt: Hiện tất cả báo cáo gần đây", 
+              type: "info" 
+          })}
           style={{
             backgroundColor: isFocusMode ? colors.primary : (theme === "dark" ? colors.neutrals800 : "white"),
             padding: 10,
@@ -899,22 +931,6 @@ import { calculateDistance } from "@/utils/geo";
             color={isFocusMode ? "white" : colors.primary} 
           />
         </TouchableOpacity>
-
-        <TouchableOpacity 
-          onPress={handleRecenter}
-          style={{
-            backgroundColor: theme === "dark" ? colors.neutrals800 : "white",
-            padding: 10,
-            borderRadius: 25,
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.25,
-            shadowRadius: 3.84,
-            elevation: 5,
-          }}
-        >
-          <Icon name="Navigation" size={20} color={colors.primary} />
-        </TouchableOpacity>
       </View>
 
       {/* --- CREATE BUTTON (User/Volunteer) --- */}
@@ -922,6 +938,7 @@ import { calculateDistance } from "@/utils/geo";
         <View style={styles.actionButtonsContainer}>
           <TouchableOpacity
             onPress={() => setModalVisible(true)}
+            onLongPress={() => showToast({ title: "Tạo báo cáo", message: "Gửi yêu cầu cứu trợ khẩn cấp", type: "info" })}
             style={[styles.floatingButton, { backgroundColor: colors.primary }]}
           >
             <Plus color="white" size={32} />
@@ -929,6 +946,7 @@ import { calculateDistance } from "@/utils/geo";
 
           <TouchableOpacity
             onPress={handleRecenter}
+            onLongPress={() => showToast({ title: "Vị trí của bạn", message: "Quay về vị trí hiện tại", type: "info" })}
             style={[styles.floatingButton, styles.recenterButton, { backgroundColor: theme === 'dark' ? colors.neutrals800 : 'white' }]}
           >
             {/* Icon màu xanh dương giống Google Maps */}

@@ -491,9 +491,20 @@ export class UsersService {
     expoPushToken: string,
     options?: IDatabaseSaveOptions
   ) {
-    repository.expoPushToken = expoPushToken;
+    // repository.expoPushToken = expoPushToken;
+    // const updated = await this.userRepository.save(repository, options);
 
-    const updated = await this.userRepository.save(repository, options);
+    // Use updateRaw (updateOne) to avoid version conflict (__v) and WriteConflict
+    const updated = await this.userRepository.updateRaw(
+      { _id: repository._id },
+      {
+        $set: {
+          expoPushToken: expoPushToken
+        }
+      },
+      options
+    );
+
     await this.cacheManager.del(`user:info:${repository._id}`);
     return updated;
   }

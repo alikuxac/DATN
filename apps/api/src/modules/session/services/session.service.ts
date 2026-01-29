@@ -160,16 +160,16 @@ export class SessionService {
             })
         );
 
-        if (platform === ENUM_SESSION_PLATFORM.MOBILE) {
-            const oldSessions = await this.sessionRepository.findAll<SessionDoc>({
-                user,
-                platform: ENUM_SESSION_PLATFORM.MOBILE,
-                status: ENUM_SESSION_STATUS.ACTIVE,
-            });
+        // Revoke old sessions of same platform (Mobile or Web)
+        // This ensures single active session per device type as requested
+        const oldSessions = await this.sessionRepository.findAll<SessionDoc>({
+            user,
+            platform,
+            status: ENUM_SESSION_STATUS.ACTIVE,
+        });
 
-            for (const session of oldSessions) {
-                await this.updateRevoke(session, options);
-            }
+        for (const session of oldSessions) {
+            await this.updateRevoke(session, options);
         }
 
         const create = new SessionEntity();

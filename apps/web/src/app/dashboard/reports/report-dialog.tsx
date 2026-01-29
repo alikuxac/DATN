@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Loader2 } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 import {
   Dialog,
@@ -56,6 +57,7 @@ interface ReportDialogProps {
 
 export function ReportDialog({ open, onOpenChange }: ReportDialogProps) {
   const { createReport, isCreating } = useReports({ page: 1 }); // Dummy params
+  const { t } = useLanguage();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema) as any,
@@ -196,11 +198,11 @@ export function ReportDialog({ open, onOpenChange }: ReportDialogProps) {
               name="regionId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Region</FormLabel>
+                  <FormLabel>{t("REPORTS.REGION") || "Region"}</FormLabel>
                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select region" />
+                          <SelectValue placeholder={t("REPORTS.PLACEHOLDER_REGION") || "Select region"} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>

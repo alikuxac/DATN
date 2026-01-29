@@ -29,6 +29,7 @@ import {
     ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS,
     ENUM_STATUS_CODE_ERROR,
     IAuthJwtAccessTokenPayload,
+    ENUM_SESSION_STATUS,
 } from '@repo/shared';
 import { SessionActiveByUserParsePipe, SessionActiveParsePipe, SessionParseByUserPipe } from '@modules/session/pipes/session.parse.pipe';
 import { SessionDoc } from '@modules/session/repository/entities/session.entity';
@@ -84,6 +85,7 @@ export class SessionSharedController {
         const find: Record<string, any> = {
             ..._search,
             ...dateQuery,
+            status: ENUM_SESSION_STATUS.ACTIVE,
         };
 
         const sessions: SessionDoc[] = await this.sessionService.findAllByUser(

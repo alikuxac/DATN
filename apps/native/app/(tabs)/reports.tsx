@@ -24,6 +24,7 @@ import {
   ENUM_REPORT_SOURCE
 } from "@repo/shared";
 import { useLocationContext } from "@/context/LocationContext";
+import { calculateDistance } from "@/utils/geo";
 
 
 import { ReportCard } from "@/components/reports/ReportCard";
@@ -76,7 +77,7 @@ export default function ReportsScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { user, token, theme } = useAppSelector((state) => state.app);
-  const { currentRegion } = useLocationContext();
+  const { currentRegion, userLocation } = useLocationContext();
   const [activeTab, setActiveTab] = useState<"list" | "map">("list");
   // --- STATE ---
   const [data, setData] = useState<any[]>([]);
@@ -203,6 +204,17 @@ export default function ReportsScreen() {
           
           // Default sort by CreatedAt Desc
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }).filter(r => {
+          // Distance Filter: Only show reports within 50km
+          if (!userLocation) return true; // If no location, show all (fallback)
+          
+          const rLat = r.coordinates?.[1] ?? (r as any).location?.coordinates?.[1];
+          const rLng = r.coordinates?.[0] ?? (r as any).location?.coordinates?.[0];
+
+          if (!rLat || !rLng) return false;
+
+          const dist = calculateDistance(userLocation.latitude, userLocation.longitude, rLat, rLng);
+          return dist <= 50000; // 50km
       });
 
       if (pageNum === 1) {
@@ -241,7 +253,7 @@ export default function ReportsScreen() {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [debouncedSearch, appliedTypeFilter, appliedStatusFilter, appliedSourceFilter, isRefreshing, currentRegion, user]);
+  }, [debouncedSearch, appliedTypeFilter, appliedStatusFilter, appliedSourceFilter, isRefreshing, currentRegion, user, userLocation]);
 
   // Initial Load & Filter Change
   useEffect(() => {

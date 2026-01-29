@@ -223,17 +223,9 @@ export class UserSharedController {
         @Body()
         { pushToken }: { pushToken: string }
     ): Promise<void> {
-        const session: ClientSession =
-            await this.databaseService.createTransaction();
-
         try {
-            await this.userService.updateExpoPushToken(user, pushToken, {
-                session,
-            });
-
-            await this.databaseService.commitTransaction(session);
+            await this.userService.updateExpoPushToken(user, pushToken);
         } catch (err: unknown) {
-            await this.databaseService.abortTransaction(session);
             throw new InternalServerErrorException({
                 statusCode: ENUM_STATUS_CODE_ERROR.APP_UNKNOWN,
                 message: 'http.serverError.internalServerError',

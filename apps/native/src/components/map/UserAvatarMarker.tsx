@@ -23,13 +23,10 @@ export const UserAvatarMarker = ({
   id,
   onSelected,
 }: UserAvatarMarkerProps) => {
-  const [imageError, setImageError] = useState(false);
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
 
-  // Always use DiceBear as fallback - same logic as Avatar component
   const displayAvatar = useMemo(() => {
-    if (imageError) return null;
-    
-    // Safety check for invalid URL strings
+    // Helper to check valid HTTP string
     const isValidUrl = (url: any) => 
       url && 
       typeof url === 'string' && 
@@ -38,12 +35,24 @@ export const UserAvatarMarker = ({
       url !== 'undefined' &&
       url.startsWith('http');
 
-    if (isValidUrl(avatarUrl)) return avatarUrl;
-    
-    // Fallback to DiceBear if name is available or just use "User"
+    const validUserUrl = isValidUrl(avatarUrl) ? avatarUrl : null;
+
+    // 1. If we have a user URL and it hasn't failed yet, use it.
+    if (validUserUrl && failedUrl !== validUserUrl) {
+        return validUserUrl;
+    }
+
+    // 2. Fallback to DiceBear
     const seed = userName && userName.trim().length > 0 ? userName : (userId || 'User');
-    return getDiceBearUrl(seed);
-  }, [avatarUrl, userName, userId, imageError]);
+    const diceBearUrl = getDiceBearUrl(seed);
+
+    // 3. If DiceBear also failed, return null (to show Initials)
+    if (failedUrl === diceBearUrl) {
+        return null;
+    }
+
+    return diceBearUrl;
+  }, [avatarUrl, userName, userId, failedUrl]);
 
   return (
     <PointAnnotation
@@ -84,8 +93,10 @@ export const UserAvatarMarker = ({
                     style={styles.avatar} // Explicit border radius handled by container
                     resizeMode="cover"
                     onError={() => {
-                      console.log(`[UserAvatarMarker] Image load error: ${displayAvatar}`);
-                      setImageError(true);
+                      if (displayAvatar) {
+                          console.log(`[UserAvatarMarker] Image load error: ${displayAvatar}`);
+                          setFailedUrl(displayAvatar);
+                      }
                     }}
                   />
                 ) : (

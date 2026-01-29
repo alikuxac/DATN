@@ -218,6 +218,16 @@ export class NotificationService {
       // Safe check for _id
       const userId = volunteer._id ? volunteer._id.toString() : volunteer.id;
 
+      // Filter: Check if volunteer has enabled SOS alerts
+      // If settings is missing (partial object), we might default to TRUE or skip.
+      // Assuming critical alerts, we might want to send, but user asked to filter.
+      // Let's check safely. 
+      if (volunteer.settings) {
+        if (volunteer.settings.pushEnabled === false || volunteer.settings.sosAlerts === false) {
+          continue;
+        }
+      }
+
       await this.sendToUser(
         userId,
         ENUM_NOTIFICATION_TYPE.SYSTEM,

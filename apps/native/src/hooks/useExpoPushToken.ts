@@ -11,10 +11,10 @@ Notifications.setNotificationHandler({
 });
 
 export const useExpoPushToken = () => {
-  const { token: authToken } = useAppSelector((state) => state.app);
+  const { token: authToken, user } = useAppSelector((state) => state.app);
 
   useEffect(() => {
-    if (!authToken) return;
+    if (!authToken || !user) return;
 
     registerForPushNotificationsAsync().then(token => {
       if (token) {
@@ -22,7 +22,7 @@ export const useExpoPushToken = () => {
           .catch(err => console.error('[PushToken] Failed to update on server:', err));
       }
     });
-  }, [authToken]);
+  }, [authToken, user]);
 };
 
 async function registerForPushNotificationsAsync() {

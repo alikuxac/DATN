@@ -345,11 +345,11 @@ export default function UsersPage() {
                 </div>
                 <div>
                   <h4 className="font-medium text-sm text-muted-foreground">{t("USERS.DIALOG.ROLE")}</h4>
-                  <p className="text-foreground font-medium">{t(`USERS.ROLES.${selectedUser.role}`)}</p>
+                  <p className="text-foreground font-medium">{t(`USERS.ROLES.${selectedUser.role.toUpperCase().replace(/\s+/g, '_')}`)}</p>
                 </div>
                 <div>
                   <h4 className="font-medium text-sm text-muted-foreground">{t("USERS.DIALOG.STATUS")}</h4>
-                  <p className="text-foreground font-medium">{t(`USERS.STATUS_OPTIONS.${selectedUser.status}` as any)}</p>
+                  <p className="text-foreground font-medium">{t(`USERS.STATUS_OPTIONS.${selectedUser.status.toUpperCase()}` as any)}</p>
                 </div>
                 <div>
                   <h4 className="font-medium text-sm text-muted-foreground">{t("USERS.DIALOG.RESCUE_MODE")}</h4>
