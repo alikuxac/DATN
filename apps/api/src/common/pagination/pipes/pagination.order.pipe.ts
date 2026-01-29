@@ -16,7 +16,7 @@ export function PaginationOrderPipe(
     constructor(
       @Inject(REQUEST) protected readonly request: IRequestApp,
       private readonly paginationService: PaginationService,
-    ) {}
+    ) { }
 
     async transform(value: Record<string, any>): Promise<Record<string, any>> {
       const orderBy: string = value?.orderBy ?? defaultOrderBy;
@@ -30,6 +30,9 @@ export function PaginationOrderPipe(
         orderDirection,
         availableOrderBy,
       );
+
+      console.log("orderBy", value?.orderBy);
+
 
       this.request.__pagination = {
         ...this.request.__pagination,
