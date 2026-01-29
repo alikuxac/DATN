@@ -113,9 +113,7 @@ export default function SignInScreen() {
 
         showSuccess(t("AUTH.MSG_WELCOME_BACK"), t("AUTH.MSG_LOGIN_SUCCESS"));
 
-        setTimeout(() => {
-          router.replace("/(tabs)/account");
-        }, 500);
+        // Navigation is handled globally by useAuthRedirect observing 'token' state
       } else {
         // Trường hợp API trả về 200 nhưng không có token (logic lạ)
         showError(t("AUTH.ERR_LOGIN_FAILED"), t("AUTH.ERR_NO_TOKEN"));
@@ -205,7 +203,7 @@ export default function SignInScreen() {
             <View className="items-end">
               <Pressable onPress={() => router.push("/(auth)/forgot-password")}>
                 <AppText className="text-primary font-sans-medium text-sm">
-                  {t("AUTH.TITLE_FORGOT_PASSWORD")}?
+                  {`${t("AUTH.TITLE_FORGOT_PASSWORD")}?`}
                 </AppText>
               </Pressable>
             </View>

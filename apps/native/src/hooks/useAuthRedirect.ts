@@ -42,10 +42,14 @@ export function useAuthRedirect() {
     // 3. Logic Redirect
     if (!router) return;
 
-    if (!token && !inAuthGroup && !isFirstLaunch) {
-      router.replace("/(auth)/sign-in");
-    } else if (token && inAuthGroup) {
-      router.replace("/(tabs)");
-    }
+    const task = setTimeout(() => {
+      if (!token && !inAuthGroup && !isFirstLaunch) {
+        router.replace("/(auth)/sign-in");
+      } else if (token && inAuthGroup) {
+        router.replace("/(tabs)");
+      }
+    }, 100);
+
+    return () => clearTimeout(task);
   }, [token, isFirstLaunch, rootNavigationState]);
 }

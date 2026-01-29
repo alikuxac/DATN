@@ -58,7 +58,7 @@ class ApiService {
       // Xử lý 401 - Session expired
       if (response.status === 401) {
         // Nếu không có token trong store, đây không phải là lỗi hết phiên -> chỉ là Unauthorized
-        const currentToken = state.app.token;
+        const currentToken = state.app.token || this.accessToken;
         if (!currentToken) {
           throw new ApiError(401, 401, "Không có quyền truy cập");
         }

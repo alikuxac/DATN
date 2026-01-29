@@ -193,5 +193,5 @@ export class ReportEntity extends DatabaseObjectIdEntityBase {
 }
 
 export const ReportSchema = DatabaseSchema(ReportEntity);
-ReportSchema.index({ location: '2dsphere' });
+ReportSchema.index({ 'location.coordinates': '2dsphere' });
 export type ReportDocument = IDatabaseDocument<ReportEntity>;

@@ -226,6 +226,8 @@ export const CreateReportModal = ({
           <ScrollView
             className="flex-1 px-6 pt-4"
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{ paddingBottom: 100 }}
           >
              {/* --- PROXY TOGGLE --- */}
             <TouchableOpacity 

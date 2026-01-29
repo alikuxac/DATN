@@ -660,6 +660,12 @@ async function bootstrap() {
   const shelterModel = app.get<Model<ShelterDocument>>(getModelToken(ShelterEntity.name, DATABASE_CONNECTION_NAME));
 
   try {
+    // Sync Indexes
+    console.log('\n🔍 Syncing indexes...');
+    await userModel.syncIndexes();
+    await reportModel.syncIndexes();
+    await shelterModel.syncIndexes();
+
     // Clear existing seed data
     console.log('\n🗑️  Clearing existing seed data...');
 

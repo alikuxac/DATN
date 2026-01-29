@@ -6,7 +6,7 @@ import { ENUM_APP_ENVIRONMENT } from '@repo/shared';
 
 @Injectable()
 export class DatabaseOptionService {
-    constructor(private readonly configService: ConfigService) {}
+    constructor(private readonly configService: ConfigService) { }
 
     createOptions(): MongooseModuleOptions {
         const env = this.configService.get<string>('app.env');
@@ -44,8 +44,8 @@ export class DatabaseOptionService {
 
         const mongooseOptions: MongooseModuleOptions = {
             uri: url,
-            autoCreate: env === ENUM_APP_ENVIRONMENT.MIGRATION,
-            autoIndex: env === ENUM_APP_ENVIRONMENT.MIGRATION,
+            autoCreate: [ENUM_APP_ENVIRONMENT.MIGRATION, ENUM_APP_ENVIRONMENT.DEVELOPMENT, ENUM_APP_ENVIRONMENT.LOCAL].includes(env as ENUM_APP_ENVIRONMENT),
+            autoIndex: [ENUM_APP_ENVIRONMENT.MIGRATION, ENUM_APP_ENVIRONMENT.DEVELOPMENT, ENUM_APP_ENVIRONMENT.LOCAL].includes(env as ENUM_APP_ENVIRONMENT),
             appName: name,
             retryWrites: true,
             retryReads: true,
