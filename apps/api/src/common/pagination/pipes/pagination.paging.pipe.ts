@@ -12,16 +12,26 @@ export function PaginationPagingPipe(
     constructor(
       @Inject(REQUEST) protected readonly request: IRequestApp,
       private readonly paginationService: PaginationService,
-    ) {}
+    ) { }
 
     async transform(value: Record<string, any>): Promise<Record<string, any>> {
-      const page: number = this.paginationService.page(
-         value?.page ? Number.parseInt(value?.page as string) : 1
-      );
-      const perPage: number = this.paginationService.perPage(
-        value?.perPage ? Number.parseInt(value?.perPage as string) : defaultPerPage,
-      );
-      const offset: number = this.paginationService.offset(page, perPage);
+      let page: number;
+      let perPage: number;
+      let offset: number;
+
+      if (value?._offset !== undefined && value?._limit !== undefined) {
+        offset = Number.parseInt(value._offset as string);
+        perPage = Number.parseInt(value._limit as string);
+        page = Math.floor(offset / perPage) + 1;
+      } else {
+        page = this.paginationService.page(
+          value?.page ? Number.parseInt(value?.page as string) : 1
+        );
+        perPage = this.paginationService.perPage(
+          value?.perPage ? Number.parseInt(value?.perPage as string) : defaultPerPage,
+        );
+        offset = this.paginationService.offset(page, perPage);
+      }
 
       this.request.__pagination = {
         ...this.request.__pagination,

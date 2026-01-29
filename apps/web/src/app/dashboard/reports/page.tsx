@@ -83,7 +83,7 @@ export default function ReportsPage() {
 
   const handleExport = async () => {
     try {
-      const response = await api.get('/report/export', {
+      const response = await api.get('/admin/report/export', {
          params: {
              start: dateRange?.from?.toISOString(),
              end: dateRange?.to?.toISOString()
@@ -117,7 +117,7 @@ export default function ReportsPage() {
   
   const { reports, metadata, isLoading, updateStatus, isUpdating, rejectReport, isRejecting } = useReports({
     page,
-    limit: 10,
+    limit: 20,
     q,
     status: getApiStatus() as any,
     source: source === "ALL" ? undefined : source.toLowerCase() as any,

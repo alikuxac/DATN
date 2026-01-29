@@ -36,6 +36,15 @@ import { MessageService } from '@common/message/services/message.service';
 import { ActivityCreateEvent } from '@modules/activity/events/activity.create.event';
 import { ENUM_ACTIVITY_TYPE } from '@repo/shared';
 
+import {
+  REPORT_DEFAULT_AVAILABLE_ORDER_BY,
+  REPORT_DEFAULT_AVAILABLE_SEARCH,
+  REPORT_DEFAULT_SEVERITY,
+  REPORT_DEFAULT_SOURCE,
+  REPORT_DEFAULT_STATUS,
+  REPORT_DEFAULT_TYPE,
+} from '../constants/report.list.constant';
+
 @Controller({
   version: '1',
   path: '/report',
@@ -63,24 +72,23 @@ export class ReportAdminController {
   async list(
     @PaginationQuery({
       defaultPerPage: 20,
-      // Admin được search nhiều field hơn
-      availableSearch: ['q', 'address', 'notes', 'regionId', 'user.fullName', 'user.mobileNumber'],
-      availableOrderBy: ['createdAt', 'status', 'peopleCount', 'updatedAt'],
+      availableSearch: REPORT_DEFAULT_AVAILABLE_SEARCH,
+      availableOrderBy: REPORT_DEFAULT_AVAILABLE_ORDER_BY,
     })
     { _search, _limit, _offset, _order, search }: PaginationListDto,
 
     // 2. Enum Filters
-    @PaginationQueryFilterInEnum('severity', ENUM_REPORT_SEVERITY.MEDIUM, ENUM_REPORT_SEVERITY)
-    severity: ENUM_REPORT_SEVERITY[],
+    @PaginationQueryFilterInEnum('severity', REPORT_DEFAULT_SEVERITY, ENUM_REPORT_SEVERITY)
+    severity: Record<string, any>,
 
-    @PaginationQueryFilterInEnum('status', ENUM_REPORT_STATUS.IN_PROGRESS, ENUM_REPORT_STATUS)
-    status: ENUM_REPORT_STATUS[],
+    @PaginationQueryFilterInEnum('status', REPORT_DEFAULT_STATUS, ENUM_REPORT_STATUS)
+    status: Record<string, any>,
 
-    @PaginationQueryFilterInEnum('type', ENUM_REPORT_TYPE.EVACUATION, ENUM_REPORT_TYPE)
-    type: ENUM_REPORT_TYPE[],
+    @PaginationQueryFilterInEnum('type', REPORT_DEFAULT_TYPE, ENUM_REPORT_TYPE)
+    type: Record<string, any>,
 
-    @PaginationQueryFilterInEnum('source', ENUM_REPORT_SOURCE.APP, ENUM_REPORT_SOURCE)
-    source: ENUM_REPORT_SOURCE[],
+    @PaginationQueryFilterInEnum('source', REPORT_DEFAULT_SOURCE, ENUM_REPORT_SOURCE)
+    source: Record<string, any>,
 
     // 3. Dynamic Date Filters (Y hệt App)
     @Query('dateField') rawDateField: string,
@@ -89,7 +97,13 @@ export class ReportAdminController {
     @PaginationQueryFilterDate('toDate', ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS.LESS_THAN_EQUAL) toDate: Date,
     @PaginationQueryFilterDate('exactDate', ENUM_PAGINATION_FILTER_DATE_TIME_OPTIONS.EQUAL) exactDate: Date,
   ): Promise<IResponsePaging<ReportListResponseDto>> {
-    let find: Record<string, any> = { ..._search };
+    let find: Record<string, any> = {
+      ..._search,
+      ...severity,
+      ...status,
+      ...type,
+      ...source,
+    };
 
     if (search) {
       const userIds = await this.userService.findAllIdsByName(search);
@@ -101,11 +115,6 @@ export class ReportAdminController {
         ]
       }
     }
-
-    if (severity?.length) find.severity = { $in: severity };
-    if (status?.length) find.status = { $in: status };
-    if (type?.length) find.type = { $in: type };
-    if (source?.length) find.source = { $in: source };
 
     // B. Merge Date Filters
     const dateQuery = this.paginationFilterService.buildDateQuery(

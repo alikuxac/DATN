@@ -57,7 +57,7 @@ export default function UsersPage() {
 
   const { users, metadata, isLoading, updateUserStatus, isUpdatingStatus, resetUserPassword, isResettingPassword, deleteUser, isDeleting, restoreUser, isRestoring, revokeAllUserSessions, isRevokingAll } = useUsers({
     page,
-    limit: 10,
+    limit: 20,
     q: debouncedSearch,
     role: role === "ALL" ? undefined : role,
     status: status === "ALL" ? undefined : status,
