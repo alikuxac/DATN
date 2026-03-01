@@ -95,19 +95,20 @@ import { calculateDistance } from "@/utils/geo";
     const colors = useColors();
     const cameraRef = useRef<React.ComponentRef<typeof Camera>>(null);
     const router = useRouter();
-    
-    // Fix Map Validation/Loading: Force remount key
-    const [mountKey, setMountKey] = useState(0);
 
+    const getMapStyleUrl = useCallback(() => {
+      const mode = theme === "dark" ? "dark" : "light";
+      return `https://maps.vietmap.vn/maps/styles/tm/style.json?apikey=${VIETMAP_API_KEY}`;
+    }, [theme]);
+    
+    console.log("[Map] Render - VIETMAP_API_KEY present:", !!VIETMAP_API_KEY, "Length:", VIETMAP_API_KEY.length);
+    console.log("[Map] Style URL (masked):", getMapStyleUrl().replace(VIETMAP_API_KEY, "REDACTED"));
+    
     useFocusEffect(
       useCallback(() => {
-         // Force a re-mount of the MapView on the first real focus interaction
-         // This helps resolve GL context race conditions causing "blank map" or style parse errors on init
-         if (mountKey === 0) {
-             setMountKey(k => k + 1);
-         }
+         console.log("[Map] Screen focused.");
          fetchData();
-      }, [token, currentRegion, user?.role, user?.verification?.email]) // removed mountKey dependency to avoid loop? No, callback dependency...
+      }, [token, currentRegion, user?.role, user?.verification?.email])
     );
 
     useEffect(() => {
@@ -221,8 +222,6 @@ import { calculateDistance } from "@/utils/geo";
     }, [userLocation, params.focus, selectedReport, selectedRescuer, selectedShelter]);
   
     // --- MAP STYLE ---
-    const getMapStyleUrl = () =>
-      `https://maps.vietmap.vn/api/maps/${theme === "dark" ? "dark" : "light"}/styles.json?apikey=${VIETMAP_API_KEY}`;
       
     // --- LOCATION PICKER LOGIC ---
     const handlePickLocation = () => {
@@ -271,9 +270,7 @@ import { calculateDistance } from "@/utils/geo";
         setReports(uniqueReports);
 
           // 3. Fetch all shelters
-          const sheltersData = await shelterService.getAllShelters();
-          const uniqueShelters = Array.from(new Map((sheltersData || []).map(s => [s._id, s])).values());
-          setShelters(uniqueShelters);
+         
 
        } catch (error) {
           console.error("Error fetching map data:", error);
@@ -491,32 +488,37 @@ import { calculateDistance } from "@/utils/geo";
         return null;
     }, [reports, user, isVolunteerMode, rescuerLocations]);
 
-    const getShelterMarkers = useMemo(() => {
-        let visibleShelters = shelters;
-        if (userLocation) {
-             visibleShelters = shelters.filter(s => {
-                 const [lng, lat] = s.location.coordinates; // GeoJSON: [lng, lat]
-                 return calculateDistance(userLocation.latitude, userLocation.longitude, lat, lng) <= 30000;
-             });
-        }
+    // const getShelterMarkers = useMemo(() => {
+    //   // console.log("visible",shelters.length);
+    //   //   let visibleShelters = shelters;
+    //   //   if (userLocation) {
+    //   //        visibleShelters = shelters.filter(s => {
+    //   //            const [lng, lat] = s.location.coordinates; // GeoJSON: [lng, lat]
+    //   //            const dist =calculateDistance(userLocation.latitude, userLocation.longitude, lat, lng);
+    //   //           //  console.log('shelter:', dist)
+    //   //            return dist <= 30000;
+    //   //        });
+    //   //   }
 
-        return visibleShelters.map((shelter) => (
-            <MapShelterMarker
-                key={`shelter-${shelter._id}`}
-                id={shelter._id}
-                coordinate={[shelter.location.coordinates[0], shelter.location.coordinates[1]]}
-                title={shelter.name}
-                type={shelter.type}
-                status={shelter.status}
-                onPress={() => {
-                   userHasMovedMapRef.current = true; // User interacted
-                   setSelectedReport(null);
-                   setSelectedRescuer(null);
-                   setSelectedShelter(shelter);
-                }}
-            />
-        ));
-    }, [shelters]);
+    //   //   console.log('visibleShelters', visibleShelters.length)
+
+    //     return shelters.map((shelter) => (
+    //         <MapShelterMarker
+    //             key={`shelter-${shelter._id}`}
+    //             id={shelter._id}
+    //             coordinate={[shelter.location.coordinates[0], shelter.location.coordinates[1]]}
+    //             title={shelter.name}
+    //             type={shelter.type}
+    //             status={shelter.status}
+    //             onPress={() => {
+    //                userHasMovedMapRef.current = true; // User interacted
+    //                setSelectedReport(null);
+    //                setSelectedRescuer(null);
+    //                setSelectedShelter(shelter);
+    //             }}
+    //         />
+    //     ));
+    // }, [shelters]);
 
     const busyRescuerIds = useMemo(() => {
       const ids = new Set<string>();
@@ -835,13 +837,15 @@ import { calculateDistance } from "@/utils/geo";
         />
   
         <MapView
-          key={`${theme}-${mountKey}`}
+          key={theme}
           style={styles.map}
           mapStyle={getMapStyleUrl()}
           logoEnabled={false}
           attributionEnabled={false}
           onPress={onMapPress}
           onRegionDidChange={onRegionChanged}
+          onDidFinishLoadingStyle={() => console.log("[Map] Style loaded successfully")}
+          onDidFailLoadingMap={() => console.error("[Map] Failed to load map")}
         >
         <Camera
           ref={cameraRef}
@@ -850,7 +854,7 @@ import { calculateDistance } from "@/utils/geo";
         />
 
         {/* Render Markers - Order: Shelter (Low) -> Rescuer -> Report (High) */}
-        {getShelterMarkers}
+        {/* {getShelterMarkers} */}
         {getRescuerMarkers}
         {getReportMarkers}
 

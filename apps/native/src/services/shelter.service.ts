@@ -37,13 +37,17 @@ export const shelterService = {
   },
 
   getAllShelters: async (): Promise<Shelter[]> => {
-    const res = await apiService.get<{ data: Shelter[] }>(
+    const res = await apiService.get<any>(
       `/admin/shelter/list?limit=1000`
     );
-    return res.data;
+    // Flexible extraction to handle various response wrappers (ResponsePaging vs standard)
+    if (Array.isArray(res)) return res;
+    if (res?.data && Array.isArray(res.data)) return res.data;
+    if (res?.data?.data && Array.isArray(res.data.data)) return res.data.data;
+    return [];
   },
 
   getShelterDetail: async (id: string): Promise<Shelter> => {
-    return apiService.get<Shelter>(`/shelter/${id}`);
+    return apiService.get<Shelter>(`/admin/shelter/${id}`);
   },
 };
