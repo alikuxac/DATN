@@ -51,7 +51,7 @@
     "exceljs": "^4.4.0",
     "expo-server-sdk": "^4.0.0",
     "geolib": "^3.3.4",
-    "handlebars": "^4.7.8",
+    "handlebars": "^4.7.9",
     "helmet": "^8.1.0",
     "joi": "^18.0.1",
     "jwks-rsa": "^3.2.0",
